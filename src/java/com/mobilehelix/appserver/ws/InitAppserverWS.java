@@ -4,17 +4,21 @@
  */
 package com.mobilehelix.appserver.ws;
 
+import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
+import com.mobilehelix.wsclient.common.GenericBsonResponse;
 import com.mobilehelix.wsclient.common.WSResponse;
 import java.io.IOException;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 
 /**
  *
@@ -27,80 +31,39 @@ public class InitAppserverWS {
     private static final Logger LOGGER = Logger
         .getLogger(InitAppserverWS.class.getName());
         
+    @Context
+    private HttpServletRequest request;
+    
+    @EJB
+    private InitApplicationServer initEJB;
+    
     @POST
-    public byte[] DownloadCert(byte [] b) {
+    public byte[] InitAS(byte [] b) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
-        byte[] jksb = null;
+
+        ApplicationServerInitRequest asir = null;
         
         try {
-            if (client == null) {
-                throw new WSException("InvalidClientError", new String[]{ "null" });
-            }
+            asir = ApplicationServerInitRequest.fromBson(b);
+            initEJB.init(asir.getControllerIP(), asir.getControllerPort(), 
+                    asir.getAsPubIP(), request.getLocalAddr(), request.getLocalPort(),
+                    asir.getClientName(), asir.getServerName(), 
+                    asir.getStorePass(), asir.getKeyStore());
         
-            PersistenceManagerFactory pmf = factoryProvider.getEntityManagerFactoryForMaster();
-            if (pmf == null) {
-                throw new WSException("PersistenceErrorOccurred", new String[]{ "Persistence manager factory is null." });
-            }
-          
-            try {
-                GlobalSettings gs = settingsFacade.findSettings(pmf);
-                if (gs == null) {
-                    throw new WSException("GlobalSettingsNotFoundError");
-                }
-
-                // Get the private key and decrypt it.
-                byte[] encryptedPrivKey = gs.getPrivkey();
-                byte[] decryptedPrivKey = cKeyManager.DecryptSensitiveData(encryptedPrivKey);
-                
-                // Signing cert/key are the glassfish cert & key used by the server.
-                X509Certificate signingCert = CertificateManager.decodeX509Certificate(gs.getCertificate());
-                PrivateKey signingKey = KeyManager.decodePrivateKey(decryptedPrivKey);
-        
-                // Extract the issuerDn from the signing cert.
-                String issuerDn = signingCert.getIssuerX500Principal().getName();
-        
-                if (serverType.equals("gateway")) {
-                    // Find the gateway with the given IP address.
-                    Gateway g = gatewayFacade.findGatewayByName(serverName, pmf);
-                    if (g == null) {
-                        throw new WSException("GatewayIPNotFoundError", new String[]{ serverName });
-                    }
-                    
-                    jksb = gatewayFacade.createAndPackageCerts(g, signingKey, issuerDn, client, serverName, signingCert, storepass, pmf);
-                } else if (serverType.equals("appserver")) {
-                    // Find the application server with the given IP address.
-                    ApplicationServer as = asFacade.findAppServerByName(serverName, pmf);
-                    if (as == null) {
-                        throw new WSException("AppServerIPNotFoundError", new String[]{ serverName });
-                    }
-                    jksb = asFacade.createAndPackageCerts(as, signingKey, issuerDn, client, serverName, signingCert, storepass, pmf);
-                } else {
-                    throw new WSException("InvalidServerType", new String[]{ serverType });
-                }
-                
-                statusCode = WSResponse.SUCCESS;
-                msg = "Success";
-            } catch(com.mobilehelix.security.MHSecurityException se) {
-                msg = se.getLocalizedMessage();
-                statusCode = WSResponse.FAILURE;
-            } catch (FacadeException fe) {
-                Throwable t = fe.getCause();
-                if (t instanceof JDOException) {
-                    WSException.JDOToWSException((JDOException)t);
-                } else {
-                    msg = fe.getMessage();
-                    statusCode = WSResponse.FAILURE;
-                }
-            }
-        } catch(WSException wse) {
-            msg = wse.getLocalizedMessage();
+            statusCode = WSResponse.SUCCESS;
+            msg = "Success";
+        } catch(AppserverSystemException se) {
+            msg = se.getLocalizedMessage();
+            statusCode = WSResponse.FAILURE;
+        } catch(IOException ioe) {
+            msg = ioe.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
         }
-        
-        GatewayCertificateResponse gcr = new GatewayCertificateResponse(statusCode, msg, jksb);
+
+        GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
         try {
-            return gcr.toBson();
+            return gbr.toBson();
         } catch (IOException ioe) {
             LOGGER.log(Level.SEVERE, "Failed to serialize gateway cert response.", ioe);
         }
