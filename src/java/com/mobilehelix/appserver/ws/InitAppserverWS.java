@@ -49,18 +49,17 @@ public class InitAppserverWS {
             initEJB.init(asir.getControllerIP(), asir.getControllerPort(), 
                     asir.getAsPubIP(), request.getLocalAddr(), request.getLocalPort(),
                     asir.getClientName(), asir.getServerName(), 
-                    asir.getStorePass(), asir.getKeyStore());
+                    asir.getStorePass(), asir.getKeyStore(),
+                    asir.getDebugPassword());
         
             statusCode = WSResponse.SUCCESS;
             msg = "Success";
-        } catch(AppserverSystemException se) {
-            msg = se.getLocalizedMessage();
-            statusCode = WSResponse.FAILURE;
-        } catch(IOException ioe) {
-            msg = ioe.getLocalizedMessage();
+        } catch(Exception e) {
+            LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
+            msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
         }
-
+        
         GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
         try {
             return gbr.toBson();
