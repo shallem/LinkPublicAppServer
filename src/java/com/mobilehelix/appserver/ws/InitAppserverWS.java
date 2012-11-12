@@ -47,7 +47,7 @@ public class InitAppserverWS {
         try {
             asir = ApplicationServerInitRequest.fromBson(b);
             initEJB.init(asir.getControllerIP(), asir.getControllerPort(), 
-                    asir.getAsPubIP(), request.getLocalAddr(), request.getLocalPort(),
+                    asir.getAsPubIP(), request.getLocalAddr(), asir.getAsPubPort(),
                     asir.getClientName(), asir.getServerName(), 
                     asir.getStorePass(), asir.getKeyStore(),
                     asir.getDebugPassword());
