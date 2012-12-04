@@ -58,6 +58,9 @@ public class InitAppserverWS {
             LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
             msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
+            if (msg == null) {
+                msg = "Unknown failure.";
+            }
         }
         
         GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
