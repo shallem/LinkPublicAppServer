@@ -5,8 +5,11 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.constants.ServerTypeConstants;
 import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
+import com.mobilehelix.wsclient.common.CreateSessionRequest;
 import com.mobilehelix.wsclient.common.GenericBsonResponse;
 import com.mobilehelix.wsclient.common.WSResponse;
 import java.io.IOException;
@@ -25,37 +28,46 @@ import javax.ws.rs.core.Context;
  * @author shallem
  */
 @Stateless
-@Path("/initas")
+@Path("/createsession")
 @PermitAll
-public class InitAppserverWS {
+public class CreateSessionWS {
     private static final Logger LOGGER = Logger
-        .getLogger(InitAppserverWS.class.getName());
+        .getLogger(CreateSessionWS.class.getName());
         
     @Context
     private HttpServletRequest request;
     
     @EJB
+    private SessionManager sessionMgr;
+    
+    @EJB
     private InitApplicationServer initEJB;
     
     @POST
-    public byte[] InitAS(byte [] b) {
+    public byte[] createSession(byte [] b) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
 
-        ApplicationServerInitRequest asir = null;
-        
+        CreateSessionRequest creq = null; 
         try {
-            asir = ApplicationServerInitRequest.fromBson(b);
-            initEJB.init(asir.getControllerIP(), asir.getControllerPort(), 
-                    asir.getAsPubIP(), request.getLocalAddr(), asir.getAsPubPort(), asir.getAsPrivPort(),
-                    asir.getClientName(), asir.getServerName(), asir.getPushServerName(),
-                    asir.getStorePass(), asir.getKeyStore(),
-                    asir.getDebugPassword());
-        
-            statusCode = WSResponse.SUCCESS;
-            msg = "Success";
+            creq = CreateSessionRequest.fromBson(b);
+            if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_APPLICATION_SERVER) {
+                String reqSessionID = new String(creq.getServerSessId());
+                if (!initEJB.getSessID().equals(reqSessionID)) {
+                    /* Cannot authenticate this request. */
+                    statusCode = WSResponse.FAILURE;
+                    msg = "Failed to authentication request.";
+                } else {
+                    sessionMgr.addSession(creq.getSess());
+
+                    statusCode = WSResponse.SUCCESS;
+                    msg = "Success";
+                }
+            } else if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_PUSH_SERVER) {
+                
+            }
         } catch(Exception e) {
-            LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
+            LOGGER.log(Level.SEVERE, "Create session failed with exception.", e);
             msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
             if (msg == null) {
@@ -67,7 +79,7 @@ public class InitAppserverWS {
         try {
             return gbr.toBson();
         } catch (IOException ioe) {
-            LOGGER.log(Level.SEVERE, "Failed to serialize gateway cert response.", ioe);
+            LOGGER.log(Level.SEVERE, "Failed to serialize create session response.", ioe);
         }
         return null;
     }
