@@ -5,6 +5,7 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.constants.ServerTypeConstants;
@@ -41,6 +42,9 @@ public class CreateSessionWS {
     private SessionManager sessionMgr;
     
     @EJB
+    private PushManager pushMgr;
+    
+    @EJB
     private InitApplicationServer initEJB;
     
     @POST
@@ -64,7 +68,14 @@ public class CreateSessionWS {
                     msg = "Success";
                 }
             } else if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_PUSH_SERVER) {
+                pushMgr.addPushSubscription(initEJB.getPushServerName(), 
+                        creq.getSess().getClient(), 
+                        creq.getSess().getUserID(),
+                        creq.getSess().getPassword(),
+                        creq.getSess().getPushAppIDs());
                 
+                statusCode = WSResponse.SUCCESS;
+                msg = "Success";
             }
         } catch(Exception e) {
             LOGGER.log(Level.SEVERE, "Create session failed with exception.", e);
