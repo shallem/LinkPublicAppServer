@@ -13,6 +13,7 @@ import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.wsobjects.SendEmailRequest;
 import com.mobilehelix.appserver.xmlobjects.GenericResponse;
+import com.mobilehelix.constants.ApplicationConstants;
 import com.mobilehelix.wsclient.common.WSResponse;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,8 +71,9 @@ public class EmailWS {
             }
             
             Session currentSession = sessionMgr.getSessionForRequest(request);
+            currentSession.processRequest(request, ApplicationConstants.APPLICATION_TYPE_EMAIL);
             if (currentSession != null) {
-                EmailOperations.sendMessage(sendReq, currentSession, request);
+                EmailOperations.sendMessage(sendReq, currentSession);
             } else {
                 msg = "Could not find session.";
             }
