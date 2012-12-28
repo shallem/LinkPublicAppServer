@@ -68,7 +68,7 @@ public class CreateSessionWS {
                     msg = "Success";
                 }
             } else if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_PUSH_SERVER) {
-                pushMgr.addPushSubscription(initEJB.getPushServerName(), 
+                pushMgr.addPushSubscription(initEJB.getAsPubIP() + ":" + initEJB.getAsPubPort(), 
                         creq.getSess().getClient(), 
                         creq.getSess().getUserID(),
                         creq.getSess().getPassword(),
