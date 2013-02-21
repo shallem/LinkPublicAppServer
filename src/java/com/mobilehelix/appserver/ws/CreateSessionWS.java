@@ -4,12 +4,10 @@
  */
 package com.mobilehelix.appserver.ws;
 
-import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.constants.ServerTypeConstants;
-import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
 import com.mobilehelix.wsclient.common.CreateSessionRequest;
 import com.mobilehelix.wsclient.common.GenericBsonResponse;
 import com.mobilehelix.wsclient.common.WSResponse;
