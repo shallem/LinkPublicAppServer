@@ -4,7 +4,9 @@
  */
 package com.mobilehelix.appserver.ws;
 
+import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerPingResponse;
 import com.mobilehelix.wsclient.common.GenericBsonResponse;
 import com.mobilehelix.wsclient.common.ServerPingRequest;
 import com.mobilehelix.wsclient.common.WSResponse;
@@ -27,6 +29,9 @@ public class PingWS {
     
     @EJB
     private InitApplicationServer initEJB;
+    
+    @EJB
+    private SessionManager sessMgr;
     
     @POST
     public byte[] handlePing(byte [] b) {
@@ -53,9 +58,12 @@ public class PingWS {
             }
         }
         
-        GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
+        ApplicationServerPingResponse resp = new ApplicationServerPingResponse(statusCode, msg);
+        resp.setServerID(initEJB.getServerID());
+        resp.setSessionCt(sessMgr.getSessionCount());
+        
         try {
-            return gbr.toBson();
+            return resp.toBson();
         } catch (IOException ioe) {
             LOG.log(Level.SEVERE, "Failed to serialize ping response.", ioe);
         }
