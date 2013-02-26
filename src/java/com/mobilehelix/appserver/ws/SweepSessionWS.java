@@ -23,7 +23,7 @@ import javax.ws.rs.Path;
  * @author shallem
  */
 @Stateless
-@Path("/sweepsession")
+@Path("/sweep")
 @PermitAll
 public class SweepSessionWS {
     private static final Logger LOGGER = Logger

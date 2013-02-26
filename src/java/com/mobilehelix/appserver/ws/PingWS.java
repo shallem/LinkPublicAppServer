@@ -7,7 +7,6 @@ package com.mobilehelix.appserver.ws;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerPingResponse;
-import com.mobilehelix.wsclient.common.GenericBsonResponse;
 import com.mobilehelix.wsclient.common.ServerPingRequest;
 import com.mobilehelix.wsclient.common.WSResponse;
 import java.io.IOException;
