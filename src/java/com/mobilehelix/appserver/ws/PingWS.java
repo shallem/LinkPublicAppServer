@@ -12,6 +12,7 @@ import com.mobilehelix.wsclient.common.WSResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.security.PermitAll;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.POST;
@@ -23,6 +24,7 @@ import javax.ws.rs.Path;
  */
 @Stateless
 @Path("/ping")
+@PermitAll
 public class PingWS {
     private static final Logger LOG = Logger.getLogger(PingWS.class.getName());
     
