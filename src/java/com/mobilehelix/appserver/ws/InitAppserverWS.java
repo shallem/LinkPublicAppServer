@@ -5,6 +5,7 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
 import com.mobilehelix.wsclient.common.GenericBsonResponse;
@@ -50,7 +51,7 @@ public class InitAppserverWS {
                     asir.getAsPubIP(), request.getLocalAddr(), asir.getAsPubPort(), asir.getAsPrivPort(),
                     asir.getClientName(), asir.getServerName(), asir.getPushServerName(),
                     asir.getStorePass(), asir.getKeyStore(),
-                    asir.getDebugPassword());
+                    asir.getRegionName());
         
             statusCode = WSResponse.SUCCESS;
             msg = "Success";
