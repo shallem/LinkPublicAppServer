@@ -12,9 +12,6 @@
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <web-module-libraries>
                 <library dirs="200">
-                    <file>${libs.Java-EE-GlassFish-v3.classpath}</file>
-                </library>
-                <library dirs="200">
                     <file>${reference.Common.jar}</file>
                 </library>
                 <library dirs="100">
