@@ -4,8 +4,6 @@
  */
 package com.mobilehelix.appserver.ws;
 
-import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
 import com.mobilehelix.wsclient.common.GenericBsonResponse;
