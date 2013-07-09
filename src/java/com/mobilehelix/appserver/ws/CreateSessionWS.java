@@ -50,28 +50,17 @@ public class CreateSessionWS {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
 
-        CreateSessionRequest creq = null; 
+        CreateSessionRequest creq; 
         try {
             creq = CreateSessionRequest.fromBson(b);
-            if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_APPLICATION_SERVER) {
-                String reqSessionID = new String(creq.getServerSessId());
-                if (!initEJB.getSessID().equals(reqSessionID)) {
-                    /* Cannot authenticate this request. */
-                    statusCode = WSResponse.FAILURE;
-                    msg = "Failed to authentication request.";
-                } else {
-                    sessionMgr.addSession(creq.getSess());
+            String reqSessionID = new String(creq.getServerSessionID());
+            if (!initEJB.getSessID().equals(reqSessionID)) {
+                /* Cannot authenticate this request. */
+                statusCode = WSResponse.FAILURE;
+                msg = "Failed to authentication request.";
+            } else {
+                sessionMgr.addSession(creq);
 
-                    statusCode = WSResponse.SUCCESS;
-                    msg = "Success";
-                }
-            } else if (creq.getServerType() == ServerTypeConstants.SERVER_TYPE_PUSH_SERVER) {
-                pushMgr.addPushSubscription(initEJB.getAsPubIP() + ":" + initEJB.getAsPubPort(), 
-                        creq.getSess().getClient(), 
-                        creq.getSess().getUserID(),
-                        creq.getSess().getPassword(),
-                        creq.getSess().getPushAppIDs());
-                
                 statusCode = WSResponse.SUCCESS;
                 msg = "Success";
             }
