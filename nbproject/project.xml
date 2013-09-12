@@ -11,11 +11,20 @@
             <name>ApplicationServer-adminws</name>
             <minimum-ant-version>1.6.5</minimum-ant-version>
             <web-module-libraries>
-                <library dirs="200">
-                    <file>${reference.Common.jar}</file>
-                </library>
                 <library dirs="100">
                     <file>${reference.ApplicationServer-ejb.dist}</file>
+                </library>
+                <library dirs="200">
+                    <file>${reference.WebServicesObjects.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
+                <library dirs="100">
+                    <file>${reference.ApplicationServer-ejbPublic.dist}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
+                </library>
+                <library dirs="200">
+                    <file>${reference.ApplicationServerWebServices.jar}</file>
+                    <path-in-war>WEB-INF/lib</path-in-war>
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
@@ -36,7 +45,23 @@
                 <id>dist</id>
             </reference>
             <reference>
-                <foreign-project>Common</foreign-project>
+                <foreign-project>ApplicationServer-ejbPublic</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>dist</target>
+                <clean-target>clean</clean-target>
+                <id>dist</id>
+            </reference>
+            <reference>
+                <foreign-project>ApplicationServerWebServices</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>WebServicesObjects</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>
