@@ -17,12 +17,23 @@ puzzle, with more documentation to follow:
 service should receive binary data in the BSON format
 (http://bsonspec.org/) that deserializes into an object of type
 ApplicationServerCreateSessionRequest. See
-ApplicationServerWebServices/src/java/com/mobilehelix/services/objects.
+ApplicationServerWebServices/src/java/com/mobilehelix/services/objects. For
+example web services see the project ApplicationServer-adminws.
 
 2) You must implement custom session management to secure access to
-your custom applications. See the SessionManager, Session, and
-SessionFilter objects for an example
-(ApplicationServer-ejbPublic/src/java/com/mobilehelix/appserver/session).
+your custom applications. See the SessionManager, Session
+(ApplicationServer-ejbPublic/src/java/com/mobilehelix/appserver/session),
+and InitFilter
+(ApplicationServer-ejbPublic/src/java/com/mobilehelix/appserver/jsf)
+objects for an example.
 
 We are happy to answer any questions while our documentation remains a
 work in progress.
+
+Our master plan is to release (in the near future) a fully open
+source, and standalone application that shows how the Link SDK may be
+used to provide a simple file browser for CIFS file shares. Stay tuned
+if that sounds interesting. We are working hard on preparing our code
+for release.
+
+Each project in this repository is a NetBeans 7.2 project.
