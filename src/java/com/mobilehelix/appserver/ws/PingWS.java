@@ -6,9 +6,9 @@ package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerPingResponse;
-import com.mobilehelix.services.objects.ServerPingRequest;
 import com.mobilehelix.services.interfaces.WSResponse;
+import com.mobilehelix.services.objects.ApplicationServerPingResponse;
+import com.mobilehelix.services.objects.ServerPingRequest;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,7 +43,7 @@ public class PingWS {
         try {
             ServerPingRequest preq = ServerPingRequest.fromBson(b);
             String reqSessionID = new String(preq.getServerSessId());
-            if (!initEJB.getSessID().equals(reqSessionID)) {
+            if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
                 msg = "Failed to authentication request.";

@@ -6,9 +6,9 @@ package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerSweepRequest;
-import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.interfaces.WSResponse;
+import com.mobilehelix.services.objects.ApplicationServerSweepRequest;
+import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,7 +44,7 @@ public class SweepSessionWS {
         try {
             sreq = ApplicationServerSweepRequest.fromBson(b);
             String reqSessionID = new String(sreq.getServerSessId());
-            if (!initEJB.getSessID().equals(reqSessionID)) {
+            if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
                 msg = "Failed to authentication request.";

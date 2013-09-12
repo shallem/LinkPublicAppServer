@@ -5,9 +5,9 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.wsclient.ApplicationServers.ApplicationServerInitRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.interfaces.WSResponse;
+import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,11 +45,7 @@ public class InitAppserverWS {
         
         try {
             asir = ApplicationServerInitRequest.fromBson(b);
-            initEJB.init(asir.getControllerIP(), asir.getControllerPort(), 
-                    asir.getAsPubIP(), request.getLocalAddr(), asir.getAsPubPort(), asir.getAsPrivPort(),
-                    asir.getClientName(), asir.getServerName(), asir.getPushServerName(),
-                    asir.getStorePass(), asir.getKeyStore(),
-                    asir.getRegionName());
+            initEJB.init(asir, request.getLocalAddr());
         
             statusCode = WSResponse.SUCCESS;
             msg = "Success";

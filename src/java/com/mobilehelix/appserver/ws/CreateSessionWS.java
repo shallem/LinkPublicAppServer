@@ -4,12 +4,11 @@
  */
 package com.mobilehelix.appserver.ws;
 
-import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.services.objects.CreateSessionRequest;
-import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.interfaces.WSResponse;
+import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -39,9 +38,6 @@ public class CreateSessionWS {
     private SessionManager sessionMgr;
     
     @EJB
-    private PushManager pushMgr;
-    
-    @EJB
     private InitApplicationServer initEJB;
     
     @POST
@@ -49,11 +45,11 @@ public class CreateSessionWS {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
 
-        CreateSessionRequest creq; 
+        ApplicationServerCreateSessionRequest creq; 
         try {
-            creq = CreateSessionRequest.fromBson(b);
+            creq = ApplicationServerCreateSessionRequest.fromBson(b);
             String reqSessionID = new String(creq.getServerSessionID());
-            if (!initEJB.getSessID().equals(reqSessionID)) {
+            if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
                 msg = "Failed to authentication request.";
