@@ -1,21 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
-import com.mobilehelix.appserver.settings.EmailApplicationSettings;
-import com.mobilehelix.appserver.settings.FileBrowserApplicationSettings;
-import com.mobilehelix.appserver.settings.JiraApplicationSettings;
-import com.mobilehelix.appserver.settings.SharepointApplicationSettings;
-import com.mobilehelix.constants.ApplicationConstants;
-import com.mobilehelix.services.objects.ListApplicationResponse;
-import com.mobilehelix.services.objects.ServerRegisterResponse;
+import com.mobilehelix.appserver.settings.ApplicationSettingsFactory;
 import com.mobilehelix.services.objects.WSApplication;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import java.io.IOException;
 import java.util.List;
 import java.util.TreeMap;
 import javax.annotation.PostConstruct;
@@ -32,39 +35,41 @@ import javax.ejb.Startup;
 @Singleton
 @Startup
 @EJB(name="java:global/ApplicationServerRegistry", beanInterface=ApplicationServerRegistry.class)
-    public class ApplicationServerRegistry {
-    // Reference to the init object.
-    @EJB
-    private InitApplicationServer initAppServer;
-    
+public class ApplicationServerRegistry {
     // Indexed by app ID.
     private TreeMap<Long, ApplicationSettings> appMap;
+    private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
+    
+    @EJB
+    private InitApplicationServer initAS;
+    
+    private ControllerConnectionBase controllerConnection;
     
     @PostConstruct
     public void init() {
         this.appMap = new TreeMap<>();
+        this.factoryMap = new TreeMap<>();
+        this.controllerConnection = initAS.getControllerConnection();
     }
     
-    private void initFromAppList(List<WSApplication> appList) {
+    public void addSettingsFactory(int appType, ApplicationSettingsFactory sf) {
+        this.factoryMap.put(appType, sf);
+    }
+    
+    public void processAppList(List<WSApplication> appList) {
         for (WSApplication wsa : appList) {
-            ApplicationSettings newAppSettings;
-            switch(wsa.getAppType()) {
-                case ApplicationConstants.APPLICATION_TYPE_EMAIL:
-                    newAppSettings = new EmailApplicationSettings(wsa);
-                    break;
-                case ApplicationConstants.APPLICATION_TYPE_FILE_BROWSER:
-                    newAppSettings = new FileBrowserApplicationSettings(wsa);
-                    break;
-                case ApplicationConstants.APPLICATION_TYPE_SHAREPOINT:
-                    newAppSettings = new SharepointApplicationSettings(wsa);
-                    break;
-                case ApplicationConstants.APPLICATION_TYPE_JIRA:
-                    newAppSettings = new JiraApplicationSettings(wsa);
-                    break;
-                default:
-                    // Application type we can't handle. Skip it.
-                    continue;
+            ApplicationSettingsFactory sf = factoryMap.get(wsa.getAppType());
+            if (sf == null) {
+                // No factory; we cannot handle settings for this application in
+                // this server.
+                continue;
             }
+            ApplicationSettings newAppSettings = sf.createInstance(wsa);
+            if (newAppSettings == null) {
+                // Can't handle the applicaton for some app-specific reason.
+                continue;
+            }
+            
             if (appMap.containsKey(newAppSettings.getAppID())) {
                 appMap.remove(newAppSettings.getAppID());
             }
@@ -73,35 +78,14 @@ import javax.ejb.Startup;
         }
     }
     
-    public void initFromRegisterResponse(ServerRegisterResponse srr) {
-        this.initFromAppList(srr.getApplications());
+    public ApplicationSettings getSettingsForAppID(Long appID) throws AppserverSystemException {
+        return appMap.get(appID);
     }
     
-    public void updateFromAppRefreshResponse(ListApplicationResponse lar) {
-        this.initFromAppList(lar.getApps());
-    }
-    
-    public ApplicationSettings getSettingsForApplication(Long appID,
-            Integer appGenID) throws AppserverSystemException {
-        ApplicationSettings appSettings =
-                appMap.get(appID);
-        if (appSettings == null || appSettings.getAppGenID() < appGenID) {
-            try {
-                ListApplicationResponse lar =
-                        initAppServer.refreshFromController(appID);
-                this.updateFromAppRefreshResponse(lar);
-
-                // Get the application settings again (post refresh)
-                appSettings = appMap.get(appID);
-            } catch (UniformInterfaceException | IOException ex) {
-                throw new AppserverSystemException(ex,
-                        "Application list refresh failed.",
-                        "ApplicationRefreshFailed",
-                        new Object[]{ ex.getLocalizedMessage() });
-            }
-        }
-        
-        return appSettings;
+    public ApplicationSettings getSettingsForAppID(Long appID, Integer appGenID) throws AppserverSystemException {
+        // If we have a connection to the Controller, refresh the app first.
+        controllerConnection.refreshApplication(appID, appGenID);
+        return appMap.get(appID);
     }
     
     /**

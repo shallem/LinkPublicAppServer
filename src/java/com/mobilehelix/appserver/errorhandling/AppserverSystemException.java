@@ -1,6 +1,17 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.errorhandling;
 
@@ -8,6 +19,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.TreeMap;
 
 /**
  *
@@ -21,11 +33,25 @@ public class AppserverSystemException extends Exception {
     /*
      * Reference to resource bundle.
      */
-    private static ResourceBundle resources = null;
+    private static ResourceBundle commonResources = null;
+    
+    /**
+     * Mapping from app types to resource bundles.
+     */
+    private static TreeMap<Integer, ResourceBundle> appResources;
     
     private static void init() {
-        resources = ResourceBundle.getBundle("com.mobilehelix.appserver.resources/ErrorMessages");
+        commonResources = ResourceBundle.getBundle("com.mobilehelix.appserver.resources/ErrorMessages");
     }
+    
+    public static void registerErrorsBundle(int appType, ResourceBundle resources) {
+        if (AppserverSystemException.appResources == null) {
+            AppserverSystemException.appResources = new TreeMap<>();
+        }
+        AppserverSystemException.appResources.put(appType, resources);
+    }
+    
+    private ResourceBundle exceptionResources;
     
     public AppserverSystemException(Exception e, String s, String key) {
         super(s);
@@ -33,6 +59,7 @@ public class AppserverSystemException extends Exception {
         this.initCause(e);
         this.msgResourceKeys.add(key);
         this.msgResourceArgs.add(null);
+        this.exceptionResources = commonResources;
     }
 
     public AppserverSystemException(Exception e, String s, String key, Object[] args) {
@@ -41,6 +68,7 @@ public class AppserverSystemException extends Exception {
         this.initLists(1);
         this.msgResourceKeys.add(key);
         this.msgResourceArgs.add(args);
+        this.exceptionResources = commonResources;
     }
     
     public AppserverSystemException(String s, String key) {
@@ -48,6 +76,15 @@ public class AppserverSystemException extends Exception {
         this.initLists(1);
         this.msgResourceKeys.add(key);
         this.msgResourceArgs.add(null);
+        this.exceptionResources = commonResources;
+    }
+    
+    public AppserverSystemException(int appType, String s, String key) {
+        super(s);
+        this.initLists(1);
+        this.msgResourceKeys.add(key);
+        this.msgResourceArgs.add(null);
+        this.initResourceBundle(appType);
     }
     
     public AppserverSystemException(String s, String key, Object[] args) {
@@ -55,6 +92,15 @@ public class AppserverSystemException extends Exception {
         this.initLists(1);
         this.msgResourceKeys.add(key);
         this.msgResourceArgs.add(args);
+        this.exceptionResources = commonResources;
+    }
+    
+    public AppserverSystemException(int appType, String s, String key, Object[] args) {
+        super(s);
+        this.initLists(1);
+        this.msgResourceKeys.add(key);
+        this.msgResourceArgs.add(args);
+        this.initResourceBundle(appType);
     }
     
     public AppserverSystemException(String s, List<String> keys, List<Object[]> args) {
@@ -62,11 +108,19 @@ public class AppserverSystemException extends Exception {
         this.initLists(keys.size());
         this.msgResourceKeys.addAll(keys);
         this.msgResourceArgs.addAll(args);
+        this.exceptionResources = commonResources;
     }
     
     private void initLists(int sz) {
-        this.msgResourceKeys = new ArrayList<String>(sz);
-        this.msgResourceArgs = new ArrayList<Object[]>(sz);
+        this.msgResourceKeys = new ArrayList<>(sz);
+        this.msgResourceArgs = new ArrayList<>(sz);
+    }
+    
+    private void initResourceBundle(int appType) {
+        if (AppserverSystemException.appResources == null) {
+            this.exceptionResources = null;
+        }
+        this.exceptionResources = AppserverSystemException.appResources.get(appType);
     }
     
     public String getMsgResourceKey() {
@@ -91,16 +145,20 @@ public class AppserverSystemException extends Exception {
     
     @Override
     public String getLocalizedMessage() {
-        if (resources == null) {
+        if (this.exceptionResources == null) {
             AppserverSystemException.init();
         }
         
         Object[] curArgs = this.getMsgResourceArgs();
         if (curArgs != null) {
-            MessageFormat mf = new MessageFormat(resources.getString(getMsgResourceKey()));
+            MessageFormat mf = new MessageFormat(this.exceptionResources.getString(getMsgResourceKey()));
             String errMsg = mf.format(curArgs);
             return errMsg;
         }
-        return resources.getString(getMsgResourceKey());
+        if (this.exceptionResources != null) {
+            return this.exceptionResources.getString(getMsgResourceKey());
+        } else {
+            return this.getMsgResourceKey();
+        }
     }
 }

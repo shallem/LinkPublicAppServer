@@ -5,33 +5,13 @@
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.GlobalPropertiesManager;
 import com.mobilehelix.appserver.session.SessionManager;
-import com.mobilehelix.constants.ApplicationConstants;
-import com.mobilehelix.constants.ServerTypeConstants;
-import com.mobilehelix.security.JKSManager;
-import com.mobilehelix.security.MHSecurityException;
-import com.mobilehelix.security.RandomPasswordGenerator;
-import com.mobilehelix.security.SSL.CustomSSLContext;
-import com.mobilehelix.wsclient.Register.ControllerRegisterClient;
-import com.mobilehelix.wsclient.Register.ServerRegisterResponse;
-import com.mobilehelix.wsclient.common.Applications.ApplicationServiceClient;
-import com.mobilehelix.wsclient.common.Applications.ListApplicationResponse;
-import com.mobilehelix.wsclient.common.Server.WSServer;
-import com.mobilehelix.wsclient.common.WSResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
-import java.io.IOException;
-import java.security.KeyStore;
-import java.text.ParseException;
-import java.util.List;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import com.mobilehelix.services.objects.ApplicationServerInitRequest;
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 
 /**
  * Registers an application server with the Controller. 
@@ -42,52 +22,38 @@ import javax.naming.NamingException;
 @Startup
 @EJB(name="java:global/InitApplicationServer", beanInterface=InitApplicationServer.class)
 public class InitApplicationServer {
-    
-    private static final Logger LOGGER = Logger
-        .getLogger(InitApplicationServer.class.getName());
-    
-    /**
-     * Unique ID of this server.
-     */
-    private Long serverID;
-    
-    // System properties set when the server was installed and modified via the
-    // installer scripts.
-    private String clientName;
-    private String controllerIP;
-    private Integer controllerPort;
-    private String asPubIP;
-    private String asPrivIP;
-    private Integer asPubPort;
-    private Integer asPrivPort;
-    private String serverName;
-    private String pushServerName;
-    private KeyStore applicationServerKeystore;
-    private Properties jksPasswords;
-    private boolean isInitialized = false;
-    private String sessID;
-    private String regionName;
-    
-    private String mongoHost;
-    private Integer mongoPort;
-    private String mongoPassword;
         
-    /* Debugging properties. */
-    private boolean debugOn;
-    private String debugUser;
-    private String debugPassword;
-    
-    // SSL context to use in WS calls.
-    private HTTPSProperties sslContext;
-    
     // Repository for application configuration information.
     @EJB
     private ApplicationServerRegistry appRegistry;
     
+    // Global properties
+    @EJB
+    private GlobalPropertiesManager globalProperties;
+    
     // Global session manager
     @EJB
     private SessionManager sessionMgr;
+    
+    private boolean isInitialized = false;
+    
+    private ControllerConnectionBase controllerConnection;
+    
+    @PostConstruct
+    public void init() {
+        try {
+            // See if we have a connection to the Controller.
+            Class c = Class.forName("ControllerConnection");
+            this.controllerConnection = (ControllerConnectionBase)c.newInstance();
+        } catch(ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            
+        }
         
+        if (controllerConnection == null) {
+            controllerConnection = new ControllerConnectionBase();
+        }
+    }
+    
     /**
      * Called to register the application server with the controller and to re-read
      * all Glassfish system properties. The parameter supplied is the keystore password
@@ -96,67 +62,9 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void init(String controllerIP,
-            Integer controllerPort,
-            String asPubIP,
-            String asPrivIP,
-            Integer asPubPort,
-            Integer asPrivPort,
-            String clientName,
-            String serverName,
-            String pushServerName,
-            String storePass, 
-            byte[] keystore,
-            String regionName) throws AppserverSystemException {
-        /* Copy server system properties. */
-        this.controllerIP = controllerIP;
-        this.controllerPort = controllerPort;
-        this.asPubIP = asPubIP;
-        this.asPrivIP = asPrivIP;
-        this.asPubPort = asPubPort;
-        this.asPrivPort = asPrivPort;
-        this.clientName = clientName;
-        this.serverName = serverName;
-        this.pushServerName = pushServerName;
-        this.regionName = regionName;
-        
-        /* Use the supplied password as both storepass and keypass. */
-        this.jksPasswords = new Properties();
-        this.jksPasswords.setProperty("StorePass", storePass);
-        this.jksPasswords.setProperty("KeyPass", storePass);
-        
-        /* Save the keystore. */
-        try {
-            this.applicationServerKeystore = JKSManager.loadKeystore(keystore, storePass);
-        } catch(MHSecurityException mhse) {
-            throw new AppserverSystemException("Application server keystore load failed.", 
-                    "SystemPropertyInvalid", 
-                    new String[]{ "credentials keystore", mhse.getLocalizedMessage() });
-        } catch(IOException ioe) {
-            throw new AppserverSystemException("Application server keystore load failed.", 
-                    "SystemPropertyInvalid", 
-                    new String[]{ "credentials keystore", ioe.getLocalizedMessage() });
-        }
-        
-        /* Create the SSL context for registration. */
-        try {
-            this.createSSLContext();
-        } catch(Exception e) {
-            LOGGER.log(Level.SEVERE, "Failed to create SSL context for Jersey client calls. Registration failed.", e);
-            return;            
-        }
-        
-        /* Read debugging properties. */
-        this.readDebugProperties();
-        
-        /* Reset the session manager. When we re-initialize the app server it is
-         * no different than restarting the app server.
-         */
-        this.sessionMgr.sweepAllSessions();
-        
-        /* Now, register with the controller and store the results. */
-        this.registerWithController();
-        this.registerPushServerWithController();
+    public void init(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {
+        /* Register with the Controller, if we have one. */
+        this.controllerConnection.processInitRequest(asir, privIP);
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;
@@ -165,277 +73,25 @@ public class InitApplicationServer {
          * session to be re-created with the latest applications when the debug user
          * next contacts the app server.
          */
-        if (this.debugOn) {
+        if (globalProperties.isDebugOn()) {
             sessionMgr.setDebugSession(null);
             System.setProperty("jcifs.util.loglevel", "3");
         }
     }
     
-    private void createSSLContext() throws MHSecurityException, IOException {
-        sslContext = CustomSSLContext.Init(this.applicationServerKeystore, 
-                jksPasswords);
+    public ControllerConnectionBase getControllerConnection() {
+        return this.controllerConnection;
     }
     
-    private void readDebugProperties() {
-        String debugOnStr = System.getProperty("com.mobilehelix.debug");
-        if (debugOnStr != null && debugOnStr.equals("true")) {
-            this.debugOn = true;
-            this.debugUser = System.getProperty("com.mobilehelix.debuguser");
-            this.debugPassword = System.getProperty("com.mobilehelix.debugpassword");
-        } else {
-            this.debugOn = false;
-            this.debugUser = null;       
-            this.debugPassword = null;
-        }
-    }
-    
-    /**
-     * Register with the Controller. 
-     */
-    private void registerWithController() throws AppserverSystemException {
-        ControllerRegisterClient crc = new ControllerRegisterClient(controllerIP + ":" + controllerPort.toString(),
-                this.getSslContext());
-        try {
-            /* Register the application server functionality. */
-            ServerRegisterResponse srr = crc.runRegister(this.serverName,
-                this.asPrivIP,
-                this.asPrivPort,
-                this.asPubIP,
-                this.asPubPort,
-                this.clientName,
-                genSessionID(),
-                /* Apptypes we accept. */
-                new Integer[]{ ApplicationConstants.APPLICATION_TYPE_FILE_BROWSER,
-                    ApplicationConstants.APPLICATION_TYPE_EMAIL,
-                    ApplicationConstants.APPLICATION_TYPE_SHAREPOINT,
-                    ApplicationConstants.APPLICATION_TYPE_MH_SERVICES,
-                    ApplicationConstants.APPLICATION_TYPE_JIRA
-                },
-                /* Servers we depend on. */
-                new Integer[]{ ServerTypeConstants.SERVER_TYPE_MONGODB_SERVER,
-                    ServerTypeConstants.SERVER_TYPE_GATEWAY
-                });
-            
-            if (srr.getStatusCode() != WSResponse.SUCCESS) {
-                // Call to Controller failed.
-                throw new AppserverSystemException("Call to controller register service failed.",
-                        "ControllerRegisterCallFailed",
-                        new Object[]{ srr.getMsg() });
-            }
-            
-            // Save off the unique ID of this server - used as part of the ping protocol.
-            this.serverID = srr.getServerID();
-            
-            // Process the server register response.
-            appRegistry.initFromRegisterResponse(srr);
-            
-            // Read the settings for the mongo server.
-            List<WSServer> serverList = srr.getServerDependencies();
-            boolean hasGateway = this.debugOn;
-            if (serverList != null) {
-                for (WSServer server : serverList) {
-                    /* Make sure we have a gateway in our region. Otherwise the app server will
-                     * not run at an acceptable performance. The only exception is when debugging
-                     * is on, because we may debug without a gateway.
-                     */
-                    if (server.getServerType() == ServerTypeConstants.SERVER_TYPE_GATEWAY) {
-                        if (this.regionName.equals(server.getRegion())) {
-                            hasGateway = true;
-                        }
-                    } else if (server.getServerType() == ServerTypeConstants.SERVER_TYPE_MONGODB_SERVER) {
-                        this.mongoHost = server.getPublicIPAddress();
-                        this.mongoPort = server.getPubPort();
-                        this.mongoPassword = new String(server.getSessionID());
-                    }
-                    
-                    if (hasGateway && this.mongoHost != null) {
-                        break;
-                    }
-                }
-            }
-            if (this.mongoHost == null) {
-            //    throw new AppserverSystemException("Failed to get a host name/port/password for mongo DB.",
-            //            "MongoDBNotFound");
-            }
-            if (!hasGateway) {
-                throw new AppserverSystemException("There is no gateway in this app server's region.",
-                        "GatewayNotFoundInRegion");
-            }
-            
-            // To ensure that users can authenticate, we save the client name and the debug
-            // password (if any) in the global namespace.
-            InitialContext ctx = new InitialContext();
-            try {
-                String oldClient = (String) ctx.lookup("helixAS/Client");
-                ctx.rebind("helixAS/Client", this.clientName);
-            } catch(NamingException nex) {
-                ctx.bind("helixAS/Client", this.clientName);
-            }
-            
-            // Save the debug password. Make sure to clear it out, though, if the user
-            // re-inits the server with a null password.
-            try {
-                if (this.debugPassword == null) {
-                    ctx.unbind("helixAS/DebugPassword");
-                } else {
-                    String oldDebugPass = (String) ctx.lookup("helixAS/DebugPassword");
-                    ctx.rebind("helixAS/DebugPassword", this.debugPassword);
-                }
-            } catch(NamingException nex) {
-                if (this.debugPassword != null) {
-                    ctx.bind("helixAS/DebugPassword", this.debugPassword);
-                }
-            }
-        } catch (UniformInterfaceException ex) {
-            throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        } catch (IOException ex) {
-            throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        } catch (ParseException ex) {
-	    throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        } catch (NamingException nex) {
-            throw new AppserverSystemException("Naming exception while binding global auth properties.",
-                    "NamingExceptionInInit",
-                    new String[]{ nex.getLocalizedMessage() });
-        }
-    }
-
-    private void registerPushServerWithController() throws AppserverSystemException {
-        ControllerRegisterClient crc = new ControllerRegisterClient(controllerIP + ":" + controllerPort.toString(),
-                this.getSslContext());
-        try {
-            /* Register the push server functionality. */
-            ServerRegisterResponse srr = crc.runRegister(this.pushServerName,
-                this.asPrivIP,
-                this.asPrivPort,
-                this.asPubIP,
-                this.asPubPort,
-                this.clientName,
-                this.sessID,
-                /* Apptypes we accept. */
-                new Integer[]{ },
-                /* Servers we depend on. */
-                new Integer[]{ });
-            
-            if (srr.getStatusCode() != WSResponse.SUCCESS) {
-                // Call to Controller failed.
-                throw new AppserverSystemException("Call to controller register service failed.",
-                        "ControllerRegisterCallFailed",
-                        new Object[]{ srr.getMsg() });
-            }
-            
-        } catch (UniformInterfaceException ex) {
-            throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        } catch (IOException ex) {
-            throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        } catch (ParseException ex) {
-	    throw new AppserverSystemException("Application server controller registration failed.", 
-                    "ControllerRegistrationFailed", 
-                    new String[]{ ex.getLocalizedMessage() });
-        }
-    }
-    
-    /**
-     * Download updated settings for a single named app from the Controller.
-     * @param appID
-     * @return 
-     */
-    public ListApplicationResponse refreshFromController(long appID) 
-            throws UniformInterfaceException, IOException {
-        ApplicationServiceClient asc = 
-                new ApplicationServiceClient(this.controllerIP + ":" + Integer.toString(this.controllerPort),
-                    this.sslContext);
-        return asc.runList(this.clientName, appID);
-    }
-    
-    public KeyStore getApplicationServerKeystore() {
-        return applicationServerKeystore;
-    }
-
-    public String getClientName() {
-        return clientName;
-    }
-
-    public String getControllerIP() {
-        return controllerIP;
-    }
-
-    public Integer getControllerPort() {
-        return controllerPort;
-    }
-
-    public Properties getJksPasswords() {
-        return jksPasswords;
-    }
-
-    public String getServerName() {
-        return serverName;
-    }
-
-    public HTTPSProperties getSslContext() {
-        return sslContext;
-    }
-
-    public String getDebugPassword() {
-        return debugPassword;
-    }
-
     public boolean isIsInitialized() {
         return isInitialized;
     }
-
-    /**
-     * Generate a random 32-character password to secure communications to/from this
-     * server.
-     * @return Generated session ID. 
-     */
-    private String genSessionID() {
-        this.sessID = RandomPasswordGenerator.generateRandomPassword(32);
-        return this.sessID;
+    
+    public boolean validateSessionID(String incomingSessID) {
+        return this.controllerConnection.validateSessionID(incomingSessID);
     }
-
-    public String getSessID() {
-        return sessID;
-    }
-
-    public String getAsPubIP() {
-        return asPubIP;
-    }
-
-    public String getAsPrivIP() {
-        return asPrivIP;
-    }
-
-    public Integer getAsPubPort() {
-        return asPubPort;
-    }
-
-    public Integer getAsPrivPort() {
-        return asPrivPort;
-    }
-
-    public String getPushServerName() {
-        return pushServerName;
-    }
-
+    
     public Long getServerID() {
-        return serverID;
-    }
-
-    public boolean isDebugOn() {
-        return debugOn;
-    }
-
-    public String getDebugUser() {
-        return debugUser;
+        return this.controllerConnection.getServerID();
     }
 }

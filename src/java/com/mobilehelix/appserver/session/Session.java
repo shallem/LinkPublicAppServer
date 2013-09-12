@@ -1,17 +1,27 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.session;
 
-import com.mobilehelix.appserver.connections.MHConnectException;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationFacade;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
-import com.mobilehelix.services.objects.CreateSessionRequest;
+import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.text.MessageFormat;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -65,8 +75,8 @@ public class Session {
     /* Base URL of the server servicing this request. */
     private String serverBaseURL;
         
-    public Session(CreateSessionRequest sess, 
-            ApplicationInitializer appInit) throws AppserverSystemException, MHConnectException {
+    public Session(ApplicationServerCreateSessionRequest sess, 
+            ApplicationInitializer appInit) throws AppserverSystemException {
         this.init(sess.getClient(), sess.getUserID(), sess.getPassword(), sess.getDeviceType(), false);
         // Do application-specific init for each application in the session.
         if (sess.getAppIDs() == null) {
@@ -82,12 +92,12 @@ public class Session {
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
-            ApplicationInitializer appInit) throws AppserverSystemException, MHConnectException {
+            ApplicationInitializer appInit) throws AppserverSystemException {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
             ApplicationSettings as = 
-                    appRegistry.getSettingsForApplication(appID, appGenID);
+                    appRegistry.getSettingsForAppID(appID, appGenID);
             if (as == null) {
                 /* The registration does not tell us the app type. Hence we may get
                  * normal web apps in our ID list. We just need to skip these ...
@@ -208,7 +218,7 @@ public class Session {
         } else if (appID != null && appGenID != null) {
             // Get the per-app configuration.
             this.currentApplication =
-                appRegistry.getSettingsForApplication(Long.parseLong(appID), Integer.parseInt(appGenID));
+                appRegistry.getSettingsForAppID(Long.parseLong(appID), Integer.parseInt(appGenID));
             // Whenever we change apps, we reset the current facade.
             this.currentFacade = null;
         }
@@ -220,7 +230,7 @@ public class Session {
      * Should be called when a GET page request arrives.
      */
     public void processRequest(HttpServletRequest req) 
-            throws AppserverSystemException, MHConnectException {        
+            throws AppserverSystemException {        
         String reqUsername = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_USERNAME_HEADER);
         String reqPassword = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_PASSWORD_HEADER);
 

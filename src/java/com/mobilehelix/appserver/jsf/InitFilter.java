@@ -4,7 +4,6 @@
  */
 package com.mobilehelix.appserver.jsf;
 
-import com.mobilehelix.appserver.connections.MHConnectException;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.session.SessionManager;
@@ -21,7 +20,6 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.logging.LogFactory;
 
 /**
  *
@@ -29,7 +27,6 @@ import org.apache.commons.logging.LogFactory;
  */
 public class InitFilter {
 
-    private static final org.apache.commons.logging.Log LOG = LogFactory.getLog(InitFilter.class);
     private static final String NOINIT_URL = "/Dispatcher/faces/noinit.xhtml";
     private static final String NOAUTH_URL = "/Dispatcher/faces/denied.xhtml";
     private static final String NOAPP_URL = "/Dispatcher/faces/noconfig.xhtml";
@@ -116,7 +113,7 @@ public class InitFilter {
 
             // Finally, ask the session to process this request.
             currentSession.processRequest(req);
-        } catch (AppserverSystemException | MHConnectException ex) {
+        } catch (AppserverSystemException ex) {
             this.sendError(req, resp, ERROR_URL, ex.getLocalizedMessage());
             return false;
         }

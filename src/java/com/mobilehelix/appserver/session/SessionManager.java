@@ -1,15 +1,24 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.session;
 
-import com.mobilehelix.appserver.connections.MHConnectException;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.wsclient.common.CreateSessionRequest;
+import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.util.HashMap;
 import java.util.List;
 import javax.annotation.PostConstruct;
@@ -39,25 +48,27 @@ public class SessionManager {
     /* EJB to perform async init on application settings. */
     @EJB
     private ApplicationInitializer appInit;
-
-    /* Global settings object to get debug settings. */
+    
+    /* Global properties. */
     @EJB
-    private InitApplicationServer globalInit;
-
+    private GlobalPropertiesManager globalProperties;
+    
     @PostConstruct
     public void init() {
         globalSessionMap = new HashMap<>();
+        
+        // Determine what type of app registry we have ...
     }
 
-    public void addSession(CreateSessionRequest sess)
-            throws AppserverSystemException, MHConnectException {
+    public void addSession(ApplicationServerCreateSessionRequest sess)
+            throws AppserverSystemException {
         String sessIDB64 = new String(Base64.encodeBase64(sess.getSessionKey()));
         Session appServerSession = new Session(sess, appInit);
         globalSessionMap.put(sessIDB64, appServerSession);
     }
 
     public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
-            throws AppserverSystemException, MHConnectException {
+            throws AppserverSystemException {
         sess.doAppInit(appIDs, appGenIDs, appInit);
     }
 
@@ -110,15 +121,15 @@ public class SessionManager {
     }
 
     public boolean isDebugOn() {
-        return globalInit.isDebugOn();
+        return globalProperties.isDebugOn();
     }
 
     public String getDebugUser() {
-        return globalInit.getDebugUser();
+        return globalProperties.getDebugUser();
     }
 
     public String getDebugPassword() {
-        return globalInit.getDebugPassword();
+        return globalProperties.getDebugPassword();
     }
 
     public Session getDebugSession() {
