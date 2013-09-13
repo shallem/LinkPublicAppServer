@@ -1,3 +1,5 @@
 nbproject/private
 *~
 /ApplicationServer-ejbPublic/nbproject/private/
+dist/
+build/
