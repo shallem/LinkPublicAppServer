@@ -45,7 +45,7 @@ public class InitAppserverWS {
         
         try {
             asir = ApplicationServerInitRequest.fromBson(b);
-            initEJB.init(asir, request.getLocalAddr());
+            initEJB.processInitRequest(asir, request.getLocalAddr());
         
             statusCode = WSResponse.SUCCESS;
             msg = "Success";

@@ -16,6 +16,8 @@
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.GlobalPropertiesManager;
+import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 
 /**
@@ -25,6 +27,15 @@ import com.mobilehelix.services.objects.ApplicationServerInitRequest;
  * @author shallem
  */
 public class ControllerConnectionBase {
+    // Repository for application configuration information.
+    protected ApplicationServerRegistry appRegistry;
+    
+    // Global properties
+    protected GlobalPropertiesManager globalProperties;
+    
+    // Global session manager
+    protected SessionManager sessionMgr;
+    
     public ControllerConnectionBase() {
         
     }
@@ -36,7 +47,10 @@ public class ControllerConnectionBase {
     
     public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
             throws AppserverSystemException {
-        // Do nothing. We have no Controller.
+        /* Reset the session manager. When we re-initialize the app server it is
+         * no different than restarting the app server.
+         */
+        this.sessionMgr.sweepAllSessions();
     }
     
     /**
@@ -63,5 +77,17 @@ public class ControllerConnectionBase {
      */
     public Long getServerID() {
         return (long)1;
+    }
+    
+    public void setApplicationRegistry(ApplicationServerRegistry appRegistry) {
+        this.appRegistry = appRegistry;
+    }
+
+    public void setGlobalProperties(GlobalPropertiesManager globalProperties) {
+        this.globalProperties = globalProperties;
+    }
+
+    public void setSessionMgr(SessionManager sessionMgr) {
+        this.sessionMgr = sessionMgr;
     }
 }
