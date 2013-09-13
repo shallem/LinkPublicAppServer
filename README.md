@@ -36,4 +36,15 @@ used to provide a simple file browser for CIFS file shares. Stay tuned
 if that sounds interesting. We are working hard on preparing our code
 for release.
 
-Each project in this repository is a NetBeans 7.2 project.
+Each project in this repository is a NetBeans 7.2 project. At the
+moment we are not distributing the required open source dependencies,
+although we plan to do so soon. The following libraries are required:
+
+jcifs (tested with 1.3.17)
+Apache HTTP client (tested with v4.2.3)
+Apache HTTP core (tested with v4.2.3)
+Jersey Bundle (tested with v1.14)
+Apache Commons HTTP client (tested with v3.1)
+Apache Commons Codec (tested with v1.7)
+
+Also, this project requires JDK 1.7.
