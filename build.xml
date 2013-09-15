@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." default="all" name="LinkPublicAppServer">
+
+  <target name="WebServicesObjects">
+    <ant dir="WebServicesObjects" target="clean" useNativeBaseDir="true"/>
+    <ant dir="WebServicesObjects" target="jar" useNativeBaseDir="true"/>
+  </target>
+
+  <target name="ApplicationServerServices">
+    <ant dir="ApplicationServerWebServices" target="clean" useNativeBaseDir="true"/>
+    <ant dir="ApplicationServerWebServices" target="jar" useNativeBaseDir="true"/>
+  </target>
+
+
+  <target name="ApplicationServer-ejbPublic">
+    <ant dir="ApplicationServer-ejbPublic" target="clean" useNativeBaseDir="true"/>
+    <ant dir="ApplicationServer-ejbPublic" target="dist" useNativeBaseDir="true"/>
+  </target>
+
+  <target name="ApplicationServer-adminws">
+    <ant dir="ApplicationServer-adminws" target="clean" useNativeBasedir="true"/>
+    <ant dir="ApplicationServer-adminws" target="dist" useNativeBasedir="true"/>
+  </target>
+
+  <target name="all" depends="WebServicesObjects,ApplicationServerServices,ApplicationServer-ejbPublic"/>
+</project>

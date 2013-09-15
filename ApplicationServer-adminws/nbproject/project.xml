@@ -15,10 +15,10 @@
                     <file>${reference.ApplicationServer-ejbPublic.dist}</file>
                 </library>
                 <library dirs="200">
-                    <file>${reference.ControllerWebServices.jar}</file>
+                    <file>${reference.WebServicesCore.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${reference.WebServicesCore.jar}</file>
+                    <file>${reference.ApplicationServerWebServices.jar}</file>
                 </library>
                 <library dirs="200">
                     <file>${reference.ApplicationServerWebServices.jar}</file>

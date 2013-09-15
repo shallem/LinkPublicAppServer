@@ -50,6 +50,7 @@ public class ApplicationServerRegistry {
         this.appMap = new TreeMap<>();
         this.factoryMap = new TreeMap<>();
         this.controllerConnection = initAS.getControllerConnection();
+        this.controllerConnection.setApplicationRegistry(this);
     }
     
     public void addSettingsFactory(int appType, ApplicationSettingsFactory sf) {

@@ -8,6 +8,8 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.GlobalPropertiesManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -22,10 +24,6 @@ import javax.ejb.Startup;
 @Startup
 @EJB(name="java:global/InitApplicationServer", beanInterface=InitApplicationServer.class)
 public class InitApplicationServer {
-        
-    // Repository for application configuration information.
-    @EJB
-    private ApplicationServerRegistry appRegistry;
     
     // Global properties
     @EJB
@@ -43,15 +41,18 @@ public class InitApplicationServer {
     public void init() {
         try {
             // See if we have a connection to the Controller.
-            Class c = Class.forName("ControllerConnection");
-            this.controllerConnection = (ControllerConnectionBase)c.newInstance();
-        } catch(ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            Class c = Class.forName("com.mobilehelix.appserver.system.ControllerConnection");
+            Constructor cc = c.getDeclaredConstructor();
+            this.controllerConnection = (ControllerConnectionBase)cc.newInstance(new Object[]{});
+        } catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             
         }
         
         if (controllerConnection == null) {
             controllerConnection = new ControllerConnectionBase();
         }
+        this.controllerConnection.setSessionMgr(sessionMgr);
+        this.controllerConnection.setGlobalProperties(globalProperties);
     }
     
     /**
@@ -62,7 +63,7 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void init(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {
+    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {
         /* Register with the Controller, if we have one. */
         this.controllerConnection.processInitRequest(asir, privIP);
         
