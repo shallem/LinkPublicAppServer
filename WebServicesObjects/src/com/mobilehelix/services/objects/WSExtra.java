@@ -22,7 +22,7 @@ import org.codehaus.jackson.JsonToken;
  *
  * @author shallem
  */
-public class WSExtra {
+public class WSExtra implements Comparable {
 
     public String tag;
     public int dataType;
@@ -328,5 +328,11 @@ public class WSExtra {
                     val,
                     (this.groupID != null) ? this.groupID : "none"
                 }));
+    }
+
+    @Override
+    public int compareTo(Object o) {
+        WSExtra oExtra = (WSExtra)o;
+        return this.tag.compareTo(oExtra.tag);
     }
 }
