@@ -4,7 +4,6 @@
  */
 package com.mobilehelix.services.objects;
 
-import com.mobilehelix.services.constants.ExtraTypeConstants;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
@@ -18,28 +17,28 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class WSExtraGroup {
-    private TreeSet<WSExtra> policyExtras;
+    private TreeSet<WSExtra> extras;
 
     public WSExtraGroup() {
-        this.policyExtras = new TreeSet<>();
+        this.extras = new TreeSet<>();
     }
     
-    public Collection<WSExtra> getPolicyExtras() {
-        return policyExtras;
+    public Collection<WSExtra> getExtras() {
+        return extras;
     }
 
-    public void setPolicyExtras(List<WSExtra> policyExtras) {
-        this.policyExtras.addAll(policyExtras);
+    public void setExtras(List<WSExtra> policyExtras) {
+        this.extras.addAll(policyExtras);
     }
     
-    public void addPolicyExtra(WSExtra e) {
-        this.policyExtras.add(e);
+    public void addExtra(WSExtra e) {
+        this.extras.add(e);
     }
 
     public void toBson(JsonGenerator gen) throws IOException {
         gen.writeStartObject();
         gen.writeArrayFieldStart("extras");
-        for (WSExtra e : this.getPolicyExtras()) {
+        for (WSExtra e : this.getExtras()) {
             e.toBson(gen);
         }
         gen.writeEndArray();
@@ -57,7 +56,7 @@ public class WSExtraGroup {
                 case "extras":
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
                         WSExtra e = WSExtra.fromBson(parser);
-                        ret.addPolicyExtra(e);
+                        ret.addExtra(e);
                     }
                     break;
             }
