@@ -27,7 +27,7 @@ public class WSExtraGroup {
         return extras;
     }
 
-    public void setExtras(List<WSExtra> policyExtras) {
+    public void setExtras(Collection<WSExtra> policyExtras) {
         this.extras.addAll(policyExtras);
     }
     
