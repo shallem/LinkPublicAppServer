@@ -112,7 +112,7 @@ public class InitFilter {
             }
 
             // Finally, ask the session to process this request.
-            currentSession.processRequest(req);
+            currentSession.processRequest(req, apptype);
         } catch (AppserverSystemException ex) {
             this.sendError(req, resp, ERROR_URL, ex.getLocalizedMessage());
             return false;

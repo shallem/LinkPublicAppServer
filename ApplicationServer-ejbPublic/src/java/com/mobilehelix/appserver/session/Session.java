@@ -168,7 +168,7 @@ public class Session {
         return appID;
     }
     
-    private String getAppIDFromReqeust(HttpServletRequest req) {
+    private String getAppIDFromRequest(HttpServletRequest req) {
         return this.getValueFromCookieName(req, HTTPHeaderConstants.MH_APP_ID_HEADER);
     }
     
@@ -188,7 +188,7 @@ public class Session {
     public boolean findApplication(HttpServletRequest req,
             int apptype) throws AppserverSystemException {
         
-        String appID = this.getAppIDFromReqeust(req);
+        String appID = this.getAppIDFromRequest(req);
         String appGenID = this.getAppGenFromRequest(req);
 
         if (this.currentApplication != null) {
@@ -229,7 +229,7 @@ public class Session {
     /**
      * Should be called when a GET page request arrives.
      */
-    public void processRequest(HttpServletRequest req) 
+    public void processRequest(HttpServletRequest req, int apptype) 
             throws AppserverSystemException {        
         String reqUsername = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_USERNAME_HEADER);
         String reqPassword = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_PASSWORD_HEADER);
@@ -261,6 +261,13 @@ public class Session {
          */
         ApplicationFacade af = this.currentFacade;
         if (af == null) {
+            if (this.currentApplication == null) {
+                if (!this.findApplication(req, apptype)) {
+                    throw new AppserverSystemException("Failed to lookup current application in process request.",
+                            "SessionCannotFindApp");
+                }
+            }
+            
             /* First time we have been here or we just switched from another app ... */
             if (this.currentApplication != null) {
                 didCreate = true;
@@ -272,8 +279,6 @@ public class Session {
                 } else {
                     this.currentFacade = af;
                 }
-            } else {
-                return;
             }
         } 
         
