@@ -3,6 +3,8 @@ package com.mobilehelix.services.objects;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
@@ -17,7 +19,9 @@ public class WSApplication {
     private Integer appType;
     private Integer appGenId;
     private WSRole[] appRoles;
-    private WSExtra[] appExtras;
+    
+    // Extras
+    private Collection<WSExtraGroup> appExtraGroups;
     
     public WSApplication() {
         
@@ -30,7 +34,7 @@ public class WSApplication {
             Integer appType,
             int appGenId,
             List<WSRole> appRoles,
-            List<WSExtra> extras) {
+            Collection<WSExtraGroup> appExtrasGroups) {
 	this.init(client,
                 appName,
                 uniqueID,
@@ -38,7 +42,7 @@ public class WSApplication {
                 appType, 
                 appGenId,
                 appRoles,
-                extras);
+                appExtrasGroups);
     }
     
     private void init(String client,
@@ -48,7 +52,7 @@ public class WSApplication {
             Integer appType,
             int appGenId,
             List<WSRole> appRoles,
-            List<WSExtra> appExtras) {
+            Collection<WSExtraGroup> appExtrasGroups) {
         this.client = client;
         this.appName = appName;
         this.uniqueID = uniqueID;
@@ -61,9 +65,9 @@ public class WSApplication {
             this.appRoles = appRoles.toArray(this.appRoles);
         }
         
-        if (appExtras != null && !appExtras.isEmpty()) {
-            this.appExtras = new WSExtra[appExtras.size()];
-            this.appExtras = appExtras.toArray(this.appExtras);
+        if (appExtrasGroups != null && !appExtrasGroups.isEmpty()) {
+            this.appExtraGroups = new ArrayList<>(appExtrasGroups.size());
+            this.appExtraGroups.addAll(appExtrasGroups);
         }
     }
     
@@ -103,12 +107,12 @@ public class WSApplication {
         this.appRoles = appRoles;
     }
 
-    public void setAppExtras(WSExtra[] appExtras) {
-        this.appExtras = appExtras;
+    public Collection<WSExtraGroup> getAppExtraGroups() {
+        return appExtraGroups;
     }
-    
-    public WSExtra[] getAppExtras() {
-        return appExtras;
+
+    public void setAppExtraGroups(Collection<WSExtraGroup> appExtraGroups) {
+        this.appExtraGroups = appExtraGroups;
     }
 
     public Integer getAppType() {
@@ -170,10 +174,11 @@ public class WSApplication {
             }
             gen.writeEndArray();
         }
-        if (appExtras != null) {
-            gen.writeArrayFieldStart("extras");
-            for (WSExtra e : appExtras) {
-                e.toBson(gen);
+        if (this.appExtraGroups != null &&
+                !this.appExtraGroups.isEmpty()) {
+            gen.writeArrayFieldStart("extraGroups");
+            for (WSExtraGroup eg : this.appExtraGroups) {
+                eg.toBson(gen);
             }
             gen.writeEndArray();
         }
@@ -199,10 +204,12 @@ public class WSApplication {
             gen.writeFieldName("category");
             gen.writeString(categoryname);
         }
-        if (appExtras != null) {
+        if (appExtraGroups != null) {
             gen.writeArrayFieldStart("extras");
-            for (WSExtra e : appExtras) {
-                e.toJSON(gen);
+            for (WSExtraGroup eg : this.appExtraGroups) {
+                for (WSExtra e : eg.getExtras()) {
+                    e.toJSON(gen);
+                }
             }
             gen.writeEndArray();
         }
@@ -215,8 +222,8 @@ public class WSApplication {
         String category = null;
         Integer appType = null;
         List<WSRole> appRoles = null;
-        List<WSExtra> appExtras = null;
         int genid = 0;
+        LinkedList<WSExtraGroup> attachedExtrasGroups = new LinkedList<>();
         
         // Input should be pointing to START_OBJECT token.
         while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -247,13 +254,10 @@ public class WSApplication {
                         appRoles.add(r);
                     }
                     break;
-                case "extras":
-                    appExtras = new LinkedList<>();
-                    // Advance past start array.
+                case "extraGroups":
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
-                        // Should be pointing to START_OBJECT
-                        WSExtra e = WSExtra.fromBson(parser);
-                        appExtras.add(e);
+                        WSExtraGroup g = WSExtraGroup.fromBson(parser);
+                        attachedExtrasGroups.add(g);
                     }
                     break;
                 case "genid":
@@ -269,6 +273,6 @@ public class WSApplication {
                 appType, 
                 genid, 
                 appRoles,
-                appExtras);
+                attachedExtrasGroups);
     }
 }

@@ -5,6 +5,7 @@
 package com.mobilehelix.services.objects;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
@@ -40,7 +41,7 @@ public class WSPolicy {
     private Integer pincodeExpirationDuration;
     
     // Extras
-    private List<WSExtra> policyExtras;
+    private Collection<WSExtraGroup> policyExtraGroups;
     
     public WSPolicy() {
         this.policyName = "Computed";
@@ -131,13 +132,13 @@ public class WSPolicy {
     public void setPincodeExpirationDuration(Integer pincodeExpirationDuration) {
         this.pincodeExpirationDuration = pincodeExpirationDuration;
     }
-    
-    public List<WSExtra> getPolicyExtras() {
-        return policyExtras;
+
+    public Collection<WSExtraGroup> getPolicyExtraGroups() {
+        return policyExtraGroups;
     }
 
-    public void setPolicyExtras(List<WSExtra> policyExtras) {
-        this.policyExtras = policyExtras;
+    public void setPolicyExtraGroups(Collection<WSExtraGroup> policyExtraGroups) {
+        this.policyExtraGroups = policyExtraGroups;
     }
 
     public Integer getPincodeComplexity() {
@@ -204,6 +205,9 @@ public class WSPolicy {
             gen.writeNumber(this.pincodeExpirationDuration);
         }
         
+        if (this.offlineAuthMethod == null) {
+            this.offlineAuthMethod = 0; // No offline authentication.
+        }
         if (this.offlineAuthMethod >= 0) {
             gen.writeFieldName("offlineauth");
             gen.writeNumber(this.offlineAuthMethod);
@@ -217,11 +221,11 @@ public class WSPolicy {
             }
         }
                     
-        if (this.policyExtras != null &&
-                !this.policyExtras.isEmpty()) {
-            gen.writeArrayFieldStart("extras");
-            for (WSExtra e : this.policyExtras) {
-                e.toBson(gen);
+        if (this.policyExtraGroups != null &&
+                !this.policyExtraGroups.isEmpty()) {
+            gen.writeArrayFieldStart("extraGroups");
+            for (WSExtraGroup eg : this.policyExtraGroups) {
+                eg.toBson(gen);
             }
             gen.writeEndArray();
         }
@@ -277,13 +281,13 @@ public class WSPolicy {
                 case "passexpire":
                     wsp.setPasswordExpirationDays(parser.getIntValue());
                     break;
-                case "extras":
-                    LinkedList<WSExtra> attachedExtras = new LinkedList<>();
+                case "extraGroups":
+                    LinkedList<WSExtraGroup> attachedExtrasGroups = new LinkedList<>();
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
-                        WSExtra e = WSExtra.fromBson(parser);
-                        attachedExtras.add(e);
+                        WSExtraGroup g = WSExtraGroup.fromBson(parser);
+                        attachedExtrasGroups.add(g);
                     }
-                    wsp.setPolicyExtras(attachedExtras);
+                    wsp.setPolicyExtraGroups(attachedExtrasGroups);
                     break;
             }
        }
