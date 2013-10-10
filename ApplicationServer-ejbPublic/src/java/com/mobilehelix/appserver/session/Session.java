@@ -208,20 +208,20 @@ public class Session {
             /* If we fall through then we have changed applications. */
         }
         
-        if (this.debugOn && 
+        if (appID != null && appGenID != null) {
+            // Get the per-app configuration.
+            this.currentApplication =
+                appRegistry.getSettingsForAppID(Long.parseLong(appID), Integer.parseInt(appGenID));
+            // Whenever we change apps, we reset the current facade.
+            this.currentFacade = null;
+        } else if (this.debugOn && 
                 (appID == null || appGenID == null)) {
             // Install defaults. For now (while debugging), look up config by type.
             this.currentApplication =
                     appRegistry.getSettingsForApplicationType(apptype);
             // Whenever we change apps, we reset the current facade.
             this.currentFacade = null;
-        } else if (appID != null && appGenID != null) {
-            // Get the per-app configuration.
-            this.currentApplication =
-                appRegistry.getSettingsForAppID(Long.parseLong(appID), Integer.parseInt(appGenID));
-            // Whenever we change apps, we reset the current facade.
-            this.currentFacade = null;
-        }
+        } 
 
         return (this.currentApplication != null);
     }
