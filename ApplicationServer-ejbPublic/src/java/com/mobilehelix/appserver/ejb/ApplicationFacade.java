@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 public abstract class ApplicationFacade {
     private Future<Integer> initStatus;
     private Long appID;
+    private boolean loadInitDone = false;
 
     /**
      * Get the result of the asynchronous initialization. Returns null if no async
@@ -86,4 +87,18 @@ public abstract class ApplicationFacade {
      */
     public abstract Integer doInitOnLoad(HttpServletRequest req,
             CredentialsManager credentials) throws AppserverSystemException;
+
+    /**
+     * Indicates that doInitOnLoad has been called.
+     */
+    public void setInitOnLoadDone() {
+        this.loadInitDone = true;
+    }
+    
+    /**
+     * Return if doInitOnLoad has been called.
+     */
+    public boolean getInitOnLoadDone() {
+        return this.loadInitDone;
+    }
 }

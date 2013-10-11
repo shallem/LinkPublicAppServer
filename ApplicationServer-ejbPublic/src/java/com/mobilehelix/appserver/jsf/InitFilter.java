@@ -105,12 +105,6 @@ public class InitFilter {
                 return false;
             }
 
-            // Next, make sure the application exists.
-            if (!currentSession.findApplication(req, apptype)) {
-                this.sendError(req, resp, NOAPP_URL);
-                return false;
-            }
-
             // Finally, ask the session to process this request.
             currentSession.processRequest(req, apptype);
         } catch (AppserverSystemException ex) {
