@@ -127,6 +127,7 @@ public class InitFilter {
         String newUrl = this.getBaseUrl(req) + errorBaseURL
                 + "?faces-redirect=true&error="
                 + URLEncoder.encode(errMsg, "UTF-8");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         res.sendRedirect(newUrl);
     }
 
@@ -135,6 +136,7 @@ public class InitFilter {
             String errorURL) {
         try {
             String newURL = this.getBaseUrl(req) + errorURL + "?faces-redirect=true";
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
             resp.sendRedirect(newURL); // calls responseComplete() according to JavaDocs
         } catch (IOException ex) {
             throw new FacesException(ex);

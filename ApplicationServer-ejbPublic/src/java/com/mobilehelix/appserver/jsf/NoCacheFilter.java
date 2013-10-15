@@ -37,13 +37,10 @@ public class NoCacheFilter implements Filter {
         String reqContextPath = req.getContextPath();
         String rsrcPath = ResourceHandler.RESOURCE_IDENTIFIER;
         
-        if (!reqURI.startsWith(reqContextPath + "/faces" + rsrcPath) &&
-                !reqURI.startsWith(reqContextPath + "/faces" + "/resources")) { // Skip JSF resources (CSS/JS/Images/etc)
-            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-            res.setHeader("Pragma", "no-cache"); // HTTP 1.0.
-            res.setDateHeader("Expires", 0); // Proxies.
-        } else {
+        if (reqURI.contains("javax.faces.resource")) {
             res.setHeader("Cache-Control", "public");
+        } else {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         }
 
         chain.doFilter(request, response);
