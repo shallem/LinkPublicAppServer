@@ -800,7 +800,6 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.httpcore-4.2.3.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.jersey-bundle-1.14.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.commons-httpclient-3.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.commons-codec-1.7.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${file.reference.jcifs-1.3.17.jar}" property="manifest.file.reference.jcifs-1.3.17.jar"/>
@@ -808,15 +807,13 @@ exists or setup the property manually. For example like this:
         <basename file="${file.reference.httpcore-4.2.3.jar}" property="manifest.file.reference.httpcore-4.2.3.jar"/>
         <basename file="${file.reference.jersey-bundle-1.14.jar}" property="manifest.file.reference.jersey-bundle-1.14.jar"/>
         <basename file="${file.reference.commons-httpclient-3.1.jar}" property="manifest.file.reference.commons-httpclient-3.1.jar"/>
-        <basename file="${file.reference.commons-codec-1.7.jar}" property="manifest.file.reference.commons-codec-1.7.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 "/>
+            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.jcifs-1.3.17.jar}"/>
             <attribute name="jar-2-Extension-Name" value="${manifest.file.reference.httpclient-4.2.3.jar}"/>
             <attribute name="jar-3-Extension-Name" value="${manifest.file.reference.httpcore-4.2.3.jar}"/>
             <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.jersey-bundle-1.14.jar}"/>
             <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.commons-httpclient-3.1.jar}"/>
-            <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.commons-codec-1.7.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
@@ -825,7 +822,6 @@ exists or setup the property manually. For example like this:
         <copyfiles files="${file.reference.httpcore-4.2.3.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.jersey-bundle-1.14.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.commons-httpclient-3.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.commons-codec-1.7.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">
