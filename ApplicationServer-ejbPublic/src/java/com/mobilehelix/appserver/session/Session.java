@@ -309,4 +309,10 @@ public class Session {
     public String getDeviceType() {
         return deviceType;
     }
+    
+    public void close() {
+        for (ApplicationFacade af : this.appFacades.values()) {
+            af.close();
+        }
+    }
 }

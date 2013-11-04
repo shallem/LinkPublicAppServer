@@ -101,4 +101,13 @@ public abstract class ApplicationFacade {
     public boolean getInitOnLoadDone() {
         return this.loadInitDone;
     }
+
+    /**
+     * Overridable close method, which is invoked when the session is deleted from
+     * the session manager. This is the place to ensure that any open sockets,
+     * files, etc. are cleaned up. By default, nothing happens here.
+     */
+    public void close() {
+        
+    }
 }
