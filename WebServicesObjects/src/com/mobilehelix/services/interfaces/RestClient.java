@@ -250,7 +250,7 @@ public abstract class RestClient {
      * @throws IOException 
      */
     protected byte[] runPut(String host, int port, String path, byte[] req) throws UniformInterfaceException, IOException {
-        String url = this.initWebURL((this.httpsProps != null ? "https" : "http"), host, port, path, null);
+        String url = this.initWebURL((this.httpsProps != null ? "https://" : "http://"), host, port, path, null);
         return this.run(url, "PUT", req);
     }
     
