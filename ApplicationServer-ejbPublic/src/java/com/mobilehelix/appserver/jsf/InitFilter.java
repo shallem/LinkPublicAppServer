@@ -105,12 +105,6 @@ public class InitFilter {
                 return false;
             }
 
-            // Next, make sure the application exists.
-            if (!currentSession.findApplication(req, apptype)) {
-                this.sendError(req, resp, NOAPP_URL);
-                return false;
-            }
-
             // Finally, ask the session to process this request.
             currentSession.processRequest(req, apptype);
         } catch (AppserverSystemException ex) {
@@ -133,6 +127,7 @@ public class InitFilter {
         String newUrl = this.getBaseUrl(req) + errorBaseURL
                 + "?faces-redirect=true&error="
                 + URLEncoder.encode(errMsg, "UTF-8");
+        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         res.sendRedirect(newUrl);
     }
 
@@ -141,6 +136,7 @@ public class InitFilter {
             String errorURL) {
         try {
             String newURL = this.getBaseUrl(req) + errorURL + "?faces-redirect=true";
+            resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
             resp.sendRedirect(newURL); // calls responseComplete() according to JavaDocs
         } catch (IOException ex) {
             throw new FacesException(ex);

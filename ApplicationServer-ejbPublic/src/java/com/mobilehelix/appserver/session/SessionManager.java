@@ -74,7 +74,12 @@ public class SessionManager {
 
     public void deleteSession(byte[] sessionKey) {
         String sessIDB64 = new String(Base64.encodeBase64(sessionKey));
-        globalSessionMap.remove(sessIDB64);
+        
+        Session s = globalSessionMap.get(sessIDB64);
+        if (s != null) {
+            s.close();
+            globalSessionMap.remove(sessIDB64);
+        }
     }
 
     private String getSessIDFromRequest(HttpServletRequest req) {

@@ -185,7 +185,7 @@ public class Session {
      * @param apptype
      * @return 
      */
-    public boolean findApplication(HttpServletRequest req,
+    private void findApplication(HttpServletRequest req,
             int apptype) throws AppserverSystemException {
         
         String appID = this.getAppIDFromRequest(req);
@@ -195,14 +195,21 @@ public class Session {
             /* Make sure the app didn't change ... */
             if (appID != null &&
                     this.currentApplication.getAppID() == Long.parseLong(appID)) {
-                /* Have already found the application. */
-                return true;
+                /* Make sure the currentFacade is for the current app. */
+                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
+                
+                /* Have already found the application and facade. */
+                return;
             }
             
             /* If we are debugging, match by type. */
             if (debugOn &&
                     this.currentApplication.getAppType() == apptype) {
-                return true;
+                /* Make sure the currentFacade is for the current app. */
+                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID()); 
+                
+                /* Have already found the application and facade. */
+                return;
             }
             
             /* If we fall through then we have changed applications. */
@@ -212,18 +219,17 @@ public class Session {
             // Get the per-app configuration.
             this.currentApplication =
                 appRegistry.getSettingsForAppID(Long.parseLong(appID), Integer.parseInt(appGenID));
-            // Whenever we change apps, we reset the current facade.
-            this.currentFacade = null;
         } else if (this.debugOn && 
                 (appID == null || appGenID == null)) {
             // Install defaults. For now (while debugging), look up config by type.
             this.currentApplication =
                     appRegistry.getSettingsForApplicationType(apptype);
+        }
+        
+        if (this.currentApplication != null) {
             // Whenever we change apps, we reset the current facade.
-            this.currentFacade = null;
-        } 
-
-        return (this.currentApplication != null);
+            this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
+        }
     }
     
     /**
@@ -255,46 +261,40 @@ public class Session {
                 Integer.toString(req.getServerPort())
             });   
         
-        /* See if we have an application facade. If not, create one. If we can't create one,
-         * just return so that operations that don't require an application facade can 
-         * proceed.
-         */
-        ApplicationFacade af = this.currentFacade;
-        if (af == null) {
-            if (this.currentApplication == null) {
-                if (!this.findApplication(req, apptype)) {
-                    throw new AppserverSystemException("Failed to lookup current application in process request.",
+        /* Setup the application and facade. */
+        this.findApplication(req, apptype);
+        
+        if (this.currentApplication == null) {
+            /* Could not lookup the application. Fail. */
+            throw new AppserverSystemException("Failed to lookup current application in process request.",
                             "SessionCannotFindApp");
-                }
-            }
+        }
+        
+        if (this.currentFacade == null) {
+            /* First time we have been here ... */
+            didCreate = true;
+                
+            /* This will generally only happen in debug sessions. */
+            this.currentFacade = this.currentApplication.createFacade(appRegistry, debugOn);
             
-            /* First time we have been here or we just switched from another app ... */
-            if (this.currentApplication != null) {
-                didCreate = true;
-                af = this.appFacades.get(this.currentApplication.getAppID());
-            
-                if (af == null) {
-                    /* This will generally only happen in debug sessions. */
-                    this.currentFacade = af = this.currentApplication.createFacade(appRegistry, debugOn);
-                } else {
-                    this.currentFacade = af;
-                }
-            }
+            /* Store the mapping from app ID to facade. */
+            this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
         } 
         
         if (!didCreate) {
-            /* Block until the app facade init is done. */
-            Integer status = af.getInitStatus();
+            /* Block until the app facade init is done. This init is started when the session
+             * is created.
+             */
+            Integer status = this.currentFacade.getInitStatus();
         }
         
-        /* If something substantial changed, we re-init the facade. */
-        if (didCreate || didChangeUser || didChangePassword) {
+        /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
+        if (!this.currentFacade.getInitOnLoadDone() || didChangeUser || didChangePassword) {
             /* Need to re-init the facade because credentials have changed. */
-            af.doInitOnLoad(req, credentials);
-        
-            if (didCreate) {
-                this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
-            }
+            this.currentFacade.doInitOnLoad(req, credentials);
+            
+            /* Inidicate the first load is one. */
+            this.currentFacade.setInitOnLoadDone();
         }   
     }
 
@@ -308,5 +308,11 @@ public class Session {
 
     public String getDeviceType() {
         return deviceType;
+    }
+    
+    public void close() {
+        for (ApplicationFacade af : this.appFacades.values()) {
+            af.close();
+        }
     }
 }

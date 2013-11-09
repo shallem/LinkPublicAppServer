@@ -21,7 +21,7 @@
                     <file>${reference.ApplicationServerWebServices.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${reference.ApplicationServerWebServices.jar}</file>
+                    <file>${reference.ControllerWebServices.jar}</file>
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>

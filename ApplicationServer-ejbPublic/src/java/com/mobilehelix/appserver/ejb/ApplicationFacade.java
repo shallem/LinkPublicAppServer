@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 public abstract class ApplicationFacade {
     private Future<Integer> initStatus;
     private Long appID;
+    private boolean loadInitDone = false;
 
     /**
      * Get the result of the asynchronous initialization. Returns null if no async
@@ -86,4 +87,27 @@ public abstract class ApplicationFacade {
      */
     public abstract Integer doInitOnLoad(HttpServletRequest req,
             CredentialsManager credentials) throws AppserverSystemException;
+
+    /**
+     * Indicates that doInitOnLoad has been called.
+     */
+    public void setInitOnLoadDone() {
+        this.loadInitDone = true;
+    }
+    
+    /**
+     * Return if doInitOnLoad has been called.
+     */
+    public boolean getInitOnLoadDone() {
+        return this.loadInitDone;
+    }
+
+    /**
+     * Overridable close method, which is invoked when the session is deleted from
+     * the session manager. This is the place to ensure that any open sockets,
+     * files, etc. are cleaned up. By default, nothing happens here.
+     */
+    public void close() {
+        
+    }
 }

@@ -25,11 +25,14 @@ import javax.ws.rs.core.MediaType;
  * @author shallem
  */
 public abstract class RestClient {
+    private static final Logger LOG = Logger.getLogger(RestClient.class.getName());
+    
     private Client c;
     private String webURL;
-    private ClientResponse resp;
+    //private ClientResponse resp;
     private Integer connectTimeout;
     private Integer readTimeout;
+    private HTTPSProperties httpsProps;
     
     // Specified in milliseconds
     private static final int DEFAULT_CONNECT_TIMEOUT = 20000;
@@ -38,43 +41,50 @@ public abstract class RestClient {
     // Properties map containing headers to add to the request.
     private Properties headersToAdd;
     
+    public RestClient() {
+        this.CreateJerseyClient(null);
+    }
+    
+    public RestClient(HTTPSProperties props) {
+        this.CreateJerseyClient(props);
+    }
+    
     public RestClient(String host, String path) {
         this.CreateJerseyClient(null);
-        this.initWebURL("http://", host, -1, path, null);
+        this.webURL = this.initWebURL("http://", host, -1, path, null);
     }
         
     public RestClient(String host, String path, HTTPSProperties props) {
         this.CreateJerseyClient(props);
-        this.initWebURL("https://", host, -1, path, null);
+        this.webURL = this.initWebURL("https://", host, -1, path, null);
     }
     
     public RestClient(String host, int port, String path) {
         this.CreateJerseyClient(null);
-        this.initWebURL("http://", host, port, path, null);
+        this.webURL = this.initWebURL("http://", host, port, path, null);
     }
     
     public RestClient(String host, int port, String path, HTTPSProperties props) {
         this.CreateJerseyClient(props);
-        this.initWebURL("https://", host, port, path, null);
+        this.webURL = this.initWebURL("https://", host, port, path, null);
     }
     
     public RestClient(String host, int port, String path, String[] pathArgs) {
         this.CreateJerseyClient(null);
-        this.initWebURL("http://", host, port, path, pathArgs);
+        this.webURL = this.initWebURL("http://", host, port, path, pathArgs);
     }
     
     public RestClient(String host, int port, String path, String[] pathArgs, HTTPSProperties props) {
         this.CreateJerseyClient(props);
-        this.initWebURL("https://", host, port, path, pathArgs);
+        this.webURL = this.initWebURL("https://", host, port, path, pathArgs);
     }
     
-    private void initWebURL(String scheme, String host, int port, String path, String[] pathArgs) {
-        System.out.println("Initializing dest URL.");
-        webURL = scheme + host; 
+    final protected String initWebURL(String scheme, String host, int port, String path, String[] pathArgs) {
+        String url = scheme + host; 
         if (port > 0) {
-            webURL = webURL + ":" + port;
+            url = url + ":" + port;
         }
-        webURL = webURL + path;
+        url = url + path;
         if (pathArgs != null) {
             StringBuilder pathArgString = new StringBuilder();
             for (String s : pathArgs) {
@@ -86,9 +96,10 @@ public abstract class RestClient {
                     Logger.getLogger(RestClient.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
-            webURL = webURL + pathArgString.toString();
+            url = url + pathArgString.toString();
         }
-        System.out.println("Connecting to: " + webURL);
+        LOG.log(Level.INFO, "Connecting to: {0}", url);
+        return url;
     }
 
     protected void appendWebURLPath(String path) {
@@ -97,9 +108,9 @@ public abstract class RestClient {
     
     private void CreateJerseyClient(HTTPSProperties prop) {
         System.out.println("Creating Jersey client.");
-        resp = null;
         connectTimeout = DEFAULT_CONNECT_TIMEOUT;
         readTimeout = DEFAULT_READ_TIMEOUT;
+        this.httpsProps = prop;
         
         c = Client.create();
         if (prop != null) {
@@ -148,7 +159,7 @@ public abstract class RestClient {
         this.headersToAdd.setProperty(key, value);
     }
     
-    private byte[] readResponseData() throws UniformInterfaceException, IOException {
+    private byte[] readResponseData(ClientResponse resp) throws UniformInterfaceException, IOException {
         InputStream is = resp.getEntityInputStream();
         byte[] b = new byte[1024 * 32];
         int nRead;
@@ -177,12 +188,12 @@ public abstract class RestClient {
         setTimeouts();
         WebResource r = c.resource(this.webURL);
         WebResource.Builder builder = this.AddHeadersToResource(r);
-        resp = builder.type(MediaType.APPLICATION_FORM_URLENCODED).method(method, ClientResponse.class, f);
+        ClientResponse resp = builder.type(MediaType.APPLICATION_FORM_URLENCODED).method(method, ClientResponse.class, f);
         if (resp.getStatus() != 200) {
             // Request failed.
             return null;
         }
-        return readResponseData();
+        return readResponseData(resp);
     }
 
     protected byte[] runPost(Form f) throws UniformInterfaceException, IOException {
@@ -193,16 +204,20 @@ public abstract class RestClient {
         return this.run("PUT", f);
     }
  
-    protected byte[] run(String method, byte[] input) throws UniformInterfaceException, IOException {
+    protected byte[] run(String url, String method, byte[] input) throws UniformInterfaceException, IOException {
         setTimeouts();
-        WebResource r = c.resource(this.webURL);
+        WebResource r = c.resource(url);
         WebResource.Builder builder = this.AddHeadersToResource(r);
-        resp = builder.type(MediaType.APPLICATION_OCTET_STREAM).method(method, ClientResponse.class, input);
+        ClientResponse resp = builder.type(MediaType.APPLICATION_OCTET_STREAM).method(method, ClientResponse.class, input);
         if (resp.getStatus() != 200) {
             // Request failed.
             return null;
         }
-        return readResponseData();
+        return readResponseData(resp);
+    }
+    
+    protected byte[] run(String method, byte[] input) throws UniformInterfaceException, IOException {
+        return this.run(this.webURL, method, input);
     }
     
     protected byte[] runPut(WSRequest req) throws UniformInterfaceException, IOException {
@@ -217,6 +232,28 @@ public abstract class RestClient {
         return this.run("PUT", req);
     }
     
+    /**
+     * Variant of runPut that allows for re-use of the Jersey client. Since the destination address
+     * is specific to the jersey web resource, not the Client, we specify a per request ip, port,
+     * and path for creating a Jersey web resource from the client. Note that properties like HTTPS
+     * properties and timeouts are shared across all web resources that use the same Jersey connection
+     * and cannot be set on a per-request basis.
+     * 
+     * @param host Host name or port number.
+     * @param port Port number.
+     * @param path URL path to append to the host://port combo.
+     * @param req Payload for the put request.
+     * @return Byte array containing the full response. Note this is not a streaming response, so
+     * this interface is not intended for receiving large amounts of data.
+     * 
+     * @throws UniformInterfaceException
+     * @throws IOException 
+     */
+    protected byte[] runPut(String host, int port, String path, byte[] req) throws UniformInterfaceException, IOException {
+        String url = this.initWebURL((this.httpsProps != null ? "https://" : "http://"), host, port, path, null);
+        return this.run(url, "PUT", req);
+    }
+    
     protected byte[] runPost(byte[] req) throws UniformInterfaceException, IOException {
         return this.run("POST", req);
     }
@@ -229,15 +266,15 @@ public abstract class RestClient {
         setTimeouts();
         WebResource r = c.resource(url);
         WebResource.Builder builder = this.AddHeadersToResource(r);
-        resp = builder.method(method, ClientResponse.class);
-        return readResponseData();
+        ClientResponse resp = builder.method(method, ClientResponse.class);
+        return readResponseData(resp);
     }
     
     protected InputStream runStreamingNoBody(String method, String url) throws UniformInterfaceException, IOException {
         setTimeouts();
         WebResource r = c.resource(url);
         WebResource.Builder builder = this.AddHeadersToResource(r);
-        resp = builder.method(method, ClientResponse.class);
+        ClientResponse resp = builder.method(method, ClientResponse.class);
         if (resp.getStatus() != 200) {
             return null;
         }
@@ -265,5 +302,9 @@ public abstract class RestClient {
     protected byte[] runDelete(String params) throws UniformInterfaceException, IOException {
         String fullURI = this.webURL + "?" + params;
         return runNoBody("DELETE", fullURI);
+    }
+    
+    public void close() {
+        c.destroy();
     }
 }
