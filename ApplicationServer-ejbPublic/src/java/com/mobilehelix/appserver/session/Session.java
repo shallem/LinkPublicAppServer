@@ -74,6 +74,9 @@ public class Session {
     
     /* Base URL of the server servicing this request. */
     private String serverBaseURL;
+    
+    /* Client of this user. */
+    private String client;
         
     public Session(ApplicationServerCreateSessionRequest sess, 
             ApplicationInitializer appInit) throws AppserverSystemException {
@@ -86,8 +89,8 @@ public class Session {
         this.doAppInit(sess.getAppIDs(), sess.getAppGenIDs(), appInit);
     }
     
-    public Session(String username, String password, boolean debugOn) throws AppserverSystemException {
-        this.init("", username, password, "iPhone", debugOn);
+    public Session(String client, String username, String password, boolean debugOn) throws AppserverSystemException {
+        this.init(client, username, password, "iPhone", debugOn);
     }
     
     public final void doAppInit(Long[] appIDs, 
@@ -97,7 +100,7 @@ public class Session {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
             ApplicationSettings as = 
-                    appRegistry.getSettingsForAppID(appID, appGenID);
+                    appRegistry.getSettingsForAppID(this.client, appID, appGenID);
             if (as == null) {
                 /* The registration does not tell us the app type. Hence we may get
                  * normal web apps in our ID list. We just need to skip these ...
@@ -123,6 +126,7 @@ public class Session {
             this.debugOn = debugOn;
             this.deviceType = deviceType;
             this.appFacades = new TreeMap<>();
+            this.client = client;
             
             // Do a JNDI lookup of the app registry.
             InitialContext ictx = new InitialContext();
@@ -218,12 +222,12 @@ public class Session {
         if (appID != null && appGenID != null) {
             // Get the per-app configuration.
             this.currentApplication =
-                appRegistry.getSettingsForAppID(Long.parseLong(appID), Integer.parseInt(appGenID));
+                appRegistry.getSettingsForAppID(this.getClient(), Long.parseLong(appID), Integer.parseInt(appGenID));
         } else if (this.debugOn && 
                 (appID == null || appGenID == null)) {
             // Install defaults. For now (while debugging), look up config by type.
             this.currentApplication =
-                    appRegistry.getSettingsForApplicationType(apptype);
+                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype);
         }
         
         if (this.currentApplication != null) {
@@ -308,6 +312,10 @@ public class Session {
 
     public String getDeviceType() {
         return deviceType;
+    }
+
+    public String getClient() {
+        return client;
     }
     
     public void close() {

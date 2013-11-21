@@ -36,8 +36,8 @@ import javax.ejb.Startup;
 @Startup
 @EJB(name="java:global/ApplicationServerRegistry", beanInterface=ApplicationServerRegistry.class)
 public class ApplicationServerRegistry {
-    // Indexed by app ID.
-    private TreeMap<Long, ApplicationSettings> appMap;
+    // Indexed by client, then app ID.
+    private TreeMap<String, TreeMap<Long, ApplicationSettings> > appMap;
     private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
     
     @EJB
@@ -57,7 +57,14 @@ public class ApplicationServerRegistry {
         this.factoryMap.put(appType, sf);
     }
     
-    public void processAppList(List<WSApplication> appList) {
+    public void processAppList(String client,
+            List<WSApplication> appList) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            cliMap = new TreeMap<>();
+            appMap.put(client, cliMap);
+        }
+        
         for (WSApplication wsa : appList) {
             ApplicationSettingsFactory sf = factoryMap.get(wsa.getAppType());
             if (sf == null) {
@@ -65,28 +72,36 @@ public class ApplicationServerRegistry {
                 // this server.
                 continue;
             }
-            ApplicationSettings newAppSettings = sf.createInstance(wsa);
+            ApplicationSettings newAppSettings = sf.createInstance(client, wsa);
             if (newAppSettings == null) {
                 // Can't handle the applicaton for some app-specific reason.
                 continue;
             }
             
-            if (appMap.containsKey(newAppSettings.getAppID())) {
-                appMap.remove(newAppSettings.getAppID());
+            if (cliMap.containsKey(newAppSettings.getAppID())) {
+                cliMap.remove(newAppSettings.getAppID());
             }
             
-            appMap.put(newAppSettings.getAppID(), newAppSettings);
+            cliMap.put(newAppSettings.getAppID(), newAppSettings);
         }
     }
     
-    public ApplicationSettings getSettingsForAppID(Long appID) throws AppserverSystemException {
-        return appMap.get(appID);
+    public ApplicationSettings getSettingsForAppID(String client, Long appID) throws AppserverSystemException {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        return cliMap.get(appID);
     }
     
-    public ApplicationSettings getSettingsForAppID(Long appID, Integer appGenID) throws AppserverSystemException {
+    public ApplicationSettings getSettingsForAppID(String client, Long appID, Integer appGenID) throws AppserverSystemException {
         // If we have a connection to the Controller, refresh the app first.
-        controllerConnection.refreshApplication(appID, appGenID);
-        return appMap.get(appID);
+        controllerConnection.refreshApplication(client, appID, appGenID);
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        return cliMap.get(appID);
     }
     
     /**
@@ -94,8 +109,12 @@ public class ApplicationServerRegistry {
      * @param apptype
      * @return 
      */
-    public ApplicationSettings getSettingsForApplicationType(int apptype) {
-        for (ApplicationSettings appSettings : this.appMap.values()) {
+    public ApplicationSettings getSettingsForApplicationType(String client, int apptype) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        for (ApplicationSettings appSettings : cliMap.values()) {
             if (appSettings.getAppType() == apptype) {
                 return appSettings;
             }
@@ -110,7 +129,12 @@ public class ApplicationServerRegistry {
      * 
      * @param appID 
      */
-    public void deleteAppFromRegistry(Long appID) {
-        appMap.remove(appID);
+    public void deleteAppFromRegistry(String client,
+            Long appID) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return;
+        }
+        cliMap.remove(appID);
     }
 }

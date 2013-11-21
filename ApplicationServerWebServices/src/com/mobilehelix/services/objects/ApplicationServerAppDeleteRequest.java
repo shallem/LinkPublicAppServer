@@ -18,11 +18,14 @@ import org.codehaus.jackson.JsonToken;
  */
 public class ApplicationServerAppDeleteRequest extends WSRequest {
     byte[] serverSessId;
+    private String client;
     private Long appID;
     
     public ApplicationServerAppDeleteRequest(byte[] serverSessId,
+            String client,
             Long appID) {
         this.serverSessId = serverSessId;
+        this.client = client;
         this.appID = appID;
     }
 
@@ -33,6 +36,10 @@ public class ApplicationServerAppDeleteRequest extends WSRequest {
     public Long getAppID() {
         return appID;
     }
+
+    public String getClient() {
+        return client;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -42,6 +49,7 @@ public class ApplicationServerAppDeleteRequest extends WSRequest {
         
         JsonGenerator gen = factory.createJsonGenerator(baos);
         gen.writeStartObject();
+        gen.writeStringField("client", client);
         gen.writeFieldName("sessid");
         gen.writeBinary(this.serverSessId);
         gen.writeFieldName("appid");
@@ -54,6 +62,7 @@ public class ApplicationServerAppDeleteRequest extends WSRequest {
     public static ApplicationServerAppDeleteRequest fromBson(byte[] b) throws IOException {
         Long appID = null;
         byte [] sessid = null;
+        String cli = null;
         JsonParser parser = WSRequest.InitFromBSON(b);
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = parser.getCurrentName();
@@ -66,8 +75,11 @@ public class ApplicationServerAppDeleteRequest extends WSRequest {
                 case "sessid":
                     sessid = (byte[])parser.getEmbeddedObject();
                     break;
+                case "client":
+                    cli = parser.getText();
+                    break;
             }
         }
-        return new ApplicationServerAppDeleteRequest(sessid, appID);
+        return new ApplicationServerAppDeleteRequest(sessid, cli, appID);
     }
 }

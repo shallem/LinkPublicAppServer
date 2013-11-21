@@ -40,13 +40,17 @@ public class ControllerConnectionBase {
         
     }
     
-    public void refreshApplication(Long appID,
+    public void refreshApplication(String client,
+            Long appID,
             Integer appGenID) throws AppserverSystemException {
         // Do nothing. We have no Controller.
     }
     
     public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
             throws AppserverSystemException {
+        /* Store the client name in the global properties. */
+        this.globalProperties.setClientName(asir.getClientName());
+        
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
          */

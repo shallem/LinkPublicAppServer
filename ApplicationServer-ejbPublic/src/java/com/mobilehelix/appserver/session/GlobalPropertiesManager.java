@@ -28,6 +28,9 @@ import javax.ejb.Startup;
 @Startup
 @Singleton
 public class GlobalPropertiesManager {
+    /* Main client name. */
+    private String clientName;
+    
     /* Debugging properties. */
     private boolean debugOn;
     private String debugUser;
@@ -61,5 +64,13 @@ public class GlobalPropertiesManager {
     
     public String getDebugPassword() {
         return debugPassword;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 }

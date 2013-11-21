@@ -26,18 +26,24 @@ import java.util.List;
  * @author shallem
  */
 public abstract class ApplicationSettings<T> {
+    private String client;
     private Long appID;
     private String appName;
     private Integer appGenID;
     private Integer appType;
     
-    public ApplicationSettings(WSApplication app) {
+    public ApplicationSettings(String client, WSApplication app) {
+        this.client = client;
         this.appID = app.getUniqueID();
         this.appName = app.getAppName();
         this.appGenID = app.getAppGenID();
         this.appType = app.getAppType();
     }
 
+    public String getClient() {
+        return client;
+    }
+    
     public Long getAppID() {
         return appID;
     }

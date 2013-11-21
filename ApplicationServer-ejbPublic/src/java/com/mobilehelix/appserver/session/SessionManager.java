@@ -100,8 +100,9 @@ public class SessionManager {
         if (sessIDB64 == null) {
             if (this.isDebugOn()) {
                 if (this.debugSession == null) {
-                    this.debugSession = new Session(this.getDebugUser(),
-                        this.getDebugPassword(),
+                    this.debugSession = new Session(globalProperties.getClientName(),
+                            this.getDebugUser(),
+                            this.getDebugPassword(),
                             true);
                 }
                 return this.debugSession;

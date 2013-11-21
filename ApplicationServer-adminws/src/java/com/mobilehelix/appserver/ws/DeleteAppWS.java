@@ -50,7 +50,7 @@ public class DeleteAppWS {
                 msg = "Failed to authentication request.";
             } else {
                 Long toDelete = sreq.getAppID();
-                appRegistry.deleteAppFromRegistry(toDelete);
+                appRegistry.deleteAppFromRegistry(sreq.getClient(), toDelete);
                 
                 statusCode = WSResponse.SUCCESS;
                 msg = "Success";
