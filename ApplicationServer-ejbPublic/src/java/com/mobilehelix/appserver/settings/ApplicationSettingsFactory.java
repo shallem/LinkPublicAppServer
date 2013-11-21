@@ -32,5 +32,5 @@ public abstract class ApplicationSettingsFactory {
      * @param a The web services object representing the application whose settings to parse.
      * @return A new, empty settings object.
      */
-    public abstract ApplicationSettings createInstance(WSApplication a);
+    public abstract ApplicationSettings createInstance(String client, WSApplication a);
 }
