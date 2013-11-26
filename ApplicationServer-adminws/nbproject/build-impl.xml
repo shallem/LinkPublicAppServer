@@ -835,9 +835,6 @@ exists or setup the property manually. For example like this:
         <ant antfile="${project.ApplicationServerWebServices}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
-        <ant antfile="${project.ControllerWebServices}/build.xml" inheritall="false" target="jar">
-            <property name="deploy.on.save" value="false"/>
-        </ant>
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
@@ -847,9 +844,6 @@ exists or setup the property manually. For example like this:
             <property location="${build.dir}" name="dist.ear.dir"/>
         </ant>
         <ant antfile="${project.ApplicationServerWebServices}/build.xml" inheritall="false" target="jar">
-            <property name="deploy.on.save" value="false"/>
-        </ant>
-        <ant antfile="${project.ControllerWebServices}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="jar">
@@ -1398,7 +1392,6 @@ exists or setup the property manually. For example like this:
     <target depends="init" name="deps-clean" unless="no.deps">
         <ant antfile="${project.ApplicationServer-ejbPublic}/build.xml" inheritall="false" target="clean"/>
         <ant antfile="${project.ApplicationServerWebServices}/build.xml" inheritall="false" target="clean"/>
-        <ant antfile="${project.ControllerWebServices}/build.xml" inheritall="false" target="clean"/>
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="clean"/>
     </target>
     <target depends="init" name="do-clean">
