@@ -33,21 +33,18 @@ public class AppserverSystemException extends Exception {
     /*
      * Reference to resource bundle.
      */
-    private static ResourceBundle commonResources = null;
+    private static ResourceBundle commonResources = init();
     
     /**
      * Mapping from app types to resource bundles.
      */
-    private static TreeMap<Integer, ResourceBundle> appResources;
+    private static TreeMap<Integer, ResourceBundle> appResources = new TreeMap<>();
     
-    private static void init() {
-        commonResources = ResourceBundle.getBundle("com.mobilehelix.appserver.resources/ErrorMessages");
+    private static ResourceBundle init() {
+        return ResourceBundle.getBundle("com.mobilehelix.appserver.resources/ErrorMessages");
     }
     
     public static void registerErrorsBundle(int appType, ResourceBundle resources) {
-        if (AppserverSystemException.appResources == null) {
-            AppserverSystemException.appResources = new TreeMap<>();
-        }
         AppserverSystemException.appResources.put(appType, resources);
     }
     

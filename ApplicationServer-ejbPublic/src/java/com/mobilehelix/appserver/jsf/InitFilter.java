@@ -27,10 +27,9 @@ import javax.servlet.http.HttpServletResponse;
  */
 public class InitFilter {
 
-    private static final String NOINIT_URL = "/Dispatcher/faces/noinit.xhtml";
-    private static final String NOAUTH_URL = "/Dispatcher/faces/denied.xhtml";
-    private static final String NOAPP_URL = "/Dispatcher/faces/noconfig.xhtml";
-    private static final String ERROR_URL = "/Dispatcher/faces/error.xhtml";
+    private static final String NOINIT = "The application server has not been initialized. Please run the init-application-server ant target from the command line.";
+    private static final String NOAUTH = "Authentication is denied.";
+    private static final String ERROR = "The app server failed to respond to this request: {0}";
     private InitialContext ictx;
     protected InitApplicationServer appServerSettings;
     protected SessionManager sessionManager;
@@ -40,12 +39,6 @@ public class InitFilter {
             FilterChain chain,
             int apptype) throws IOException, ServletException {
         String dstUrl = req.getRequestURL().toString();
-
-        // See if we are already redirecting to an error page.
-        if (dstUrl.startsWith("/Dispatcher")) {
-            chain.doFilter(req, resp);
-            return false;
-        }
 
         // If this is a resource request, return.
         String rsrcPath = ResourceHandler.RESOURCE_IDENTIFIER;
@@ -79,14 +72,14 @@ public class InitFilter {
                 }
 
                 if (appServerSettings == null || sessionManager == null) {
-                    this.sendError(req, resp, NOINIT_URL);
+                    this.sendError(req, resp, NOINIT);
                     return false;
                 }
             }
 
             if (!appServerSettings.isIsInitialized()) {
                 // Need to initialize the app server.
-                this.sendError(req, resp, NOINIT_URL);
+                this.sendError(req, resp, NOINIT);
                 return false;
             }
 
@@ -95,20 +88,20 @@ public class InitFilter {
             try {
                 currentSession = sessionManager.getSessionForRequest(req);
             } catch (AppserverSystemException ex) {
-                this.sendError(req, resp, ERROR_URL, ex.getLocalizedMessage());
+                this.sendError(req, resp, ERROR, ex.getLocalizedMessage());
                 return false;
             }
 
             /* If access is authorized, currentSession should be non-null. */
             if (currentSession == null) {
-                this.sendError(req, resp, NOAUTH_URL);
+                this.sendError(req, resp, NOAUTH);
                 return false;
             }
 
             // Finally, ask the session to process this request.
             currentSession.processRequest(req, apptype);
         } catch (AppserverSystemException ex) {
-            this.sendError(req, resp, ERROR_URL, ex.getLocalizedMessage());
+            this.sendError(req, resp, ERROR, ex.getLocalizedMessage());
             return false;
         }
         return true;
@@ -122,22 +115,21 @@ public class InitFilter {
 
     protected void sendError(HttpServletRequest req,
             HttpServletResponse res,
-            String errorBaseURL,
+            String msgTemplate,
             String errMsg) throws UnsupportedEncodingException, IOException {
-        String newUrl = this.getBaseUrl(req) + errorBaseURL
-                + "?faces-redirect=true&error="
-                + URLEncoder.encode(errMsg, "UTF-8");
-        res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-        res.sendRedirect(newUrl);
+        String fullMsg = MessageFormat.format(msgTemplate, new Object[]{ errMsg });
+        this.sendError(req, res, fullMsg);
     }
 
     protected void sendError(HttpServletRequest req,
             HttpServletResponse resp,
-            String errorURL) {
+            String msg) {
         try {
-            String newURL = this.getBaseUrl(req) + errorURL + "?faces-redirect=true";
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
-            resp.sendRedirect(newURL); // calls responseComplete() according to JavaDocs
+            resp.getWriter()
+                    .append("<html><body>")
+                    .append(msg)
+                    .append("</body></html>");
         } catch (IOException ex) {
             throw new FacesException(ex);
         }

@@ -7,8 +7,8 @@ package com.mobilehelix.appserver.ws;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
+import com.mobilehelix.services.objects.ApplicationServerPingRequest;
 import com.mobilehelix.services.objects.ApplicationServerPingResponse;
-import com.mobilehelix.services.objects.ServerPingRequest;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -41,7 +41,7 @@ public class PingWS {
         Long serverID = (long)-1;
         
         try {
-            ServerPingRequest preq = ServerPingRequest.fromBson(b);
+            ApplicationServerPingRequest preq = ApplicationServerPingRequest.fromBson(b);
             String reqSessionID = new String(preq.getServerSessId());
             if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */

@@ -16,6 +16,7 @@
 package com.mobilehelix.appserver.session;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.security.PermitAll;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -27,6 +28,7 @@ import javax.ejb.Startup;
  */
 @Startup
 @Singleton
+@PermitAll
 public class GlobalPropertiesManager {
     /* Main client name. */
     private String clientName;
