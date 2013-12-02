@@ -90,28 +90,20 @@ public class CredentialsManager {
         return false;
     }
 
-    public String getUsernameForSharepoint() {
-        // Converts a username that we specify as user@domain to the sharepoint form:
-        // test.mobilehelix.com\\Seth.
+    public String getUsernameNoDomain() {
         String outUsername = this.getUsername();
         int atIdx = outUsername.indexOf("@");
         if (atIdx > 0) {
-            String domainUser = outUsername.substring(0, atIdx);
-            return domainUser;
-/*            outUsername = MessageFormat.format("{0}\\{1}", 
-                    new Object[]{ domainStr, domainUser }); */
+            return outUsername.substring(0, atIdx);
         }
         return outUsername;
     }
     
-    public String getDomainForSharepoint() {
-        // Converts a username that we specify as user@domain to the sharepoint form:
-        // test.mobilehelix.com\\Seth.
+    public String getUserDomain() {
         String outUsername = this.getUsername();
         int atIdx = outUsername.indexOf("@");
         if (atIdx > 0) {
-            String domainStr = outUsername.substring(atIdx + 1);
-            return domainStr;
+            return outUsername.substring(atIdx + 1);
         }
         return null;
     }
