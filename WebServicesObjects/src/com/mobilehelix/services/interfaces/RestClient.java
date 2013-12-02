@@ -160,16 +160,21 @@ public abstract class RestClient {
     }
     
     private byte[] readResponseData(ClientResponse resp) throws UniformInterfaceException, IOException {
-        InputStream is = resp.getEntityInputStream();
-        byte[] b = new byte[1024 * 32];
-        int nRead;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        while ((nRead = is.read(b, 0, b.length)) != -1) {
-            baos.write(b, 0, nRead);
+        try {
+            InputStream is = resp.getEntityInputStream();
+       
+            byte[] b = new byte[1024 * 32];
+            int nRead;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            while ((nRead = is.read(b, 0, b.length)) != -1) {
+                baos.write(b, 0, nRead);
+            }
+
+            baos.flush();
+            return baos.toByteArray();
+        } finally {
+            resp.close();
         }
-        
-        baos.flush();
-        return baos.toByteArray();
     }
     
     /**
@@ -204,6 +209,19 @@ public abstract class RestClient {
         return this.run("PUT", f);
     }
  
+    public ClientResponse runRaw(String url, String method, byte[] input) {
+        setTimeouts();
+        WebResource r = c.resource(url);
+        WebResource.Builder builder = this.AddHeadersToResource(r);
+        ClientResponse resp = builder.type(MediaType.APPLICATION_OCTET_STREAM).method(method, ClientResponse.class, input);
+        if (resp.getStatus() != 200) {
+            // Request failed.
+            return null;
+        }
+        
+        return resp;
+    }
+    
     protected byte[] run(String url, String method, byte[] input) throws UniformInterfaceException, IOException {
         setTimeouts();
         WebResource r = c.resource(url);
@@ -252,6 +270,11 @@ public abstract class RestClient {
     protected byte[] runPut(String host, int port, String path, byte[] req) throws UniformInterfaceException, IOException {
         String url = this.initWebURL((this.httpsProps != null ? "https://" : "http://"), host, port, path, null);
         return this.run(url, "PUT", req);
+    }
+    
+    protected ClientResponse runPutRaw(String host, int port, String path, byte[] req) throws UniformInterfaceException, IOException {
+        String url = this.initWebURL((this.httpsProps != null ? "https://" : "http://"), host, port, path, null);
+        return this.runRaw(url, "PUT", req);
     }
     
     protected byte[] runPost(byte[] req) throws UniformInterfaceException, IOException {

@@ -24,12 +24,12 @@ public class CredentialsManager {
     private String username;
     private String password;
     private String client;
-    
+
     // Per-request credentials that were (potentially) sent along with the
     // request to the device.
     private String requestUsername;
     private String requestPassword;
-    
+
     public CredentialsManager(String client, String username, String password) {
         this.client = client;
         this.username = username;
@@ -43,14 +43,14 @@ public class CredentialsManager {
     public void setClient(String client) {
         this.client = client;
     }
-    
+
     public String getPassword() {
         if (this.requestPassword != null) {
             return this.requestPassword;
         }
         return password;
     }
-    
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -61,7 +61,7 @@ public class CredentialsManager {
         }
         return username;
     }
-    
+
     public void setUsername(String username) {
         this.username = username;
     }
@@ -98,7 +98,7 @@ public class CredentialsManager {
         }
         return outUsername;
     }
-    
+
     public String getUserDomain() {
         String outUsername = this.getUsername();
         int atIdx = outUsername.indexOf("@");
