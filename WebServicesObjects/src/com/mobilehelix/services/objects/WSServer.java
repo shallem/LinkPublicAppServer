@@ -34,6 +34,7 @@ public class WSServer implements Comparable {
     private Date lastContact;
     private Date lastSucessfulContact;
     private Integer[] appTypes;
+    private String additionalClients;
     
     public WSServer() {
     }
@@ -84,7 +85,8 @@ public class WSServer implements Comparable {
             String region,
             Date lastContact,
             Date lastSuccessfulContact,
-            Integer[] appTypes) {
+            Integer[] appTypes,
+            String additionalClients) {
         this.serverName = serverName;
         this.serverType = serverType;
         this.publicIPAddress = publicIP;
@@ -96,6 +98,7 @@ public class WSServer implements Comparable {
         this.lastContact = lastContact;
         this.lastSucessfulContact = lastSuccessfulContact;
         this.appTypes = appTypes;
+        this.additionalClients = additionalClients;
     }
     
     /**
@@ -120,7 +123,8 @@ public class WSServer implements Comparable {
             byte[] sessionID,
             int serverType,
             Date lastContact,
-            Integer[] appTypes) {
+            Integer[] appTypes,
+            String additionalClients) {
         this.serverName = serverName;
         this.serverID = serverID;
         this.status = status;
@@ -133,6 +137,7 @@ public class WSServer implements Comparable {
         this.serverType = serverType;
         this.appTypes = appTypes;
         this.lastContact = lastContact;
+        this.additionalClients = additionalClients;
     }
     
     
@@ -242,6 +247,14 @@ public class WSServer implements Comparable {
 
     public void setAppTypes(Integer[] appTypes) {
         this.appTypes = appTypes;
+    }
+
+    public String getAdditionalClients() {
+        return additionalClients;
+    }
+
+    public void setAdditionalClients(String additionalClients) {
+        this.additionalClients = additionalClients;
     }
         
     public void fieldsToBSON(JsonGenerator gen) throws IOException {
