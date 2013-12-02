@@ -90,7 +90,7 @@ public class CredentialsManager {
         return false;
     }
 
-    public String getUsernameForSharepoint() {
+    public String getUsernameNoDomain() {
         // Converts a username that we specify as user@domain to the sharepoint form:
         // test.mobilehelix.com\\Seth.
         String outUsername = this.getUsername();
@@ -104,7 +104,7 @@ public class CredentialsManager {
         return outUsername;
     }
     
-    public String getDomainForSharepoint() {
+    public String getUserDomain() {
         // Converts a username that we specify as user@domain to the sharepoint form:
         // test.mobilehelix.com\\Seth.
         String outUsername = this.getUsername();
