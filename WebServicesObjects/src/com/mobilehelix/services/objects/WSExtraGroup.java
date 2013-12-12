@@ -35,11 +35,11 @@ public class WSExtraGroup {
         this.extras.add(e);
     }
 
-    public void toBson(JsonGenerator gen) throws IOException {
+    public void toBson(JsonGenerator gen, WSExtra.SerializeOptions serializeOptions) throws IOException {
         gen.writeStartObject();
         gen.writeArrayFieldStart("extras");
         for (WSExtra e : this.getExtras()) {
-            e.toBson(gen);
+            e.toBson(gen, serializeOptions);
         }
         gen.writeEndArray();
         gen.writeEndObject();

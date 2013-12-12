@@ -139,18 +139,18 @@ public class WSApplication {
         this.client = client;
     }
     
-    public byte[] toBson() throws IOException {
+    public byte[] toBson(WSExtra.SerializeOptions serializeOptions) throws IOException {
         //serialize data
         BsonFactory factory = new BsonFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
         JsonGenerator gen = factory.createJsonGenerator(baos);
-        this.toBson(gen);
+        this.toBson(gen, serializeOptions);
         gen.close();
         return baos.toByteArray();
     }
     
-    public void toBson(JsonGenerator gen) throws IOException {
+    public void toBson(JsonGenerator gen, WSExtra.SerializeOptions serializeOptions) throws IOException {
 	gen.writeStartObject();
         gen.writeStringField("client", client);
 	gen.writeFieldName("name");
@@ -178,7 +178,7 @@ public class WSApplication {
                 !this.appExtraGroups.isEmpty()) {
             gen.writeArrayFieldStart("extraGroups");
             for (WSExtraGroup eg : this.appExtraGroups) {
-                eg.toBson(gen);
+                eg.toBson(gen, serializeOptions);
             }
             gen.writeEndArray();
         }
@@ -208,7 +208,7 @@ public class WSApplication {
             gen.writeArrayFieldStart("extras");
             for (WSExtraGroup eg : this.appExtraGroups) {
                 for (WSExtra e : eg.getExtras()) {
-                    e.toJSON(gen);
+                    e.toJSON(gen, WSExtra.SerializeOptions.DEVICE_ONLY);
                 }
             }
             gen.writeEndArray();

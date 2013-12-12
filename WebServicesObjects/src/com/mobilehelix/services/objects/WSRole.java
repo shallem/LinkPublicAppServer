@@ -93,7 +93,7 @@ public class WSRole {
         if (this.rolePolicies != null) {
             gen.writeArrayFieldStart("policies");
             for (WSPolicy p : this.rolePolicies) {
-                p.toBson(gen);
+                p.toBson(gen, WSExtra.SerializeOptions.INCLUDE_ALL);
             }
             gen.writeEndArray();
         }

@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.codec.binary.Base64;
@@ -23,6 +22,11 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class WSExtra implements Comparable {
+    public enum SerializeOptions {
+        DEVICE_ONLY,
+        EXCLUDE_DEVICE,
+        INCLUDE_ALL
+    };
 
     public String tag;
     public int dataType;
@@ -30,65 +34,10 @@ public class WSExtra implements Comparable {
     public String mergeFn;
     public Long groupID;
     public byte[] value;
+    public Boolean isToDevice;
 
     public WSExtra() {
         this.mergeFn = "default";
-    }
-
-    public WSExtra(String tag, String value) {
-        this.tag = tag;
-        this.dataType = ExtraTypeConstants.EXTRA_TYPE_STRING;
-        this.schemaType = ExtraTypeConstants.EXTRA_SCHEMA_ATTRIBUTE;
-        this.value = value.getBytes();
-        this.groupID = null;
-        this.mergeFn = "default";
-    }
-
-    public WSExtra(String tag, int dataType, int schemaType, String mergeFn, byte[] value) {
-        this.tag = tag;
-        this.dataType = dataType;
-        this.schemaType = schemaType;
-        this.value = value;
-        this.groupID = null;
-        this.mergeFn = mergeFn;
-    }
-    
-    public WSExtra(String tag, int dataType, int schemaType, String mergeFn, Integer value) {
-        this.tag = tag;
-        this.dataType = dataType;
-        this.schemaType = schemaType;
-        try {
-            this.value = value.toString().getBytes("US-ASCII");
-        } catch(UnsupportedEncodingException ex) {
-            // Ignore the exception b/c US-ASCII encoding is REQUIRED by all implementations
-            // of Java.
-        }
-        this.groupID = null;
-        this.mergeFn = mergeFn;
-    }
-    
-    public WSExtra(String tag, int dataType, int schemaType, String mergeFn, Boolean value) {
-        this.tag = tag;
-        this.dataType = dataType;
-        this.schemaType = schemaType;
-        byte[] b = new byte[1];
-        if (value != null && value) {
-            b[0] = 1;
-        } else {
-            b[0] = 0;
-        }
-        this.value = b;
-        this.groupID = null;
-        this.mergeFn = mergeFn;
-    }
-
-    public WSExtra(String tag, int dataType, int schemaType, String mergeFn, byte[] value, Long gid) {
-        this.tag = tag;
-        this.dataType = dataType;
-        this.schemaType = schemaType;
-        this.value = value;
-        this.groupID = gid;
-        this.mergeFn = mergeFn;
     }
 
     public String getTag() {
@@ -153,17 +102,26 @@ public class WSExtra implements Comparable {
         return (this.value[0] == 1);
     }
     
+    public void setValueBoolean(boolean b) {
+        byte[] val = new byte[1];
+        if (b) {
+            val[0] = 1;
+        } else {
+            val[0] = 0;
+        }
+        this.value = val;
+        this.dataType = ExtraTypeConstants.EXTRA_TYPE_BOOLEAN;
+    }
+    
     public void setValueBoolean(String s) {
         byte[] b = new byte[1];
         if (s.equals("true") ||
                 s.equals("True") ||
                 s.equals("t")) {
-            b[0] = 1;
+            this.setValueBoolean(true);
         } else {
-            b[0] = 0;
+            this.setValueBoolean(false);
         }
-        this.value = b;
-        this.dataType = ExtraTypeConstants.EXTRA_TYPE_BOOLEAN;
     }
 
     public void setValueFile(String fileName) {
@@ -200,6 +158,16 @@ public class WSExtra implements Comparable {
          this.setValueFile(fileName);
          this.dataType = ExtraTypeConstants.EXTRA_TYPE_IMAGE;
     }
+    
+    public Integer getValueInteger() {
+        String s = new String(this.value);
+        return Integer.parseInt(s);
+    }
+    
+    public void setValueInteger(Integer i) throws UnsupportedEncodingException {
+        this.value = i.toString().getBytes("US-ASCII");
+        this.dataType = ExtraTypeConstants.EXTRA_TYPE_INT;
+    }
 
     public String getMergeFn() {
         return mergeFn;
@@ -209,7 +177,33 @@ public class WSExtra implements Comparable {
         this.mergeFn = mergeFn;
     }
 
-    public void toBson(JsonGenerator gen) throws IOException {
+    public boolean isIsToDevice() {
+        return isToDevice;
+    }
+
+    public void setIsToDevice(boolean isToDevice) {
+        this.isToDevice = isToDevice;
+    }
+
+    public void toBson(JsonGenerator gen, SerializeOptions serializeOptions) throws IOException {
+        if (this.isToDevice == null) {
+            throw new IOException("Must set the toDevice field of a WSExtra to serialize it.");
+        }
+        switch(serializeOptions) {
+            case DEVICE_ONLY:
+                if (!this.isToDevice) {
+                    return;
+                }
+                break;
+            case EXCLUDE_DEVICE:
+                if (this.isToDevice) {
+                    return;
+                }
+                break;
+            case INCLUDE_ALL:
+                break;
+        }
+        
         gen.writeStartObject();
         gen.writeFieldName("tag");
         gen.writeString(tag);
@@ -230,7 +224,25 @@ public class WSExtra implements Comparable {
         gen.writeEndObject();
     }
     
-    public void toJSON(JsonGenerator gen) throws IOException {
+    public void toJSON(JsonGenerator gen, SerializeOptions serializeOptions) throws IOException {
+        if (this.isToDevice == null) {
+            throw new IOException("Must set the toDevice field of a WSExtra to serialize it.");
+        }
+        switch(serializeOptions) {
+            case DEVICE_ONLY:
+                if (!this.isToDevice) {
+                    return;
+                }
+                break;
+            case EXCLUDE_DEVICE:
+                if (this.isToDevice) {
+                    return;
+                }
+                break;
+            case INCLUDE_ALL:
+                break;
+        }
+        
         gen.writeStartObject();
         gen.writeStringField("tag", tag);
         gen.writeNumberField("datatype", this.dataType);
@@ -267,67 +279,35 @@ public class WSExtra implements Comparable {
     }
 
     public static WSExtra fromBson(JsonParser parser) throws IOException {
-        String tag = null;
-        byte[] value = null;
-        int datatype = ExtraTypeConstants.EXTRA_TYPE_STRING;
-        int schematype = ExtraTypeConstants.EXTRA_SCHEMA_ATTRIBUTE;
-        Long gid = null;
-        String mergeFn = null;
-
+        WSExtra ex = new WSExtra();
+        
         // Input should be pype.ointing to START_OBJECT token.
         while (parser.nextToken() != JsonToken.END_OBJECT) {
             String fieldname = parser.getCurrentName();
             parser.nextToken();
             switch (fieldname) {
                 case "tag":
-                    tag = parser.getText();
+                    ex.setTag(parser.getText());
                     break;
                 case "value":
-                    value = (byte[]) parser.getEmbeddedObject();
+                    ex.setValue((byte[]) parser.getEmbeddedObject());
                     break;
                 case "datatype":
-                    datatype = parser.getIntValue();
+                    ex.setDataType(parser.getIntValue());
                     break;
                 case "gid":
-                    gid = parser.getLongValue();
+                    ex.setGroupID(parser.getLongValue());
                     break;
                 case "schematype":
-                    schematype = parser.getIntValue();
+                    ex.setSchemaType(parser.getIntValue());
                     break;
                 case "mergefn":
-                    mergeFn = parser.getText();
+                    ex.setMergeFn(parser.getText());
                     break;
             }
         }
 
-        return new WSExtra(tag, datatype, schematype, mergeFn, value, gid);
-    }
-
-    public void print() {
-        String fmt = "TAG=''{0}'',TYPE=''{1}'',SCHEMATYPE=''{2}'',VALUE=''{3}'',GID=''{4}''";
-        String val = "binary";
-        switch (this.dataType) {
-            case ExtraTypeConstants.EXTRA_TYPE_IMAGE:
-                break;
-            case ExtraTypeConstants.EXTRA_TYPE_BOOLEAN:
-                if (this.value[0] == 1) {
-                    val = "true";
-                } else {
-                    val = "false";
-                }
-                break;
-            default:
-                val = new String(this.value);
-                break;
-        }
-
-        MessageFormat mf = new MessageFormat(fmt);
-        System.out.println(mf.format(new Object[]{this.tag,
-                    Integer.toString(this.getDataType()),
-                    Integer.toString(this.getSchemaType()),
-                    val,
-                    (this.groupID != null) ? this.groupID : "none"
-                }));
+        return ex;
     }
 
     @Override

@@ -136,7 +136,7 @@ public class WSDeviceUserPolicy {
                 !this.policyExtras.isEmpty()) {
             gen.writeArrayFieldStart("extras");
             for (WSExtra e : this.policyExtras) {
-                e.toBson(gen);
+                e.toBson(gen, WSExtra.SerializeOptions.INCLUDE_ALL);
             }
             gen.writeEndArray();
         }

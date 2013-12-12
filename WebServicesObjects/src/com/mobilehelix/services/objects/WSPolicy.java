@@ -5,7 +5,6 @@
 package com.mobilehelix.services.objects;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
@@ -17,6 +16,7 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class WSPolicy {
+    
     // Policy name.
     private String policyName;
     
@@ -41,7 +41,7 @@ public class WSPolicy {
     private Integer pincodeExpirationDuration;
     
     // Extras
-    private Collection<WSExtraGroup> policyExtraGroups;
+    private List<WSPolicyProfile> appPolicyProfiles;
     
     public WSPolicy() {
         this.policyName = "Computed";
@@ -133,12 +133,12 @@ public class WSPolicy {
         this.pincodeExpirationDuration = pincodeExpirationDuration;
     }
 
-    public Collection<WSExtraGroup> getPolicyExtraGroups() {
-        return policyExtraGroups;
+    public List<WSPolicyProfile> getAppPolicyProfiles() {
+        return appPolicyProfiles;
     }
 
-    public void setPolicyExtraGroups(Collection<WSExtraGroup> policyExtraGroups) {
-        this.policyExtraGroups = policyExtraGroups;
+    public void setAppPolicyProfiles(List<WSPolicyProfile> appPolicyProfiles) {
+        this.appPolicyProfiles = appPolicyProfiles;
     }
 
     public Integer getPincodeComplexity() {
@@ -165,7 +165,7 @@ public class WSPolicy {
         this.passwordExpirationDays = passwordExpirationDays;
     }
     
-    public void toBson(JsonGenerator gen) throws IOException {
+    public void toBson(JsonGenerator gen, WSExtra.SerializeOptions options) throws IOException {
         gen.writeStartObject();
         gen.writeFieldName("name");
         gen.writeString(this.policyName);
@@ -221,11 +221,11 @@ public class WSPolicy {
             }
         }
                     
-        if (this.policyExtraGroups != null &&
-                !this.policyExtraGroups.isEmpty()) {
-            gen.writeArrayFieldStart("extraGroups");
-            for (WSExtraGroup eg : this.policyExtraGroups) {
-                eg.toBson(gen);
+        if (this.appPolicyProfiles != null &&
+                !this.appPolicyProfiles.isEmpty()) {
+            gen.writeArrayFieldStart("apppolicies");
+            for (WSPolicyProfile entry : this.appPolicyProfiles) {
+                entry.toBson(gen, options);
             }
             gen.writeEndArray();
         }
@@ -234,7 +234,7 @@ public class WSPolicy {
     }
     
     public static WSPolicy fromBson(JsonParser parser) throws IOException {
-        WSPolicy wsp = new WSPolicy();
+       WSPolicy wsp = new WSPolicy();
         
         // When we start, parser is pointing to START_OBJECT token.
        while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -281,13 +281,13 @@ public class WSPolicy {
                 case "passexpire":
                     wsp.setPasswordExpirationDays(parser.getIntValue());
                     break;
-                case "extraGroups":
-                    LinkedList<WSExtraGroup> attachedExtrasGroups = new LinkedList<>();
+                case "apppolicies":
+                    LinkedList<WSPolicyProfile> appProfiles = new LinkedList<>();
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
-                        WSExtraGroup g = WSExtraGroup.fromBson(parser);
-                        attachedExtrasGroups.add(g);
+                        WSPolicyProfile g = WSPolicyProfile.fromBson(parser);
+                        appProfiles.add(g);
                     }
-                    wsp.setPolicyExtraGroups(attachedExtrasGroups);
+                    wsp.setAppPolicyProfiles(appProfiles);
                     break;
             }
        }

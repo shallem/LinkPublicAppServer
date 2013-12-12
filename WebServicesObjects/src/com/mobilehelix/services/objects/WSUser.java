@@ -165,7 +165,7 @@ public final class WSUser {
         gen.writeEndArray();
         if (this.computedPolicy != null) {
             gen.writeFieldName("policy");
-            this.computedPolicy.toBson(gen);
+            this.computedPolicy.toBson(gen, WSExtra.SerializeOptions.INCLUDE_ALL);
         }
         gen.writeFieldName("tz");
         gen.writeString(this.tz);
