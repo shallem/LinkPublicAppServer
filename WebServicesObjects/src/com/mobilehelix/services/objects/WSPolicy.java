@@ -223,7 +223,7 @@ public class WSPolicy {
                     
         if (this.appPolicyProfiles != null &&
                 !this.appPolicyProfiles.isEmpty()) {
-            gen.writeArrayFieldStart("apppolicies");
+            gen.writeArrayFieldStart("appprofiles");
             for (WSPolicyProfile entry : this.appPolicyProfiles) {
                 entry.toBson(gen, options);
             }
@@ -281,7 +281,7 @@ public class WSPolicy {
                 case "passexpire":
                     wsp.setPasswordExpirationDays(parser.getIntValue());
                     break;
-                case "apppolicies":
+                case "appprofiles":
                     LinkedList<WSPolicyProfile> appProfiles = new LinkedList<>();
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
                         WSPolicyProfile g = WSPolicyProfile.fromBson(parser);

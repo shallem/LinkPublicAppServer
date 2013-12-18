@@ -6,7 +6,6 @@ package com.mobilehelix.services.objects;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeSet;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
