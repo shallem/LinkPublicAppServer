@@ -150,7 +150,7 @@ public class AppserverSystemException extends Exception {
         }
         
         Object[] curArgs = this.getMsgResourceArgs();
-        if (curArgs != null) {
+        if (curArgs != null && this.exceptionResources != null) {
             MessageFormat mf = new MessageFormat(this.exceptionResources.getString(getMsgResourceKey()));
             String errMsg = mf.format(curArgs);
             return errMsg;
