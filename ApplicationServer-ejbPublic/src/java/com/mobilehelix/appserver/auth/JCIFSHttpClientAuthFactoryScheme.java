@@ -16,15 +16,14 @@
 package com.mobilehelix.appserver.auth;
 
 import org.apache.http.auth.AuthScheme;
-import org.apache.http.auth.AuthSchemeFactory;
+import org.apache.http.auth.AuthSchemeProvider;
 import org.apache.http.impl.auth.NTLMScheme;
-import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HttpContext;
 
-public class JCIFSHttpClientAuthFactoryScheme implements AuthSchemeFactory {
+public class JCIFSHttpClientAuthFactoryScheme implements AuthSchemeProvider {
 
     @Override
-    public AuthScheme newInstance(final HttpParams params) {
+    public AuthScheme create(HttpContext context) {
         return new NTLMScheme(new JCIFSHttpClientEngine());
     }
-
 }
