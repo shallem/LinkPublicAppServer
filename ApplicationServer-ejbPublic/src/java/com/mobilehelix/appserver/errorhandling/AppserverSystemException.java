@@ -41,7 +41,7 @@ public class AppserverSystemException extends Exception {
     private static TreeMap<Integer, ResourceBundle> appResources;
     
     private static void init() {
-        commonResources = ResourceBundle.getBundle("com.mobilehelix.appserver.resources/ErrorMessages");
+        commonResources = ResourceBundle.getBundle("com.mobilehelix.resources/ErrorMessages");
     }
     
     public static void registerErrorsBundle(int appType, ResourceBundle resources) {
