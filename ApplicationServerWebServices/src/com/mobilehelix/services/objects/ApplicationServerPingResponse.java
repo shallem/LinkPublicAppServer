@@ -8,6 +8,9 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.util.LinkedList;
+import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
 
 /**
@@ -17,36 +20,49 @@ import org.codehaus.jackson.JsonGenerator;
  */
 public class ApplicationServerPingResponse extends WSResponse {
    
-    /**
-     * Unique ID of this server.
-     */
-    private Long serverID;
+    public class ServerResponse {
+        
+        /**
+         * Unique ID of this server.
+         */
+        private Long serverID;
+
+        /**
+         * Number of active sessions on this app server.
+         */
+        private int sessionCt;        
     
-    /**
-     * Number of active sessions on this app server.
-     */
-    private int sessionCt;
+        public ServerResponse(Long serverID, int sessCt) {
+            this.serverID = serverID;
+            this.sessionCt = sessCt;
+        }
+
+        public Long getServerID() {
+            return serverID;
+        }
+
+        public void setServerID(Long serverID) {
+            this.serverID = serverID;
+        }
+
+        public int getSessionCt() {
+            return sessionCt;
+        }
+
+        public void setSessionCt(int sessionCt) {
+            this.sessionCt = sessionCt;
+        }
+    }
+    
+    List<ServerResponse> serverResponses;
     
     public ApplicationServerPingResponse(int status, String msg) {
         super(status, msg);
-        serverID = (long)-1;
-        sessionCt = 0;
+        this.serverResponses = new LinkedList<>();
     }
-
-    public Long getServerID() {
-        return serverID;
-    }
-
-    public void setServerID(Long serverID) {
-        this.serverID = serverID;
-    }
-
-    public int getSessionCt() {
-        return sessionCt;
-    }
-
-    public void setSessionCt(int sessionCt) {
-        this.sessionCt = sessionCt;
+    
+    public void addServer(Long serverID, int sessCt) {
+        this.serverResponses.add(new ServerResponse(serverID, sessCt));
     }
     
     @Override
@@ -58,10 +74,18 @@ public class ApplicationServerPingResponse extends WSResponse {
         JsonGenerator gen = factory.createJsonGenerator(baos);
         gen.writeStartObject();
         super.toBson(gen);
-        gen.writeFieldName("id");
-        gen.writeNumber(serverID);
-        gen.writeFieldName("ct");
-        gen.writeNumber(sessionCt);
+        
+        gen.writeArrayFieldStart("resps");
+        for (ServerResponse resp : this.serverResponses) {
+            gen.writeStartObject();
+            gen.writeNumberField("status", 0);
+            gen.writeNumberField("id", resp.getServerID());
+            gen.writeNumberField("ct", resp.getSessionCt());
+            gen.writeEndObject();
+        }
+        gen.writeEndArray();
+        
+        gen.writeEndObject();
         gen.close();
         return baos.toByteArray();
     }

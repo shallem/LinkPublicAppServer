@@ -38,6 +38,17 @@ public class GlobalPropertiesManager {
     private String debugUser;
     private String debugPassword;
     
+    /* Public and private IP addresses of this server. Note that the public IP
+     * is the "externally accessible" address that is, for example, used to create
+     * a push subscription in MS Exchange. The private ip/port is used by the gateway
+     * to contact this server.
+     */
+    private String asPubIP;
+    private String asPrivIP;
+    private Integer asPubPort;
+    private Integer asPrivPort;
+
+    
     @PostConstruct
     public void init() {
         this.readDebugProperties();
@@ -74,5 +85,37 @@ public class GlobalPropertiesManager {
 
     public void setClientName(String clientName) {
         this.clientName = clientName;
+    }
+
+    public String getAsPubIP() {
+        return asPubIP;
+    }
+
+    public void setAsPubIP(String asPubIP) {
+        this.asPubIP = asPubIP;
+    }
+
+    public String getAsPrivIP() {
+        return asPrivIP;
+    }
+
+    public void setAsPrivIP(String asPrivIP) {
+        this.asPrivIP = asPrivIP;
+    }
+
+    public Integer getAsPubPort() {
+        return asPubPort;
+    }
+
+    public void setAsPubPort(Integer asPubPort) {
+        this.asPubPort = asPubPort;
+    }
+
+    public Integer getAsPrivPort() {
+        return asPrivPort;
+    }
+
+    public void setAsPrivPort(Integer asPrivPort) {
+        this.asPrivPort = asPrivPort;
     }
 }

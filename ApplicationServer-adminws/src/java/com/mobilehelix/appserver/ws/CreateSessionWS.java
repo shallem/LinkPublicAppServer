@@ -4,8 +4,10 @@
  */
 package com.mobilehelix.appserver.ws;
 
+import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.services.constants.ServerTypeConstants;
 import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
@@ -30,12 +32,12 @@ import javax.ws.rs.core.Context;
 public class CreateSessionWS {
     private static final Logger LOGGER = Logger
         .getLogger(CreateSessionWS.class.getName());
-        
-    @Context
-    private HttpServletRequest request;
     
     @EJB
     private SessionManager sessionMgr;
+    
+    @EJB
+    private PushManager pushMgr;
     
     @EJB
     private InitApplicationServer initEJB;
@@ -57,10 +59,20 @@ public class CreateSessionWS {
                 statusCode = WSResponse.FAILURE;
                 msg = "Cannot create a session on the app server because it is not initialized.";
             } else {
-                sessionMgr.addSession(creq);
-
                 statusCode = WSResponse.SUCCESS;
                 msg = "Success";
+                switch(creq.getServerType()) {
+                    case ServerTypeConstants.SERVER_TYPE_APPLICATION_SERVER:
+                        sessionMgr.addSession(creq);
+                        break;
+                    case ServerTypeConstants.SERVER_TYPE_PUSH_SERVER:
+                        pushMgr.addSession(creq);
+                        break;
+                    default:
+                        statusCode = WSResponse.FAILURE;
+                        msg = "Cannot create sessions for this server type.";
+                        break;
+                }
             }
         } catch(Exception e) {
             LOGGER.log(Level.SEVERE, "Create session failed with exception.", e);

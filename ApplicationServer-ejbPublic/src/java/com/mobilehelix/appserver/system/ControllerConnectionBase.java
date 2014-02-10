@@ -50,6 +50,12 @@ public class ControllerConnectionBase {
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
         this.globalProperties.setClientName(asir.getClientName());
+
+        /* Store the pub/priv IP and port. */
+        this.globalProperties.setAsPubIP(asir.getAsPubIP());
+        this.globalProperties.setAsPubPort(asir.getAsPubPort());
+        this.globalProperties.setAsPrivIP(privIP);
+        this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
         
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
@@ -75,12 +81,18 @@ public class ControllerConnectionBase {
      * In a multi server system, each should have a unique ID. The main purpose of these
      * IDs is to allow the Mobile Helix Controller to track the status of each server.
      * Again, not relevant in a test environment without the rest of the Mobile Helix
-     * infrastructure.
+     * infrastructure. The push server is another Mobile Helix server that is co-hosted
+     * with the application server and is responsible for receiving push notifications
+     * from Exchange.
      * 
      * @return Unique ID of this server, when a Controller is present.
      */
     public Long getServerID() {
         return (long)1;
+    }
+
+    public Long getPushServerID() {
+        return (long)2;
     }
     
     public void setApplicationRegistry(ApplicationServerRegistry appRegistry) {

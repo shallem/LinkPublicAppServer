@@ -95,4 +95,8 @@ public class InitApplicationServer {
     public Long getServerID() {
         return this.controllerConnection.getServerID();
     }
+    
+    public Long getPushServerID() {
+        return this.controllerConnection.getPushServerID();
+    }
 }

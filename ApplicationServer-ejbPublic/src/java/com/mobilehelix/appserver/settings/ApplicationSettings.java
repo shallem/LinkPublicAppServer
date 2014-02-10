@@ -16,6 +16,7 @@
 package com.mobilehelix.appserver.settings;
 
 import com.mobilehelix.appserver.ejb.ApplicationFacade;
+import com.mobilehelix.appserver.push.PushReceiver;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.services.objects.WSApplication;
 import java.util.Arrays;
@@ -84,4 +85,12 @@ public abstract class ApplicationSettings<T> {
      */
     public abstract ApplicationFacade createFacade(ApplicationServerRegistry appRegistry,
             boolean debugOn);
+    
+    /**
+     * Returns a push receiver object, if relevant for this app type. By default apps
+     * have no push support so we return null.
+     */
+    public PushReceiver getPushReceiver() {
+        return null;
+    }
 }

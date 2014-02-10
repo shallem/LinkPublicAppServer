@@ -4,6 +4,7 @@
  */
 package com.mobilehelix.appserver.ws;
 
+import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
@@ -33,6 +34,9 @@ public class PingWS {
     
     @EJB
     private SessionManager sessMgr;
+
+    @EJB
+    private PushManager pushMgr;
     
     @POST
     public byte[] handlePing(byte [] b) {
@@ -64,14 +68,13 @@ public class PingWS {
             }
         }
         
-        if (initEJB.getServerID() != null) {
-            serverID = initEJB.getServerID();
-        }
-        
         ApplicationServerPingResponse resp = new ApplicationServerPingResponse(statusCode, msg);
-        resp.setServerID(serverID);
-        resp.setSessionCt(sessMgr.getSessionCount());
-        
+        if (statusCode == WSResponse.SUCCESS) {
+            // Add the result for the main app server.
+            resp.addServer(initEJB.getServerID(), sessMgr.getSessionCount());
+            resp.addServer(initEJB.getPushServerID(), pushMgr.getPushSessionCount());
+        }
+                
         try {
             return resp.toBson();
         } catch (IOException ioe) {
