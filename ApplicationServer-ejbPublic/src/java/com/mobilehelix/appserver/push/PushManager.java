@@ -1,10 +1,20 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.push;
 
-import com.mobilehelix.appserver.ejb.ApplicationFacade;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.GlobalPropertiesManager;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
@@ -16,7 +26,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -52,13 +61,16 @@ public class PushManager {
     @PostConstruct
     public void init() {
         userPushMap = new TreeMap<>();
-        asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsPubPort().toString();
         srandom = new SecureRandom();
     }
     
     public void addSession(ApplicationServerCreateSessionRequest newSess) throws AppserverSystemException {
         Long[] appIDs = newSess.getAppIDs();
         Integer[] appGenIDs = newSess.getAppGenIDs();
+        
+        if (this.asHostPlusPort == null) {
+            this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsPubPort().toString();
+        }
         
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];

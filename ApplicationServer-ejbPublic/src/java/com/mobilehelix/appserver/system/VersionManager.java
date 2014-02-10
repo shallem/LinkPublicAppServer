@@ -31,19 +31,6 @@ public class VersionManager {
     
     private String versionString = "1.0.0";
     
-    @PostConstruct
-    public void init() {
-        if (initDone) {
-            return;
-        }
-        try {
-            this.readVersion();
-            initDone = true;
-        } catch (Exception ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-    }
-    
     private void readVersion() throws Exception {
         InputStream verStream = 
                 getClass().getClassLoader().getResourceAsStream(versionProperties);
@@ -58,6 +45,14 @@ public class VersionManager {
     }
     
     public String getVersion() {
+        if (!initDone) {
+            try {
+                this.readVersion();
+            } catch (Exception ex) {
+                Logger.getLogger(VersionManager.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            initDone = true;
+        }
         return versionString;
     }
 }

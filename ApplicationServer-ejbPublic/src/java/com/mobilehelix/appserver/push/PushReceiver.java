@@ -19,7 +19,7 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 
 /**
- * Abstact interface for a client object that can handle push notification events.
+ * Abstract interface for a client object that can handle push notification events.
  * In general, push notifications can be originated by the push server, which
  * accepts incoming notification requests to stylized URLs, or by any other piece
  * of the code. Each push receiver is intended to be a persistent, single user, single app
