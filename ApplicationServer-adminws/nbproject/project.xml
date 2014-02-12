@@ -20,6 +20,9 @@
                 <library dirs="200">
                     <file>${reference.ApplicationServerWebServices.jar}</file>
                 </library>
+                <library dirs="200">
+                    <file>${file.reference.commons-io-2.4.jar}</file>
+                </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
             <source-roots>

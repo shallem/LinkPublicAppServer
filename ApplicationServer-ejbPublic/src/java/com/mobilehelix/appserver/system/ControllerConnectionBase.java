@@ -17,8 +17,13 @@ package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.GlobalPropertiesManager;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
+import com.mobilehelix.services.objects.WSExtra;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * When no Controller is available (e.g., in the open source edition of an app used
@@ -44,6 +49,11 @@ public class ControllerConnectionBase {
             Long appID,
             Integer appGenID) throws AppserverSystemException {
         // Do nothing. We have no Controller.
+    }
+    
+    public Map<Long, List<WSExtra> > downloadAppPolicies(Session s) throws IOException {
+        // Do nothing. We have no Controller.
+        return null;
     }
     
     public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 

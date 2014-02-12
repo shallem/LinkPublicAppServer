@@ -103,7 +103,8 @@ public class SessionManager {
                     this.debugSession = new Session(globalProperties.getClientName(),
                             this.getDebugUser(),
                             this.getDebugPassword(),
-                            true);
+                            true,
+                            appInit);
                 }
                 return this.debugSession;
             }

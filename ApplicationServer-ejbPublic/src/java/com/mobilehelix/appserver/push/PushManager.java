@@ -61,6 +61,7 @@ public class PushManager {
     @PostConstruct
     public void init() {
         userPushMap = new TreeMap<>();
+        idMap = new TreeMap<>();
         srandom = new SecureRandom();
     }
     

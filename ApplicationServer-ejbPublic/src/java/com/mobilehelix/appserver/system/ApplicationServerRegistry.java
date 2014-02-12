@@ -22,6 +22,7 @@ import com.mobilehelix.services.objects.WSApplication;
 import java.util.List;
 import java.util.TreeMap;
 import javax.annotation.PostConstruct;
+import javax.annotation.security.PermitAll;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -34,6 +35,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@PermitAll
 @EJB(name="java:global/ApplicationServerRegistry", beanInterface=ApplicationServerRegistry.class)
 public class ApplicationServerRegistry {
     // Indexed by client, then app ID.
@@ -136,5 +138,27 @@ public class ApplicationServerRegistry {
             return;
         }
         cliMap.remove(appID);
+    }
+    
+    public Long[] getAppIDs(String client) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        Long[] ret = new Long[cliMap.keySet().size()];
+        return cliMap.keySet().toArray(ret);
+    }
+    
+    public Integer[] getAppGenIDs(String client) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        Integer[] ret = new Integer[cliMap.keySet().size()];
+        int i = 0;
+        for (ApplicationSettings as : cliMap.values()) {
+            ret[i++] = as.getAppGenID();
+        }
+        return ret;
     }
 }

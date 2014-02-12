@@ -21,8 +21,14 @@ import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
+import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.WSExtra;
+import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -54,6 +60,11 @@ public class Session {
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
     
+    /* Global object that tracks app server properties and establishes the connection to the
+     * Controller, if available.
+     */
+    private InitApplicationServer initAS;
+    
     /* Map from appID to the app-specific facade for that app ID. */
     private TreeMap<Long, ApplicationFacade> appFacades;    
 
@@ -77,7 +88,16 @@ public class Session {
     
     /* Client of this user. */
     private String client;
+    
+    /* List of app IDs in the session. */
+    private List<Long> appIDs;
+    
+    /* List of app gen IDs in the session. */
+    private List<Integer> appGenIDs;
         
+    /* Map from app IDs to policies. */
+    private Map<Long, List<WSExtra> > policyMap;
+    
     public Session(ApplicationServerCreateSessionRequest sess, 
             ApplicationInitializer appInit) throws AppserverSystemException {
         this.init(sess.getClient(), sess.getUserID(), sess.getPassword(), sess.getDeviceType(), false);
@@ -89,13 +109,25 @@ public class Session {
         this.doAppInit(sess.getAppIDs(), sess.getAppGenIDs(), appInit);
     }
     
-    public Session(String client, String username, String password, boolean debugOn) throws AppserverSystemException {
+    public Session(String client, String username, String password, boolean debugOn, ApplicationInitializer appInit) throws AppserverSystemException {
         this.init(client, username, password, "iPhone", debugOn);
+        
+        // Assume we are downloading all apps.
+        Long[] allAppIDs = appRegistry.getAppIDs(client);
+        if (allAppIDs == null) {
+            return;
+        }
+        
+        this.doAppInit(allAppIDs, appRegistry.getAppGenIDs(client), appInit);
     }
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
             ApplicationInitializer appInit) throws AppserverSystemException {
+        this.appIDs = new LinkedList<>();
+        this.appGenIDs = new LinkedList<>();
+        
+        List<ApplicationSettings> sessApps = new LinkedList<>();
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
@@ -108,11 +140,27 @@ public class Session {
                 continue;
             }
             
-            ApplicationFacade af = as.createFacade(appRegistry, false);
+            sessApps.add(as);
+            this.appIDs.add(appID);
+            this.appGenIDs.add(appGenID);
+        }
+        
+        try {
+            // Now download all app policies for this session.
+            policyMap = initAS.getControllerConnection().downloadAppPolicies(this);
+        } catch (IOException ex) {
+            throw new AppserverSystemException("Failed to load app policies.",
+                    "SessionCannotLoadAppPolicies",
+                    new String[] { ex.getMessage() });
+        }
+        
+        // Now, with policies in hand, initialize all apps.
+        for (ApplicationSettings as : sessApps) {
+            ApplicationFacade af = as.createFacade(this, appRegistry, false);
             af.setInitStatus(appInit.doInit(af, this.credentials));
-            af.setAppID(appID);
+            af.setAppID(as.getAppID());
             this.appFacades.put(as.getAppID(), af);
-        }        
+        }
     }
     
     private void init(String client,
@@ -133,6 +181,10 @@ public class Session {
             java.lang.Object appRegObj =
                     ictx.lookup("java:global/ApplicationServerRegistry");
             appRegistry = (ApplicationServerRegistry)appRegObj;
+            
+            java.lang.Object initASObj =
+                    ictx.lookup("java:global/InitApplicationServer");
+            initAS = (InitApplicationServer)initASObj;
         } catch (NamingException ex) {
             LOG.log(Level.SEVERE, "Failed to initialize session.", ex);
             throw new AppserverSystemException(ex, "SessionInitializationFailed",
@@ -279,7 +331,7 @@ public class Session {
             didCreate = true;
                 
             /* This will generally only happen in debug sessions. */
-            this.currentFacade = this.currentApplication.createFacade(appRegistry, debugOn);
+            this.currentFacade = this.currentApplication.createFacade(this, appRegistry, debugOn);
             
             /* Store the mapping from app ID to facade. */
             this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
@@ -316,6 +368,35 @@ public class Session {
 
     public String getClient() {
         return client;
+    }
+    
+    public Long[] getAppIDs() {
+        if (this.appIDs == null) {
+            return new Long[0];
+        }
+        
+        Long[] ret = new Long[this.appIDs.size()];
+        return this.appIDs.toArray(ret);
+    }
+    
+    public Integer[] getAppGenIDs() {
+        if (this.appGenIDs == null) {
+            return new Integer[0];
+        }
+        Integer[] ret = new Integer[this.appGenIDs.size()];
+        return this.appGenIDs.toArray(ret);
+    }
+
+    public WSExtra getPolicy(Long appID, String tag) {
+        if (this.policyMap != null) {
+            List<WSExtra> policyList = this.policyMap.get(appID);
+            for (WSExtra wse : policyList) {
+                if (wse.getTag().equals(tag)) {
+                    return wse;
+                }
+            }
+        }
+        return null;
     }
     
     public void close() {
