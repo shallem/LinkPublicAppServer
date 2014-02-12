@@ -22,6 +22,7 @@ public class ApplicationServerInitClient extends RestClient {
     private String asPubIP;
     private Integer asPubPort;
     private Integer asPrivPort;
+    private Integer asHttpPort;
     private String clientName;
     private String serverName;
     private String storePass;
@@ -31,6 +32,7 @@ public class ApplicationServerInitClient extends RestClient {
     public ApplicationServerInitClient(String asIP,
             String asPubIP,
             Integer asPort,
+            Integer asHttpPort,
             String controllerIP,
             Integer controllerPort,
             Integer asPubPort,
@@ -44,6 +46,7 @@ public class ApplicationServerInitClient extends RestClient {
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
         this.asPrivPort = asPort;
+        this.asHttpPort = asHttpPort;
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
         this.storePass = storePass;
@@ -56,7 +59,8 @@ public class ApplicationServerInitClient extends RestClient {
     public GenericBsonResponse runAppserverInit() throws IOException {
         ApplicationServerInitRequest asir = 
                 new ApplicationServerInitRequest(this.controllerIP, this.controllerPort,
-                    this.asPubIP, this.asPubPort, this.asPrivPort, this.clientName, this.serverName, this.storePass, 
+                    this.asPubIP, this.asPubPort, this.asPrivPort, this.asHttpPort, 
+                    this.clientName, this.serverName, this.storePass, 
                     this.clientKeystore, this.debugPassword);
         byte[] output = super.runPost(asir.toBson());
         if (output == null) {

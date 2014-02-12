@@ -66,6 +66,7 @@ public class ControllerConnectionBase {
         this.globalProperties.setAsPubPort(asir.getAsPubPort());
         this.globalProperties.setAsPrivIP(privIP);
         this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
+        this.globalProperties.setAsHttpPort(asir.getAsHttpPort());
         
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.

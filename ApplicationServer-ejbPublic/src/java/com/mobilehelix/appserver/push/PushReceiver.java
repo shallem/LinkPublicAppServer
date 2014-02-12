@@ -69,7 +69,7 @@ public interface PushReceiver {
      * @param input Raw input data supplied as the post body.
      * @return Return the data to send in response to the incoming https request.
      */
-    public byte[] receive(byte[] input);
+    public byte[] receive(byte[] headers, byte[] body);
 
     /**
      * Called to determine if a receiver matches the unique combination of client, user, and app ID.

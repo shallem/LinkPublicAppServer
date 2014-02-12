@@ -70,7 +70,7 @@ public class PushManager {
         Integer[] appGenIDs = newSess.getAppGenIDs();
         
         if (this.asHostPlusPort == null) {
-            this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsPubPort().toString();
+            this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsHttpPort().toString();
         }
         
         for (int i = 0; i < appIDs.length; ++i) {
