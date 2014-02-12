@@ -50,7 +50,7 @@ public class InitAppserverWS {
             statusCode = WSResponse.SUCCESS;
             msg = "Success";
         } catch(Exception e) {
-            LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
+                LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
             msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
             if (msg == null) {
