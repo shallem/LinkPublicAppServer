@@ -98,7 +98,6 @@ public abstract class RestClient {
             }
             url = url + pathArgString.toString();
         }
-        LOG.log(Level.INFO, "Connecting to: {0}", url);
         return url;
     }
 
@@ -191,6 +190,7 @@ public abstract class RestClient {
      */
     protected byte[] run(String method, Form f) throws UniformInterfaceException, IOException {
         setTimeouts();
+        LOG.log(Level.INFO, "Connecting to: {0}", this.webURL);
         WebResource r = c.resource(this.webURL);
         WebResource.Builder builder = this.AddHeadersToResource(r);
         ClientResponse resp = builder.type(MediaType.APPLICATION_FORM_URLENCODED).method(method, ClientResponse.class, f);
@@ -211,6 +211,7 @@ public abstract class RestClient {
  
     public ClientResponse runRaw(String url, String method, byte[] input) {
         setTimeouts();
+        LOG.log(Level.INFO, "Connecting to: {0}", url);
         WebResource r = c.resource(url);
         WebResource.Builder builder = this.AddHeadersToResource(r);
         ClientResponse resp = builder.type(MediaType.APPLICATION_OCTET_STREAM).method(method, ClientResponse.class, input);
@@ -224,6 +225,7 @@ public abstract class RestClient {
     
     protected byte[] run(String url, String method, byte[] input) throws UniformInterfaceException, IOException {
         setTimeouts();
+        LOG.log(Level.INFO, "Connecting to: {0}", url);
         WebResource r = c.resource(url);
         WebResource.Builder builder = this.AddHeadersToResource(r);
         ClientResponse resp = builder.type(MediaType.APPLICATION_OCTET_STREAM).method(method, ClientResponse.class, input);
@@ -283,6 +285,24 @@ public abstract class RestClient {
     
     protected byte[] runPost() throws UniformInterfaceException, IOException {
         return this.runNoBody("POST", this.webURL);
+    }
+    
+    /**
+     * "Raw" method to invoke a RESTful web service via a POST and to return the raw result
+     * object from Jersey. This is useful when the result is a streamed file or object, not
+     * a structured bson response.
+     * 
+     * @param host
+     * @param port
+     * @param path
+     * @param req
+     * @return
+     * @throws UniformInterfaceException
+     * @throws IOException 
+     */
+    protected ClientResponse runPostRaw(String host, int port, String path, byte[] req) throws UniformInterfaceException, IOException {
+        String url = this.initWebURL((this.httpsProps != null ? "https://" : "http://"), host, port, path, null);
+        return this.runRaw(url, "POST", req);
     }
     
     protected byte[] runNoBody(String method, String url) throws UniformInterfaceException, IOException {
