@@ -47,7 +47,7 @@ public class GlobalPropertiesManager {
     private String asPrivIP;
     private Integer asPubPort;
     private Integer asPrivPort;
-
+    private Integer asHttpPort;
     
     @PostConstruct
     public void init() {
@@ -117,5 +117,13 @@ public class GlobalPropertiesManager {
 
     public void setAsPrivPort(Integer asPrivPort) {
         this.asPrivPort = asPrivPort;
+    }
+
+    public Integer getAsHttpPort() {
+        return asHttpPort;
+    }
+
+    public void setAsHttpPort(Integer asHttpPort) {
+        this.asHttpPort = asHttpPort;
     }
 }

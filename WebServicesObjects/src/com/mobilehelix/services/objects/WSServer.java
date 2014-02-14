@@ -284,11 +284,11 @@ public class WSServer implements Comparable {
         }
         if (this.privateIPAddress != null) {
             gen.writeFieldName("privip");
-            gen.writeString(this.publicIPAddress);
+            gen.writeString(this.privateIPAddress);
         }
         if (this.privPort != null) {
             gen.writeFieldName("privport");
-            gen.writeNumber(this.pubPort);
+            gen.writeNumber(this.privPort);
         }
         if (this.status != null) {
             gen.writeFieldName("status");

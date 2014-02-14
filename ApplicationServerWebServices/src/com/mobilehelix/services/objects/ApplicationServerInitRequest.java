@@ -9,6 +9,7 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -24,6 +25,7 @@ public class ApplicationServerInitRequest extends WSRequest {
     private String asPubIP;
     private Integer asPubPort;
     private Integer asPrivPort;
+    private Integer asHttpPort;
     private String clientName;
     private String serverName;
     private String pushServerName;
@@ -40,6 +42,7 @@ public class ApplicationServerInitRequest extends WSRequest {
             String asPubIP,
             Integer asPubPort,
             Integer asPrivPort,
+            Integer asHttpPort,
             String clientName,
             String serverName,
             String storePass,
@@ -50,6 +53,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
         this.asPrivPort = asPrivPort;
+        this.asHttpPort = asHttpPort;
         this.clientName = clientName;
         this.serverName = serverName;
         this.pushServerName = this.serverName + "-PUSH";
@@ -145,6 +149,14 @@ public class ApplicationServerInitRequest extends WSRequest {
     public void setRegionName(String regionName) {
         this.regionName = regionName;
     }
+
+    public Integer getAsHttpPort() {
+        return asHttpPort;
+    }
+
+    public void setAsHttpPort(Integer asHttpPort) {
+        this.asHttpPort = asHttpPort;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -165,6 +177,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeNumber(this.asPubPort);
         gen.writeFieldName("privport");
         gen.writeNumber(this.asPrivPort);
+        gen.writeNumberField("httpport", this.asHttpPort);
         gen.writeFieldName("client");
         gen.writeString(this.clientName);
         gen.writeFieldName("server");
@@ -222,6 +235,9 @@ public class ApplicationServerInitRequest extends WSRequest {
                     break;
                 case "privport":
                     asir.setAsPrivPort(parser.getIntValue());
+                    break;
+                case "httpport":
+                    asir.setAsHttpPort(parser.getIntValue());
                     break;
             }
         }
