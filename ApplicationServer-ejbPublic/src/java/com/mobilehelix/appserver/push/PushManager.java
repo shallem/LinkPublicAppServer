@@ -112,7 +112,7 @@ public class PushManager {
                     idMap.put(uniqueID, newReceiver);
                     if (receivers == null) {
                         receivers = new LinkedList<>();
-                        this.userPushMap.put(uniqueID, receivers);
+                        this.userPushMap.put(combinedUser, receivers);
                     } 
                     receivers.add(newReceiver);
                 }

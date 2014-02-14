@@ -113,7 +113,7 @@ public class WSExtra implements Comparable {
         this.dataType = ExtraTypeConstants.EXTRA_TYPE_BOOLEAN;
     }
     
-    public void setValueBoolean(String s) {
+    public void setValueBooleanString(String s) {
         byte[] b = new byte[1];
         if (s.equals("true") ||
                 s.equals("True") ||
