@@ -387,6 +387,24 @@ public class Session {
         return this.appGenIDs.toArray(ret);
     }
 
+    /*
+     * case "email_allow_push":
+                            this.pushAllowed = (wse.value[0] == 1) ? true : false;
+                            break;
+                        case "email_allow_push_subject":
+                            this.pushSubjectAllowed = (wse.value[0] == 1) ? true : false;
+                            break;
+                        case "email_allow_push_sender":
+                            this.pushSenderAllowed = (wse.value[0] == 1) ? true : false;
+                            break;
+                        case "email_alternative_subject":
+                            this.altSubject = wse.getValue();
+                            break;
+                        case "email_alternative_sender":
+                            this.altSender = wse.getValue();
+                            break;
+     */
+    
     public WSExtra getPolicy(Long appID, String tag) {
         if (this.policyMap != null) {
             List<WSExtra> policyList = this.policyMap.get(appID);

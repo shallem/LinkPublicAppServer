@@ -56,6 +56,15 @@ public class ControllerConnectionBase {
         return null;
     }
     
+    public Map<Long, List<WSExtra> > downloadAppPolicies(String client,
+        String controllerUser,
+        String deviceType,
+        Long[] appIDs,
+        Integer[] appGenIDs) throws IOException {
+        // Do nothing. We have no Controller.
+        return null;
+    }
+    
     public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
