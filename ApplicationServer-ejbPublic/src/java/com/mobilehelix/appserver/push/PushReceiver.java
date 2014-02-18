@@ -41,14 +41,17 @@ public interface PushReceiver {
      * @param uniqueID A unique ID that is by the push servlet (hosted at /push on this server) to find this receiver.
      * @param userid User ID.
      * @param password User password.
+     * @param deviceType String identifying the type of this device.
      * @param appSettings Settings for the app requesting push support.
+     * @return True if this app is now waiting for push notifications; false if not.
      * @throws AppserverSystemException 
      */
-    public void create(String appServerHostName,
+    public boolean create(String appServerHostName,
             String uniqueID, 
             String clientid,
             String userid,
             String password,
+            String deviceType,
             ApplicationSettings appSettings) throws AppserverSystemException;
     
     /**

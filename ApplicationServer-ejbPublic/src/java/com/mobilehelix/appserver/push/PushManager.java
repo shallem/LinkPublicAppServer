@@ -107,14 +107,14 @@ public class PushManager {
                 if (!found) {
                     String uniqueID = this.getUniqueID(newSess.getClient(), newSess.getUserID(), appID);
                     PushReceiver newReceiver = as.getPushReceiver();
-                    newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), as);
-                    
-                    idMap.put(uniqueID, newReceiver);
-                    if (receivers == null) {
-                        receivers = new LinkedList<>();
-                        this.userPushMap.put(combinedUser, receivers);
-                    } 
-                    receivers.add(newReceiver);
+                    if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
+                        idMap.put(uniqueID, newReceiver);
+                        if (receivers == null) {
+                            receivers = new LinkedList<>();
+                            this.userPushMap.put(combinedUser, receivers);
+                        } 
+                        receivers.add(newReceiver);
+                    }
                 }
             } catch(NoSuchAlgorithmException | UnsupportedEncodingException ex) {
                 LOG.log(Level.SEVERE, "Failed to create push session.", ex);
