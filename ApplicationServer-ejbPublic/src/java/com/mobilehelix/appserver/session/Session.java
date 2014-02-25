@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -270,7 +269,7 @@ public class Session {
                 (appID == null || appGenID == null)) {
             // Install defaults. For now (while debugging), look up config by type.
             this.currentApplication =
-                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype);
+                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype, this);
         }
         
         if (this.currentApplication != null) {
