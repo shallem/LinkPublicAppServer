@@ -30,7 +30,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -45,17 +44,6 @@ import javax.servlet.http.HttpServletRequest;
 public class Session {
 
     private static final Logger LOG = Logger.getLogger(Session.class.getName());
-    
-    /**
-     * The lock is used to ensure that only one thread has access to this session
-     * at a time. Many of the client applications will use multiple threads to access
-     * different application server services. Unfortunately, it is common for these
-     * services to use NTLM, and NTLM triggers a call to active directory each time
-     * an authentication occurs. If >2 threads contact A-D simultaneously then a user
-     * is locked out of A-D. Hence, this lock can be used to protect operations that
-     * might trigger a call to A-D via an NTLM authentication.
-     */
-    private final ReentrantLock lock = new ReentrantLock();
     
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
@@ -157,9 +145,11 @@ public class Session {
         // Now, with policies in hand, initialize all apps.
         for (ApplicationSettings as : sessApps) {
             ApplicationFacade af = as.createFacade(this, appRegistry, false);
-            af.setInitStatus(appInit.doInit(af, this.credentials));
-            af.setAppID(as.getAppID());
-            this.appFacades.put(as.getAppID(), af);
+            if (af != null) {
+                af.setInitStatus(appInit.doInit(af, this.credentials));
+                af.setAppID(as.getAppID());
+                this.appFacades.put(as.getAppID(), af);
+            }
         }
     }
     
@@ -279,7 +269,7 @@ public class Session {
                 (appID == null || appGenID == null)) {
             // Install defaults. For now (while debugging), look up config by type.
             this.currentApplication =
-                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype);
+                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype, this);
         }
         
         if (this.currentApplication != null) {
