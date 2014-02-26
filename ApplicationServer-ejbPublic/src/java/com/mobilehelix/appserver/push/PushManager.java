@@ -17,6 +17,7 @@ package com.mobilehelix.appserver.push;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.GlobalPropertiesManager;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
@@ -30,6 +31,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -42,6 +44,7 @@ import org.apache.commons.codec.binary.Hex;
  */
 @Startup
 @Singleton
+@EJB(name="java:global/PushManager", beanInterface=PushManager.class)
 public class PushManager {
     private static final Logger LOG = Logger.getLogger(PushManager.class.getName());
     
@@ -63,6 +66,26 @@ public class PushManager {
         userPushMap = new TreeMap<>();
         idMap = new TreeMap<>();
         srandom = new SecureRandom();
+    }
+    
+    @PreDestroy
+    public void unsubscribe() {
+        for (PushReceiver r : idMap.values()) {
+            r.unsubscribe();
+        }
+    }
+    
+    public void refresh(Session sess, Long appID) {
+        String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ sess.getClient(), 
+            sess.getCredentials().getUsername() });
+        LinkedList<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        if (receivers != null && !receivers.isEmpty()) {
+            for (PushReceiver receiver : receivers) {
+                if (receiver.matches(sess.getClient(), sess.getCredentials().getUsername(), appID)) {
+                    receiver.refresh(sess.getCredentials().getUsername(), sess.getCredentials().getPassword());
+                }
+            }
+        }
     }
     
     public void addSession(ApplicationServerCreateSessionRequest newSess) throws AppserverSystemException {
