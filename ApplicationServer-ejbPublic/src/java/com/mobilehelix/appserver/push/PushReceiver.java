@@ -72,7 +72,7 @@ public interface PushReceiver {
      * @param input Raw input data supplied as the post body.
      * @return Return the data to send in response to the incoming https request.
      */
-    public byte[] receive(byte[] headers, byte[] body);
+    public byte[] receive(byte[] input);
 
     /**
      * Called to determine if a receiver matches the unique combination of client, user, and app ID.
@@ -81,4 +81,9 @@ public interface PushReceiver {
     public boolean matches(String client,
             String userid,
             Long appID);
+    
+    /**
+     * Called prior to shutdown to terminate this subscription.
+     */
+    public void unsubscribe();
 }
