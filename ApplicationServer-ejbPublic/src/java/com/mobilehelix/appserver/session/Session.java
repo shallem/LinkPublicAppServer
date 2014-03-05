@@ -398,6 +398,10 @@ public class Session {
     public WSExtra getPolicy(Long appID, String tag) {
         if (this.policyMap != null) {
             List<WSExtra> policyList = this.policyMap.get(appID);
+            if (policyList == null) {
+                return null;
+            }
+            
             for (WSExtra wse : policyList) {
                 if (wse.getTag().equals(tag)) {
                     return wse;
