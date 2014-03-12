@@ -17,6 +17,7 @@ package com.mobilehelix.appserver.ejb;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
+import com.mobilehelix.appserver.session.Session;
 import java.util.concurrent.Future;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
@@ -29,8 +30,8 @@ import javax.ejb.Stateless;
 @Stateless
 @Asynchronous
 public class ApplicationInitializer {
-    public Future<Integer> doInit(ApplicationFacade af, CredentialsManager credentials) 
+    public Future<Integer> doInit(ApplicationFacade af, Session session, CredentialsManager credentials) 
             throws AppserverSystemException {
-        return new AsyncResult<>(af.doInitOnSessionCreate(credentials));
+        return new AsyncResult<>(af.doInitOnSessionCreate(session, credentials));
     }
 }

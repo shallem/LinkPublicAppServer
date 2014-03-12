@@ -62,7 +62,7 @@ public abstract class ApplicationSettings<T> {
         return appType;
     }
     
-    protected List<String> parseStringList(String val) {
+    protected static List<String> parseStringList(String val) {
         if (val.isEmpty()) {
             return Arrays.asList(new String[]{});
         }

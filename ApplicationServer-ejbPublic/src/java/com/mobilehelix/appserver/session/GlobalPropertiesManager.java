@@ -15,6 +15,7 @@
  */
 package com.mobilehelix.appserver.session;
 
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.annotation.security.PermitAll;
 import javax.ejb.Singleton;
@@ -48,6 +49,10 @@ public class GlobalPropertiesManager {
     private Integer asPubPort;
     private Integer asPrivPort;
     private Integer asHttpPort;
+    
+    private String scriptDir;
+    private String phantomJsBin;
+            
     
     @PostConstruct
     public void init() {
@@ -125,5 +130,34 @@ public class GlobalPropertiesManager {
 
     public void setAsHttpPort(Integer asHttpPort) {
         this.asHttpPort = asHttpPort;
+    }
+
+    public String getScriptDir() {
+        return this.scriptDir;
+    }
+
+    public void setScriptDir(String scriptDir) {
+        this.scriptDir = scriptDir;
+    }
+
+    public String getPhantomJsBin() {
+        return phantomJsBin;
+    }
+
+    public void setPhantomJsBin(String phantomJsBin) {
+        this.phantomJsBin = phantomJsBin;
+    }
+    
+    public void asProperties(Map<String, Object> props) {
+        if (props == null)
+            return;
+        
+        props.put("asPubIP", this.asPubIP);
+        props.put("asPrivIP", this.asPrivIP);
+        props.put("asPubPort", this.asPubPort);
+        props.put("asPrivPort", this.asPrivPort);
+        props.put("asHttpPort", this.asHttpPort);
+        props.put("scriptDir", this.scriptDir);
+        props.put("phantomJsBin", this.phantomJsBin);
     }
 }

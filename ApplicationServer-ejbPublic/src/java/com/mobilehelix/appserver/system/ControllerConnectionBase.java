@@ -77,6 +77,9 @@ public class ControllerConnectionBase {
         this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
         this.globalProperties.setAsHttpPort(asir.getAsHttpPort());
         
+        this.globalProperties.setScriptDir(asir.getScriptDir());
+        this.globalProperties.setPhantomJsBin(asir.getPhantomJsBin());
+
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
          */
@@ -126,4 +129,11 @@ public class ControllerConnectionBase {
     public void setSessionMgr(SessionManager sessionMgr) {
         this.sessionMgr = sessionMgr;
     }
+    
+    public void getProperties(Map<String, Object> props) {
+        if (this.globalProperties == null)
+            return;
+        
+        this.globalProperties.asProperties(props);
+    }     
 }

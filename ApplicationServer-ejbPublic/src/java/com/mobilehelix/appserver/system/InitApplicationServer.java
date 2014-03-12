@@ -10,6 +10,7 @@ import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -85,7 +86,7 @@ public class InitApplicationServer {
     }
     
     public boolean isIsInitialized() {
-        return isInitialized;
+        return this.isInitialized;
     }
     
     public boolean validateSessionID(String incomingSessID) {
@@ -99,4 +100,5 @@ public class InitApplicationServer {
     public Long getPushServerID() {
         return this.controllerConnection.getPushServerID();
     }
+           
 }

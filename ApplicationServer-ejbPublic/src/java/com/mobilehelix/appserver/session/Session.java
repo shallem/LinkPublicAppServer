@@ -146,7 +146,7 @@ public class Session {
         for (ApplicationSettings as : sessApps) {
             ApplicationFacade af = as.createFacade(this, appRegistry, false);
             if (af != null) {
-                af.setInitStatus(appInit.doInit(af, this.credentials));
+                af.setInitStatus(appInit.doInit(af, this, this.credentials));
                 af.setAppID(as.getAppID());
                 this.appFacades.put(as.getAppID(), af);
             }
@@ -337,7 +337,7 @@ public class Session {
         /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
         if (!this.currentFacade.getInitOnLoadDone() || didChangeUser || didChangePassword) {
             /* Need to re-init the facade because credentials have changed. */
-            this.currentFacade.doInitOnLoad(req, credentials);
+            this.currentFacade.doInitOnLoad(this, req, credentials);
             
             /* Inidicate the first load is one. */
             this.currentFacade.setInitOnLoadDone();
@@ -412,4 +412,8 @@ public class Session {
             af.close();
         }
     }
+    
+    public void getProperties(Map<String, Object> props) {
+        this.initAS.getControllerConnection().getProperties(props);
+    }    
 }

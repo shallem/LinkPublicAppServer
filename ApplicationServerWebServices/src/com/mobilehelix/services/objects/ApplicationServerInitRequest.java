@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.services.objects;
 
 import com.mobilehelix.services.interfaces.WSRequest;
@@ -9,7 +5,6 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigDecimal;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -32,9 +27,11 @@ public class ApplicationServerInitRequest extends WSRequest {
     private String storePass;
     private byte[] keyStore;
     private String regionName;
-
-    public ApplicationServerInitRequest() {
-        
+    private String scriptDir;
+    private String phantomJsBin;
+    
+    
+    public ApplicationServerInitRequest() {    
     }
     
     public ApplicationServerInitRequest(String controllerIP,
@@ -47,7 +44,9 @@ public class ApplicationServerInitRequest extends WSRequest {
             String serverName,
             String storePass,
             byte[] keyStore,
-            String regionName) {
+            String regionName,
+            String baseDir,
+            String phantomJsBin) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
         this.asPubIP = asPubIP;
@@ -60,6 +59,8 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.storePass = storePass;
         this.keyStore = keyStore;
         this.regionName = regionName;
+        this.scriptDir = baseDir;
+        this.phantomJsBin = phantomJsBin;
     }
 
     public String getClientName() {
@@ -157,6 +158,22 @@ public class ApplicationServerInitRequest extends WSRequest {
     public void setAsHttpPort(Integer asHttpPort) {
         this.asHttpPort = asHttpPort;
     }
+
+    public String getScriptDir() {
+        return this.scriptDir;
+    }
+
+    public void setScriptDir(String scriptDir) {
+        this.scriptDir = scriptDir;
+    }
+
+    public String getPhantomJsBin() {
+        return phantomJsBin;
+    }
+
+    public void setPhantomJsBin(String phantomJsBin) {
+        this.phantomJsBin = phantomJsBin;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -190,6 +207,10 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeBinary(this.keyStore);        
         gen.writeFieldName("region");
         gen.writeString(this.regionName);
+        gen.writeFieldName("scriptdir");
+        gen.writeString(this.scriptDir);
+        gen.writeFieldName("phantomjsbin");
+        gen.writeString(this.phantomJsBin);
 
         gen.close();
         return baos.toByteArray();
@@ -238,6 +259,12 @@ public class ApplicationServerInitRequest extends WSRequest {
                     break;
                 case "httpport":
                     asir.setAsHttpPort(parser.getIntValue());
+                    break;
+                case "scriptdir":
+                    asir.setScriptDir(parser.getText());
+                    break;
+                case "phantomjsbin":
+                    asir.setPhantomJsBin(parser.getText());
                     break;
             }
         }
