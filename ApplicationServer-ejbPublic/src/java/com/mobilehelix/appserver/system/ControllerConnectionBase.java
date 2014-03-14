@@ -64,6 +64,13 @@ public class ControllerConnectionBase {
         // Do nothing. We have no Controller.
         return null;
     }
+
+    public void refreshApplications(String client,
+            String user,
+            List<Long> appIDs,
+            List<Integer> appGenIDs) throws AppserverSystemException {
+        // Do nothing. We have no controller.
+    }
     
     public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
             throws AppserverSystemException {

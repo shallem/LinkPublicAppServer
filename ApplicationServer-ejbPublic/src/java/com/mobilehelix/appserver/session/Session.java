@@ -97,16 +97,9 @@ public class Session {
         this.doAppInit(sess.getAppIDs(), sess.getAppGenIDs(), appInit);
     }
     
-    public Session(String client, String username, String password, boolean debugOn, ApplicationInitializer appInit) throws AppserverSystemException {
-        this.init(client, username, password, "iPhone", debugOn);
-        
-        // Assume we are downloading all apps.
-        Long[] allAppIDs = appRegistry.getAppIDs(client);
-        if (allAppIDs == null) {
-            return;
-        }
-        
-        this.doAppInit(allAppIDs, appRegistry.getAppGenIDs(client), appInit);
+    public Session(String client, String username, String password) throws AppserverSystemException {
+        // ONLY used for debugging.
+        this.init(client, username, password, "iPhone", true);
     }
     
     public final void doAppInit(Long[] appIDs, 
@@ -398,6 +391,10 @@ public class Session {
     public WSExtra getPolicy(Long appID, String tag) {
         if (this.policyMap != null) {
             List<WSExtra> policyList = this.policyMap.get(appID);
+            if (policyList == null) {
+                return null;
+            }
+            
             for (WSExtra wse : policyList) {
                 if (wse.getTag().equals(tag)) {
                     return wse;
