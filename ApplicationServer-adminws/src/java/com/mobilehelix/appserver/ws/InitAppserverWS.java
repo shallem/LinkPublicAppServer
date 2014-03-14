@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.system.InitApplicationServer;
@@ -53,8 +49,9 @@ public class InitAppserverWS {
                 LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
             msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
+            
             if (msg == null) {
-                msg = "Unknown failure.";
+                msg = "Unspecified failure ("+e.getClass().getSimpleName()+")";
             }
         }
         

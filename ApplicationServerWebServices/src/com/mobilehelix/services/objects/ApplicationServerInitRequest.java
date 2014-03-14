@@ -27,7 +27,7 @@ public class ApplicationServerInitRequest extends WSRequest {
     private String storePass;
     private byte[] keyStore;
     private String regionName;
-    private String scriptDir;
+    private String scriptsDir;
     private String phantomJsBin;
     
     
@@ -45,7 +45,7 @@ public class ApplicationServerInitRequest extends WSRequest {
             String storePass,
             byte[] keyStore,
             String regionName,
-            String baseDir,
+            String scriptsDir,
             String phantomJsBin) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
@@ -59,7 +59,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.storePass = storePass;
         this.keyStore = keyStore;
         this.regionName = regionName;
-        this.scriptDir = baseDir;
+        this.scriptsDir = scriptsDir;
         this.phantomJsBin = phantomJsBin;
     }
 
@@ -159,12 +159,12 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.asHttpPort = asHttpPort;
     }
 
-    public String getScriptDir() {
-        return this.scriptDir;
+    public String getScriptsDir() {
+        return this.scriptsDir;
     }
 
-    public void setScriptDir(String scriptDir) {
-        this.scriptDir = scriptDir;
+    public void setScriptsDir(String scriptsDir) {
+        this.scriptsDir = scriptsDir;
     }
 
     public String getPhantomJsBin() {
@@ -207,11 +207,10 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeBinary(this.keyStore);        
         gen.writeFieldName("region");
         gen.writeString(this.regionName);
-        gen.writeFieldName("scriptdir");
-        gen.writeString(this.scriptDir);
+        gen.writeFieldName("scriptsdir");
+        gen.writeString(this.scriptsDir);
         gen.writeFieldName("phantomjsbin");
         gen.writeString(this.phantomJsBin);
-
         gen.close();
         return baos.toByteArray();
     }
@@ -260,14 +259,15 @@ public class ApplicationServerInitRequest extends WSRequest {
                 case "httpport":
                     asir.setAsHttpPort(parser.getIntValue());
                     break;
-                case "scriptdir":
-                    asir.setScriptDir(parser.getText());
+                case "scriptsdir":
+                    asir.setScriptsDir(parser.getText());
                     break;
                 case "phantomjsbin":
                     asir.setPhantomJsBin(parser.getText());
                     break;
             }
         }
+
         return asir;
     }
 }

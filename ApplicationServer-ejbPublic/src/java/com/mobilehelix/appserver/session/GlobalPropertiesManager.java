@@ -50,7 +50,7 @@ public class GlobalPropertiesManager {
     private Integer asPrivPort;
     private Integer asHttpPort;
     
-    private String scriptDir;
+    private String scriptsDir;
     private String phantomJsBin;
             
     
@@ -132,12 +132,12 @@ public class GlobalPropertiesManager {
         this.asHttpPort = asHttpPort;
     }
 
-    public String getScriptDir() {
-        return this.scriptDir;
+    public String getScriptsDir() {
+        return this.scriptsDir;
     }
 
-    public void setScriptDir(String scriptDir) {
-        this.scriptDir = scriptDir;
+    public void setScriptsDir(String scriptDir) {
+        this.scriptsDir = scriptDir;
     }
 
     public String getPhantomJsBin() {
@@ -157,7 +157,7 @@ public class GlobalPropertiesManager {
         props.put("asPubPort", this.asPubPort);
         props.put("asPrivPort", this.asPrivPort);
         props.put("asHttpPort", this.asHttpPort);
-        props.put("scriptDir", this.scriptDir);
+        props.put("scriptsDir", this.scriptsDir);
         props.put("phantomJsBin", this.phantomJsBin);
     }
 }

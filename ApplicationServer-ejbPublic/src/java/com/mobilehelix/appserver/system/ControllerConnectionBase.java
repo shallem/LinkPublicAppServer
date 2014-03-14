@@ -77,7 +77,7 @@ public class ControllerConnectionBase {
         this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
         this.globalProperties.setAsHttpPort(asir.getAsHttpPort());
         
-        this.globalProperties.setScriptDir(asir.getScriptDir());
+        this.globalProperties.setScriptsDir(asir.getScriptsDir());
         this.globalProperties.setPhantomJsBin(asir.getPhantomJsBin());
 
         /* Reset the session manager. When we re-initialize the app server it is

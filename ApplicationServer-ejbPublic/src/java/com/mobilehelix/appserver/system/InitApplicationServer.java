@@ -10,7 +10,6 @@ import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -64,7 +63,7 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {
+    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {     
         /* Register with the Controller, if we have one. */
         this.controllerConnection.processInitRequest(asir, privIP);
         
