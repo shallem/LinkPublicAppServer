@@ -17,6 +17,7 @@ public class ApplicationServerInitRequest extends WSRequest {
     // Parameters that we send to the app server service.
     private String controllerIP;
     private Integer controllerPort;
+    private String asPrivIP;
     private String asPubIP;
     private Integer asPubPort;
     private Integer asPrivPort;
@@ -36,6 +37,7 @@ public class ApplicationServerInitRequest extends WSRequest {
     
     public ApplicationServerInitRequest(String controllerIP,
             Integer controllerPort,
+            String asPrivIP,
             String asPubIP,
             Integer asPubPort,
             Integer asPrivPort,
@@ -49,6 +51,7 @@ public class ApplicationServerInitRequest extends WSRequest {
             String phantomJsBin) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
+        this.asPrivIP = asPrivIP;
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
         this.asPrivPort = asPrivPort;
@@ -119,6 +122,14 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.storePass = storePass;
     }
 
+    public String getAsPrivIP() {
+        return asPrivIP;
+    }
+
+    public void setAsPrivIP(String asPrivIP) {
+        this.asPrivIP = asPrivIP;
+    }
+    
     public String getAsPubIP() {
         return asPubIP;
     }
@@ -188,6 +199,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeString(this.controllerIP);
         gen.writeFieldName("cport");
         gen.writeNumber(this.controllerPort);
+        gen.writeStringField("privip", this.asPrivIP);
         gen.writeFieldName("pubip");
         gen.writeString(this.asPubIP);
         gen.writeFieldName("pubport");
@@ -243,6 +255,9 @@ public class ApplicationServerInitRequest extends WSRequest {
                     break;
                 case "keystore":
                     asir.setKeyStore((byte[])parser.getEmbeddedObject());
+                    break;
+                case "privip":
+                    asir.setAsPrivIP(parser.getText());
                     break;
                 case "pubip":
                     asir.setAsPubIP(parser.getText());

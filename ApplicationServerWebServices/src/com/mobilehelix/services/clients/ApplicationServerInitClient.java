@@ -19,6 +19,7 @@ public class ApplicationServerInitClient extends RestClient {
     // Parameters that we send to the app server service.
     private String controllerIP;
     private Integer controllerPort;
+    private String asPrivIP;
     private String asPubIP;
     private Integer asPubPort;
     private Integer asPrivPort;
@@ -48,6 +49,7 @@ public class ApplicationServerInitClient extends RestClient {
             String scriptsDir,
             String phantomjsBin) {
         super(asIP + ":" + asPort.toString(), "/ws/initas", props);
+        this.asPrivIP = asIP;
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
         this.asPrivPort = asPort;
@@ -66,7 +68,7 @@ public class ApplicationServerInitClient extends RestClient {
     public GenericBsonResponse runAppserverInit() throws IOException {
         ApplicationServerInitRequest asir = 
                 new ApplicationServerInitRequest(this.controllerIP, this.controllerPort,
-                    this.asPubIP, this.asPubPort, this.asPrivPort, this.asHttpPort, 
+                    this.asPrivIP, this.asPubIP, this.asPubPort, this.asPrivPort, this.asHttpPort, 
                     this.clientName, this.serverName, this.storePass, 
                     this.clientKeystore, this.debugPassword, this.appScriptsDir, 
                     this.phantomJsBin);

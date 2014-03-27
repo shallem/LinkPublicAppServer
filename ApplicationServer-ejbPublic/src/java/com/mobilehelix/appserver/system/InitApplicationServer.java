@@ -63,9 +63,9 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {     
+    public void processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {     
         /* Register with the Controller, if we have one. */
-        this.controllerConnection.processInitRequest(asir, privIP);
+        this.controllerConnection.processInitRequest(asir, asir.getAsPrivIP());
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;
