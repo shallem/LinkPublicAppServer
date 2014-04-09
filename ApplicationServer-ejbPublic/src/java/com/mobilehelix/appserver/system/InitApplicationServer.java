@@ -10,6 +10,8 @@ import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -24,6 +26,7 @@ import javax.ejb.Startup;
 @Startup
 @EJB(name="java:global/InitApplicationServer", beanInterface=InitApplicationServer.class)
 public class InitApplicationServer {
+    private static final Logger LOG = Logger.getLogger(InitApplicationServer.class.getName());
     
     // Global properties
     @EJB
@@ -63,7 +66,15 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {     
+    public void processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {
+        LOG.log(Level.FINE, "Received init request with parameters: PublicIP={0},PubPort={1},PrivateIP={2},PrivPort={3}",
+                new Object[]{
+                    asir.getAsPubIP(),
+                    asir.getAsPubPort().toString(),
+                    asir.getAsPrivIP(),
+                    asir.getAsPrivPort().toString()
+                });
+        
         /* Register with the Controller, if we have one. */
         this.controllerConnection.processInitRequest(asir, asir.getAsPrivIP());
         

@@ -113,6 +113,7 @@ public class PushManager {
                  */
                 continue;
             }
+            LOG.log(Level.FINE, "Create or refresh push session for app {0}", as.getAppName());
             
             // See if we have a push receiver for client/user/app
             boolean found = false;
@@ -122,15 +123,22 @@ public class PushManager {
                 for (PushReceiver receiver : receivers) {
                     if (receiver.matches(newSess.getClient(), newSess.getUserID(), appID)) {
                         found = true;
+                        LOG.log(Level.FINE, "Refreshing push session for {0}", combinedUser);
                         receiver.refresh(newSess.getUserID(), newSess.getPassword());
                     }
                 }
             }
             try {
                 if (!found) {
+                    LOG.log(Level.FINE, "Creating push session for {0}", combinedUser);
                     String uniqueID = this.getUniqueID(newSess.getClient(), newSess.getUserID(), appID);
                     PushReceiver newReceiver = as.getPushReceiver();
                     if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
+                        LOG.log(Level.FINE, "Created push session for {0}, ID {1}", new Object[] {
+                            combinedUser,
+                            uniqueID
+                        });
+                    
                         idMap.put(uniqueID, newReceiver);
                         if (receivers == null) {
                             receivers = new LinkedList<>();
