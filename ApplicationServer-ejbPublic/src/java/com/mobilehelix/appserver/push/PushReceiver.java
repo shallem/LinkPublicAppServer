@@ -52,7 +52,8 @@ public interface PushReceiver {
             String userid,
             String password,
             String deviceType,
-            ApplicationSettings appSettings) throws AppserverSystemException;
+            ApplicationSettings appSettings,
+            PushCompletion pushAccepted) throws AppserverSystemException;
     
     /**
      * Called each time the user creates a new session on this server. On each session

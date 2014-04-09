@@ -26,8 +26,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
-import java.util.LinkedList;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
@@ -49,8 +49,12 @@ public class PushManager {
     private static final Logger LOG = Logger.getLogger(PushManager.class.getName());
     
     
-    private TreeMap<String, LinkedList<PushReceiver> > userPushMap;
-    private TreeMap<String, PushReceiver> idMap;
+    private ConcurrentHashMap<String, ConcurrentLinkedQueue<PushReceiver> > userPushMap;
+    private ConcurrentHashMap<String, PushReceiver> idMap;
+    
+    /* EJB to perform async init on application settings. */
+    @EJB
+    private PushInitializer pushInit;
     
     @EJB
     private ApplicationServerRegistry appRegistry;
@@ -63,8 +67,8 @@ public class PushManager {
     
     @PostConstruct
     public void init() {
-        userPushMap = new TreeMap<>();
-        idMap = new TreeMap<>();
+        userPushMap = new ConcurrentHashMap<>();
+        idMap = new ConcurrentHashMap<>();
         srandom = new SecureRandom();
     }
     
@@ -78,7 +82,7 @@ public class PushManager {
     public void refresh(Session sess, Long appID) {
         String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ sess.getClient(), 
             sess.getCredentials().getUsername() });
-        LinkedList<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
                 if (receiver.matches(sess.getClient(), sess.getCredentials().getUsername(), appID)) {
@@ -118,7 +122,7 @@ public class PushManager {
             // See if we have a push receiver for client/user/app
             boolean found = false;
             String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ newSess.getClient(), newSess.getUserID() });
-            LinkedList<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+            ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
             if (receivers != null && !receivers.isEmpty()) {
                 for (PushReceiver receiver : receivers) {
                     if (receiver.matches(newSess.getClient(), newSess.getUserID(), appID)) {
@@ -133,19 +137,24 @@ public class PushManager {
                     LOG.log(Level.FINE, "Creating push session for {0}", combinedUser);
                     String uniqueID = this.getUniqueID(newSess.getClient(), newSess.getUserID(), appID);
                     PushReceiver newReceiver = as.getPushReceiver();
+                    PushCompletion pushAccepted = new PushCompletion(this.userPushMap, this.idMap, uniqueID, combinedUser, newReceiver);
+                    pushInit.doInit(newReceiver, 
+                            asHostPlusPort, 
+                            uniqueID, 
+                            newSess.getClient(), 
+                            newSess.getUserID(), 
+                            newSess.getPassword(), 
+                            newSess.getDeviceType(), 
+                            as,
+                            pushAccepted);
+                    /*
+                    
                     if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
                         LOG.log(Level.FINE, "Created push session for {0}, ID {1}", new Object[] {
                             combinedUser,
                             uniqueID
-                        });
-                    
-                        idMap.put(uniqueID, newReceiver);
-                        if (receivers == null) {
-                            receivers = new LinkedList<>();
-                            this.userPushMap.put(combinedUser, receivers);
-                        } 
-                        receivers.add(newReceiver);
-                    }
+                        });   
+                    } */
                 }
             } catch(NoSuchAlgorithmException | UnsupportedEncodingException ex) {
                 LOG.log(Level.SEVERE, "Failed to create push session.", ex);
