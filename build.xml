@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="all" name="LinkPublicAppServer">
 
+  <target name="increment-version">
+    <propertyfile file="ApplicationServer-ejbPublic/src/java/com/mobilehelix/version/version.properties">
+      <entry key="Revision" operation="+" value="1" type="int"/>
+    </propertyfile>
+  </target>
+
   <target name="WebServicesObjects">
     <ant dir="WebServicesObjects" target="jar" useNativeBaseDir="true"/>
   </target>
