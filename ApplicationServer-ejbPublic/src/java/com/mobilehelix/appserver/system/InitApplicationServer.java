@@ -1,6 +1,17 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.system;
 
@@ -35,6 +46,10 @@ public class InitApplicationServer {
     // Global session manager
     @EJB
     private SessionManager sessionMgr;
+
+    // Global version manager.
+    @EJB
+    private VersionManager versionMgr;
     
     private boolean isInitialized = false;
     
@@ -76,7 +91,7 @@ public class InitApplicationServer {
                 });
         
         /* Register with the Controller, if we have one. */
-        this.controllerConnection.processInitRequest(asir, asir.getAsPrivIP());
+        this.controllerConnection.processInitRequest(asir, versionMgr.getVersion());
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;

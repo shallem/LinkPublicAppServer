@@ -31,6 +31,7 @@ public class ApplicationServerInitClient extends RestClient {
     private byte[] clientKeystore;
     private String appScriptsDir;
     private String phantomJsBin;
+    private String rootDir;
 
     
     public ApplicationServerInitClient(String asIP,
@@ -47,7 +48,8 @@ public class ApplicationServerInitClient extends RestClient {
             String debugPassword,
             HTTPSProperties props,
             String scriptsDir,
-            String phantomjsBin) {
+            String phantomjsBin,
+            String rootDir) {
         super(asIP + ":" + asPort.toString(), "/ws/initas", props);
         this.asPrivIP = asIP;
         this.asPubIP = asPubIP;
@@ -63,6 +65,7 @@ public class ApplicationServerInitClient extends RestClient {
         this.debugPassword = debugPassword;
         this.appScriptsDir = scriptsDir;
         this.phantomJsBin = phantomjsBin;
+        this.rootDir = rootDir;
     }
 
     public GenericBsonResponse runAppserverInit() throws IOException {
@@ -71,7 +74,7 @@ public class ApplicationServerInitClient extends RestClient {
                     this.asPrivIP, this.asPubIP, this.asPubPort, this.asPrivPort, this.asHttpPort, 
                     this.clientName, this.serverName, this.storePass, 
                     this.clientKeystore, this.debugPassword, this.appScriptsDir, 
-                    this.phantomJsBin);
+                    this.phantomJsBin, this.rootDir);
         byte[] output = super.runPost(asir.toBson());
         if (output == null) {
             throw new IOException("Failed to execute service");

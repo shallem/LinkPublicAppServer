@@ -30,7 +30,7 @@ public class ApplicationServerInitRequest extends WSRequest {
     private String regionName;
     private String scriptsDir;
     private String phantomJsBin;
-    
+    private String rootDir;
     
     public ApplicationServerInitRequest() {    
     }
@@ -48,7 +48,8 @@ public class ApplicationServerInitRequest extends WSRequest {
             byte[] keyStore,
             String regionName,
             String scriptsDir,
-            String phantomJsBin) {
+            String phantomJsBin,
+            String rootDir) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
         this.asPrivIP = asPrivIP;
@@ -64,6 +65,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.regionName = regionName;
         this.scriptsDir = scriptsDir;
         this.phantomJsBin = phantomJsBin;
+        this.rootDir = rootDir;
     }
 
     public String getClientName() {
@@ -185,6 +187,14 @@ public class ApplicationServerInitRequest extends WSRequest {
     public void setPhantomJsBin(String phantomJsBin) {
         this.phantomJsBin = phantomJsBin;
     }
+
+    public String getRootDir() {
+        return rootDir;
+    }
+
+    public void setRootDir(String rootDir) {
+        this.rootDir = rootDir;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -223,6 +233,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeString(this.scriptsDir);
         gen.writeFieldName("phantomjsbin");
         gen.writeString(this.phantomJsBin);
+        gen.writeStringField("rootdir", this.rootDir);
         gen.close();
         return baos.toByteArray();
     }
@@ -279,6 +290,9 @@ public class ApplicationServerInitRequest extends WSRequest {
                     break;
                 case "phantomjsbin":
                     asir.setPhantomJsBin(parser.getText());
+                    break;
+                case "rootdir":
+                    asir.setRootDir(parser.getText());
                     break;
             }
         }

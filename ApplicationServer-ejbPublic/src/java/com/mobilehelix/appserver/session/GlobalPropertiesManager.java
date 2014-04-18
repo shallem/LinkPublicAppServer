@@ -50,6 +50,7 @@ public class GlobalPropertiesManager {
     private Integer asPrivPort;
     private Integer asHttpPort;
     
+    private String rootDir;
     private String scriptsDir;
     private String phantomJsBin;
             
@@ -146,6 +147,14 @@ public class GlobalPropertiesManager {
 
     public void setPhantomJsBin(String phantomJsBin) {
         this.phantomJsBin = phantomJsBin;
+    }
+
+    public String getRootDir() {
+        return rootDir;
+    }
+
+    public void setRootDir(String rootDir) {
+        this.rootDir = rootDir;
     }
     
     public void asProperties(Map<String, Object> props) {

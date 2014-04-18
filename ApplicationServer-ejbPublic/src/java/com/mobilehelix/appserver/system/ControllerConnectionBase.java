@@ -72,7 +72,7 @@ public class ControllerConnectionBase {
         // Do nothing. We have no controller.
     }
     
-    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
+    public void processInitRequest(ApplicationServerInitRequest asir, String version) 
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
         this.globalProperties.setClientName(asir.getClientName());
@@ -80,12 +80,13 @@ public class ControllerConnectionBase {
         /* Store the pub/priv IP and port. */
         this.globalProperties.setAsPubIP(asir.getAsPubIP());
         this.globalProperties.setAsPubPort(asir.getAsPubPort());
-        this.globalProperties.setAsPrivIP(privIP);
+        this.globalProperties.setAsPrivIP(asir.getAsPrivIP());
         this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
         this.globalProperties.setAsHttpPort(asir.getAsHttpPort());
         
         this.globalProperties.setScriptsDir(asir.getScriptsDir());
         this.globalProperties.setPhantomJsBin(asir.getPhantomJsBin());
+        this.globalProperties.setRootDir(asir.getRootDir());
 
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
