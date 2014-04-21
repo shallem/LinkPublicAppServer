@@ -5,6 +5,7 @@
 package com.mobilehelix.services.objects;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.LinkedList;
 import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
@@ -23,6 +24,7 @@ public class WSPolicy {
     // Authentication policy.
     private boolean authIsDelegated;
     private Long authDelegateID;
+    private String authDelegatedName;
     private Integer passwordExpirationDays;
     
     // Session policy.
@@ -164,6 +166,14 @@ public class WSPolicy {
     public void setPasswordExpirationDays(Integer passwordExpirationDays) {
         this.passwordExpirationDays = passwordExpirationDays;
     }
+
+    public String getAuthDelegatedName() {
+        return authDelegatedName;
+    }
+
+    public void setAuthDelegatedName(String authDelegatedName) {
+        this.authDelegatedName = authDelegatedName;
+    }
     
     public void toBson(JsonGenerator gen, WSExtra.SerializeOptions options) throws IOException {
         gen.writeStartObject();
@@ -173,8 +183,11 @@ public class WSPolicy {
         gen.writeFieldName("delauth");
         gen.writeBoolean(authIsDelegated);
         if (authIsDelegated) {
-            gen.writeFieldName("delauthid");
-            gen.writeNumber(this.authDelegateID);
+            if (this.authDelegateID != null) {
+                gen.writeNumberField("delauthid", this.authDelegateID);
+            } else if (this.authDelegatedName != null) {
+                gen.writeStringField("delauthname", this.authDelegatedName);
+            }
         }
         if (this.passwordExpirationDays != null) {
             gen.writeFieldName("passexpire");
@@ -250,6 +263,9 @@ public class WSPolicy {
                     break;
                 case "delauthid":
                     wsp.setAuthDelegateID(parser.getLongValue());
+                    break;
+                case "delauthname":
+                    wsp.setAuthDelegatedName(parser.getText());
                     break;
                 case "sessto":
                     wsp.setSessionTimeoutMethod(parser.getIntValue());

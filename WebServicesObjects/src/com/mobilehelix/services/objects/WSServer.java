@@ -25,16 +25,17 @@ public class WSServer implements Comparable {
     private String serverName;
     private byte[] sessionID;
     private Integer serverType;
-    private String publicIPAddress;
-    private String privateIPAddress;
-    private Integer pubPort;
-    private Integer privPort;
+    private String publicIP;
+    private String privateIP;
+    private Integer publicPort;
+    private Integer privatePort;
     private Integer status;
     private String region;
     private Date lastContact;
     private Date lastSucessfulContact;
     private Integer[] appTypes;
     private String additionalClients;
+    private Boolean pingServer;
     
     public WSServer() {
     }
@@ -64,10 +65,10 @@ public class WSServer implements Comparable {
             Integer[] appTypes) {
         this.serverName = serverName;
         this.serverType = serverType;
-        this.publicIPAddress = publicIP;
-        this.privateIPAddress = privateIP;
-        this.pubPort = pubPort;
-        this.privPort = privPort;
+        this.publicIP = publicIP;
+        this.privateIP = privateIP;
+        this.publicPort = pubPort;
+        this.privatePort = privPort;
         this.region = region;
         this.status = null;
         this.appTypes = appTypes;
@@ -89,10 +90,10 @@ public class WSServer implements Comparable {
             String additionalClients) {
         this.serverName = serverName;
         this.serverType = serverType;
-        this.publicIPAddress = publicIP;
-        this.privateIPAddress = privateIP;
-        this.pubPort = pubport;
-        this.privPort = privport;
+        this.publicIP = publicIP;
+        this.privateIP = privateIP;
+        this.publicPort = pubport;
+        this.privatePort = privport;
         this.status = status;
         this.region = region;
         this.lastContact = lastContact;
@@ -128,10 +129,10 @@ public class WSServer implements Comparable {
         this.serverName = serverName;
         this.serverID = serverID;
         this.status = status;
-        this.publicIPAddress = pubIP;
-        this.pubPort = pubPort;
-        this.privateIPAddress = privIP;
-        this.privPort = privPort;
+        this.publicIP = pubIP;
+        this.publicPort = pubPort;
+        this.privateIP = privIP;
+        this.privatePort = privPort;
         this.region = region;
         this.sessionID = sessionID;
         this.serverType = serverType;
@@ -151,22 +152,6 @@ public class WSServer implements Comparable {
 
     public Date getLastSucessfulContact() {
         return lastSucessfulContact;
-    }
-
-    public Integer getPrivPort() {
-        return privPort;
-    }
-
-    public String getPrivateIPAddress() {
-        return privateIPAddress;
-    }
-
-    public Integer getPubPort() {
-        return pubPort;
-    }
-
-    public String getPublicIPAddress() {
-        return publicIPAddress;
     }
 
     public String getRegion() {
@@ -213,22 +198,6 @@ public class WSServer implements Comparable {
         this.serverType = serverType;
     }
 
-    public void setPublicIPAddress(String publicIPAddress) {
-        this.publicIPAddress = publicIPAddress;
-    }
-
-    public void setPrivateIPAddress(String privateIPAddress) {
-        this.privateIPAddress = privateIPAddress;
-    }
-
-    public void setPubPort(Integer pubPort) {
-        this.pubPort = pubPort;
-    }
-
-    public void setPrivPort(Integer privPort) {
-        this.privPort = privPort;
-    }
-
     public void setStatus(Integer status) {
         this.status = status;
     }
@@ -256,6 +225,46 @@ public class WSServer implements Comparable {
     public void setAdditionalClients(String additionalClients) {
         this.additionalClients = additionalClients;
     }
+
+    public String getPublicIP() {
+        return publicIP;
+    }
+
+    public void setPublicIP(String publicIP) {
+        this.publicIP = publicIP;
+    }
+
+    public String getPrivateIP() {
+        return privateIP;
+    }
+
+    public void setPrivateIP(String privateIP) {
+        this.privateIP = privateIP;
+    }
+
+    public Integer getPublicPort() {
+        return publicPort;
+    }
+
+    public void setPublicPort(Integer publicPort) {
+        this.publicPort = publicPort;
+    }
+
+    public Integer getPrivatePort() {
+        return privatePort;
+    }
+
+    public void setPrivatePort(Integer privatePort) {
+        this.privatePort = privatePort;
+    }
+
+    public Boolean getPingServer() {
+        return pingServer;
+    }
+
+    public void setPingServer(Boolean pingServer) {
+        this.pingServer = pingServer;
+    }
         
     public void fieldsToBSON(JsonGenerator gen) throws IOException {
         if (this.serverID != null) {
@@ -274,21 +283,21 @@ public class WSServer implements Comparable {
             gen.writeFieldName("region");
             gen.writeString(this.region);
         }
-        if (this.publicIPAddress != null) {
+        if (this.publicIP != null) {
             gen.writeFieldName("pubip");
-            gen.writeString(this.publicIPAddress);
+            gen.writeString(this.publicIP);
         }
-        if (this.pubPort != null) {
+        if (this.publicPort != null) {
             gen.writeFieldName("pubport");
-            gen.writeNumber(this.pubPort);
+            gen.writeNumber(this.publicPort);
         }
-        if (this.privateIPAddress != null) {
+        if (this.privateIP != null) {
             gen.writeFieldName("privip");
-            gen.writeString(this.privateIPAddress);
+            gen.writeString(this.privateIP);
         }
-        if (this.privPort != null) {
+        if (this.privatePort != null) {
             gen.writeFieldName("privport");
-            gen.writeNumber(this.privPort);
+            gen.writeNumber(this.privatePort);
         }
         if (this.status != null) {
             gen.writeFieldName("status");
@@ -305,6 +314,9 @@ public class WSServer implements Comparable {
         if (this.sessionID != null) {
             gen.writeFieldName("sessid");
             gen.writeBinary(this.sessionID);
+        }
+        if (this.pingServer != null) {
+            gen.writeBooleanField("ping", pingServer);
         }
         if (this.appTypes != null) {
             gen.writeArrayFieldStart("apptypes");
@@ -332,16 +344,16 @@ public class WSServer implements Comparable {
                 newServer.serverType = parser.getIntValue();
                 break;
             case "pubip":
-                newServer.publicIPAddress = parser.getText();
+                newServer.publicIP = parser.getText();
                 break;
             case "privip":
-                newServer.privateIPAddress = parser.getText();
+                newServer.privateIP = parser.getText();
                 break;
             case "pubport":
-                newServer.pubPort = parser.getIntValue();
+                newServer.publicPort = parser.getIntValue();
                 break;
             case "privport":
-                newServer.privPort = parser.getIntValue();
+                newServer.privatePort = parser.getIntValue();
                 break;
             case "status":
                 newServer.status = parser.getIntValue();
@@ -373,6 +385,9 @@ public class WSServer implements Comparable {
                 break;
             case "sessid":
                 newServer.sessionID = (byte[])parser.getEmbeddedObject();
+                break;
+            case "ping":
+                newServer.pingServer = parser.getBooleanValue();
                 break;
             default:
                 parsed = false;
@@ -406,8 +421,8 @@ public class WSServer implements Comparable {
         String fmt = "NAME=''{0}'',TYPE=''{1}'',PUBLICIP=''{2}'',PRIVATEIP=''{3}'',PUBPORT=''{4,number,#}'',PRIVPORT=''{5,number,#}'',STATUS=''{6}'',REGION=''{7}'',LASTCONTACT=''{8}'',LASTSUCCESSFULCONTACT=''{9}'',APPTYPES=''{10}''";
         MessageFormat mf = new MessageFormat(fmt);
         System.out.println(mf.format(new Object[]{this.serverName, this.serverType, 
-            this.publicIPAddress, this.privateIPAddress, this.pubPort, 
-            this.privPort, this.status, this.region, 
+            this.publicIP, this.privateIP, this.publicPort, 
+            this.privatePort, this.status, this.region, 
             this.lastContact != null ? this.lastContact.toString() : "null", 
             this.lastSucessfulContact != null ? this.lastSucessfulContact.toString() : "null",
             this.appTypes != null ? Arrays.toString(this.appTypes) : "null" }));
