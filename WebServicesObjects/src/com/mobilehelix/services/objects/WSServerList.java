@@ -4,6 +4,7 @@
  */
 package com.mobilehelix.services.objects;
 
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -11,22 +12,26 @@ import java.util.List;
  * @author shallem
  */
 public class WSServerList {
-    private WSServer[] servers;
+    private List<WSServer> servers;
     
     public WSServerList() {
-        
+        this.servers = new LinkedList<>();
     }
     
     public WSServerList(List<WSServer> serverList) {
-        this.servers = new WSServer[serverList.size()];
-        this.servers = serverList.toArray(this.servers);
+        this.servers = serverList;
     }
 
     public WSServer[] getServers() {
-        return servers;
+        WSServer[] ret = new WSServer[servers.size()];
+        return servers.toArray(ret);
     }
 
-    public void setServers(WSServer[] servers) {
+    public void setServers(List<WSServer> servers) {
         this.servers = servers;
+    }
+    
+    public void addServer(WSServer s) {
+        this.servers.add(s);
     }
 }

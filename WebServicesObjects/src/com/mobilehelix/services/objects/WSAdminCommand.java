@@ -37,6 +37,7 @@ import org.codehaus.jackson.JsonToken;
 public class WSAdminCommand {
     private String commandName;
     private String[] commandArgs;
+    private byte[] serverSessID;
     
     public WSAdminCommand() {
         
@@ -57,19 +58,27 @@ public class WSAdminCommand {
     public void setCommandArgs(String[] commandArgs) {
         this.commandArgs = commandArgs;
     }
+
+    public byte[] getServerSessID() {
+        return serverSessID;
+    }
+
+    public void setServerSessID(byte[] serverSessID) {
+        this.serverSessID = serverSessID;
+    }
     
-    public byte[] toBson(WSExtra.SerializeOptions serializeOptions) throws IOException {
+    public byte[] toBson() throws IOException {
         //serialize data
         BsonFactory factory = new BsonFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
         JsonGenerator gen = factory.createJsonGenerator(baos);
-        this.toBson(gen, serializeOptions);
+        this.toBson(gen);
         gen.close();
         return baos.toByteArray();
     }
     
-    public void toBson(JsonGenerator gen, WSExtra.SerializeOptions serializeOptions) throws IOException {
+    public void toBson(JsonGenerator gen) throws IOException {
 	gen.writeStartObject();
         gen.writeStringField("cmd", commandName);
         if (commandArgs != null) {
@@ -79,6 +88,7 @@ public class WSAdminCommand {
             }
             gen.writeEndArray();
         }
+        gen.writeBinaryField("sessid", serverSessID);
 	gen.writeEndObject();
     }
 
@@ -90,6 +100,7 @@ public class WSAdminCommand {
     public static WSAdminCommand fromBson(JsonParser parser) throws IOException {
 	String cmdName = null;
         List<String> args = null;
+        byte[] sessID = null;
         
         // Input should be pointing to START_OBJECT token.
         while (parser.nextToken() != JsonToken.END_OBJECT) {
@@ -108,6 +119,9 @@ public class WSAdminCommand {
                         args.add(s);
                     }
                     break;
+                case "sessid":
+                    sessID = (byte[])parser.getEmbeddedObject();
+                    break;
             }
         }
         
@@ -116,7 +130,8 @@ public class WSAdminCommand {
         
         String[] arr = new String[args.size()];
         adminCmd.setCommandArgs(args.toArray(arr));
-        
+        adminCmd.setServerSessID(sessID);
+
         return adminCmd;
     }
 }

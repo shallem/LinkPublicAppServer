@@ -158,7 +158,7 @@ public abstract class RestClient {
         this.headersToAdd.setProperty(key, value);
     }
     
-    private byte[] readResponseData(ClientResponse resp) throws UniformInterfaceException, IOException {
+    public byte[] readResponseData(ClientResponse resp) throws UniformInterfaceException, IOException {
         try {
             InputStream is = resp.getEntityInputStream();
        
