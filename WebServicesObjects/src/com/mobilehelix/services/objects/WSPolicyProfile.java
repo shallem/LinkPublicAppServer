@@ -17,8 +17,11 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class WSPolicyProfile {
-    private long appID;
+    private Long appID;
+    private String profileName;
+    private String profileType;
     private List<WSExtraGroup> extras;
+    private List<String> profileApplications;
     
     public WSPolicyProfile() {
         
@@ -31,7 +34,7 @@ public class WSPolicyProfile {
     public void setAppID(long appID) {
         this.appID = appID;
     }
-
+    
     public List<WSExtraGroup> getExtras() {
         return extras;
     }
@@ -39,10 +42,49 @@ public class WSPolicyProfile {
     public void setExtras(List<WSExtraGroup> extras) {
         this.extras = extras;
     }
+
+    public String getProfileName() {
+        return profileName;
+    }
+
+    public void setProfileName(String profileName) {
+        this.profileName = profileName;
+    }
+
+    public String getProfileType() {
+        return profileType;
+    }
+
+    public void setProfileType(String profileType) {
+        this.profileType = profileType;
+    }
+
+    public List<String> getProfileApplications() {
+        return profileApplications;
+    }
+
+    public void setProfileApplications(List<String> profileApplications) {
+        this.profileApplications = profileApplications;
+    }
     
     public void toBson(JsonGenerator gen, WSExtra.SerializeOptions serializeOptions) throws IOException {
         gen.writeStartObject();
-        gen.writeNumberField("appid", appID);
+        if (this.appID != null) {
+            gen.writeNumberField("appid", appID);
+        }
+        if (this.profileName != null) {
+            gen.writeStringField("name", this.profileName);
+        }
+        if (this.profileType != null) {
+            gen.writeStringField("type", this.profileType);
+        }
+        if (this.profileApplications != null) {
+            gen.writeArrayFieldStart("apps");
+            for (String appName : this.profileApplications) {
+                gen.writeString(appName);
+            }
+            gen.writeEndArray();
+        }
         gen.writeArrayFieldStart("extras");
         for (WSExtraGroup eg : extras) {
             eg.toBson(gen, serializeOptions);
@@ -62,6 +104,20 @@ public class WSPolicyProfile {
             switch (fieldName) {
                 case "appid":
                     profile.setAppID(parser.getLongValue());
+                    break;
+                case "name":
+                    profile.setProfileName(parser.getText());
+                    break;
+                case "type":
+                    profile.setProfileType(parser.getText());
+                    break;
+                case "apps":
+                    LinkedList<String> appNames = new LinkedList<>();
+                    while (parser.nextToken() != JsonToken.END_ARRAY) {
+                        String s = parser.getText();
+                        appNames.add(s);
+                    }
+                    profile.setProfileApplications(appNames);
                     break;
                 case "extras":
                     LinkedList<WSExtraGroup> attachedExtrasGroups = new LinkedList<>();
