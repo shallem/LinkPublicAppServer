@@ -30,7 +30,7 @@ public class WSExtra implements Comparable {
 
     public String tag;
     public int dataType;
-    public int schemaType;
+    public Integer schemaType;
     public String mergeFn;
     public Long groupID;
     public byte[] value;
@@ -186,7 +186,7 @@ public class WSExtra implements Comparable {
     }
 
     public void toBson(JsonGenerator gen, SerializeOptions serializeOptions) throws IOException {
-        if (this.isToDevice == null) {
+        if (this.isToDevice == null && serializeOptions != SerializeOptions.INCLUDE_ALL) {
             throw new IOException("Must set the toDevice field of a WSExtra to serialize it.");
         }
         switch(serializeOptions) {
@@ -209,10 +209,14 @@ public class WSExtra implements Comparable {
         gen.writeString(tag);
         gen.writeFieldName("datatype");
         gen.writeNumber(this.dataType);
-        gen.writeFieldName("schematype");
-        gen.writeNumber(this.schemaType);
-        gen.writeFieldName("mergefn");
-        gen.writeString(this.mergeFn);
+        if (this.schemaType != null) {            
+            gen.writeFieldName("schematype");
+            gen.writeNumber(this.schemaType);
+        }
+        if (this.mergeFn != null) {
+            gen.writeFieldName("mergefn");
+            gen.writeString(this.mergeFn);
+        }
         if (value != null) {
             gen.writeFieldName("value");
             gen.writeBinary(value);

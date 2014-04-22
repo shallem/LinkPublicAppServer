@@ -152,7 +152,9 @@ public class WSApplication {
     
     public void toBson(JsonGenerator gen, WSExtra.SerializeOptions serializeOptions) throws IOException {
 	gen.writeStartObject();
-        gen.writeStringField("client", client);
+        if (client != null) {
+            gen.writeStringField("client", client);
+        }
 	gen.writeFieldName("name");
 	gen.writeString(appName);
         if (this.appType != null) {

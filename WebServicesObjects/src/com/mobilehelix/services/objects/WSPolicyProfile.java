@@ -85,11 +85,13 @@ public class WSPolicyProfile {
             }
             gen.writeEndArray();
         }
-        gen.writeArrayFieldStart("extras");
-        for (WSExtraGroup eg : extras) {
-            eg.toBson(gen, serializeOptions);
+        if (this.extras != null) {
+            gen.writeArrayFieldStart("extras");
+            for (WSExtraGroup eg : extras) {
+                eg.toBson(gen, serializeOptions);
+            }
+            gen.writeEndArray();
         }
-        gen.writeEndArray();
         gen.writeEndObject();
     }
     
