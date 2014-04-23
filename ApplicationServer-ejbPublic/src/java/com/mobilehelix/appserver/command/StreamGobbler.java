@@ -46,6 +46,7 @@ public class StreamGobbler {
                     this.type,
                     line
                 });
+                output.append(line);
             }
         } catch (IOException ioe) {
             LOG.log(Level.SEVERE, "Failed to capture command output", ioe);

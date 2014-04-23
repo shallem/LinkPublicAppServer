@@ -44,13 +44,14 @@ public class AdminCommandWS {
     @POST
     public byte[] runCmd(byte [] b) {
         int statusCode = WSResponse.FAILURE;
-        String msg = "";
+        String msg = null;
         try {
             WSAdminCommand adminCmd = WSAdminCommand.fromBson(b);
             
             switch(adminCmd.getCommandName()) {
                 case "upgrade":
                     // Run the upgrade.
+                    msg = upgradeCmd.run();
                     break;
                 default:
                     break;
@@ -61,6 +62,10 @@ public class AdminCommandWS {
             msg = (ex.getLocalizedMessage() != null ? ex.getLocalizedMessage() : ex.getMessage());
         }
         
+        if (msg == null) {
+            msg = "Success";
+            statusCode = WSResponse.SUCCESS;
+        }
         GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
         try {
             return gbr.toBson();

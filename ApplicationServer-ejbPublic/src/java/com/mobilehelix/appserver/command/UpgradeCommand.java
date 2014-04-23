@@ -23,7 +23,7 @@ public class UpgradeCommand {
     @EJB
     private GlobalPropertiesManager globalProps;
     
-    public void run() throws IOException {
+    public String run() throws IOException {
         
         StringBuilder cmd = new StringBuilder();
         cmd.append("bash ").append(globalProps.getRootDir()).append(File.separator).append("autoupgrade.sh");
@@ -32,8 +32,25 @@ public class UpgradeCommand {
         Process proc = rt.exec(cmd.toString());
         StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR", null);
         StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT", null);
-
+        
         errorGobbler.run();
         outputGobbler.run();
+        
+        try {
+            Thread.sleep(5000);
+        
+            StringBuilder sb = new StringBuilder();
+            if (proc.exitValue() != 0) {
+                sb.append(outputGobbler.getOutput());
+                sb.append(errorGobbler.getOutput());
+                return sb.toString();
+            } else {
+                sb.append(outputGobbler.getOutput());
+                return sb.toString();                
+            }
+        } catch(Exception e) {
+            // Ignore - that means the process is still running, which is good.
+        }
+        return null;
     }
 }
