@@ -14,7 +14,7 @@ import java.util.logging.Logger;
  *
  * @author shallem
  */
-public class StreamGobbler {
+public class StreamGobbler extends Thread {
     private static final Logger LOG = Logger.getLogger(StreamGobbler.class.getName());
     
     private InputStream is;
@@ -34,6 +34,7 @@ public class StreamGobbler {
         return output.toString();
     }
     
+    @Override
     public void run()
     {
         try

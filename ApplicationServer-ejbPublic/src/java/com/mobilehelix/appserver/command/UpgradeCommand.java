@@ -17,7 +17,7 @@ import javax.ejb.Singleton;
  * @author shallem
  */
 @Singleton
-public class UpgradeCommand {
+public class UpgradeCommand  {
     private static final Logger LOG = Logger.getLogger(UpgradeCommand.class.getName());
   
     @EJB
@@ -33,8 +33,8 @@ public class UpgradeCommand {
         StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR", null);
         StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT", null);
         
-        errorGobbler.run();
-        outputGobbler.run();
+        errorGobbler.start();
+        outputGobbler.start();
         
         try {
             Thread.sleep(5000);
