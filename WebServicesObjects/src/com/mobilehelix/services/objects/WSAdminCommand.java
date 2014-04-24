@@ -127,9 +127,12 @@ public class WSAdminCommand {
         
         WSAdminCommand adminCmd = new WSAdminCommand();
 	adminCmd.setCommandName(cmdName);
+ 
+        if (args != null) {
+            String[] arr = new String[args.size()];
+            adminCmd.setCommandArgs(args.toArray(arr));
+        }
         
-        String[] arr = new String[args.size()];
-        adminCmd.setCommandArgs(args.toArray(arr));
         adminCmd.setServerSessID(sessID);
 
         return adminCmd;
