@@ -24,12 +24,12 @@ public class UpgradeCommand  {
     private GlobalPropertiesManager globalProps;
     
     public String run() throws IOException {
-        
-        StringBuilder cmd = new StringBuilder();
-        cmd.append("bash ").append(globalProps.getRootDir()).append(File.separator).append("autoupgrade.sh");
-        Runtime rt = Runtime.getRuntime();
+        ProcessBuilder pb = new ProcessBuilder("bash", globalProps.getRootDir() + File.separator + "autoupgrade.sh");
+        pb.directory(new File(globalProps.getRootDir()));
+        pb.redirectOutput(new File(globalProps.getRootDir() + File.separator + "LOG.out"));
+        pb.redirectError(new File(globalProps.getRootDir() + File.separator + "LOG.err"));
         LOG.log(Level.SEVERE, "The appserver is about to autoupgrade.");
-        Process proc = rt.exec(cmd.toString());
+        Process proc = pb.start();
         StreamGobbler errorGobbler = new StreamGobbler(proc.getErrorStream(), "ERROR", null);
         StreamGobbler outputGobbler = new StreamGobbler(proc.getInputStream(), "OUTPUT", null);
         
@@ -37,8 +37,6 @@ public class UpgradeCommand  {
         outputGobbler.start();
         
         try {
-            Thread.sleep(5000);
-        
             StringBuilder sb = new StringBuilder();
             if (proc.exitValue() != 0) {
                 sb.append(outputGobbler.getOutput());
