@@ -4,7 +4,7 @@
  */
 package com.mobilehelix.appserver.command;
 
-import com.mobilehelix.appserver.session.GlobalPropertiesManager;
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import java.io.File;
 import java.io.IOException;
 import java.util.logging.Level;
