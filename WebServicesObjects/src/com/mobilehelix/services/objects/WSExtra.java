@@ -16,6 +16,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
  *
@@ -57,9 +59,19 @@ public class WSExtra implements Comparable {
             return "";
         }
         
+        switch(this.dataType) {
+            case ExtraTypeConstants.EXTRA_TYPE_INT:
+                return this.getValueInteger().toString();
+            case ExtraTypeConstants.EXTRA_TYPE_BOOLEAN:
+                return this.getValueBoolean().toString();
+            case ExtraTypeConstants.EXTRA_TYPE_IMAGE:
+                return Base64.encodeBase64String(value);
+        }
+        
         return new String(this.value);
     }
     
+    @JsonIgnore
     public byte[] getValueBytes() {
         return this.value;
     }
@@ -98,10 +110,16 @@ public class WSExtra implements Comparable {
         this.dataType = ExtraTypeConstants.EXTRA_TYPE_STRING_LIST;
     }
     
-    public boolean getValueBoolean() {
+    @JsonIgnore
+    public Boolean getValueBoolean() {
+        if (this.dataType != ExtraTypeConstants.EXTRA_TYPE_BOOLEAN) {
+            return null;
+        }
+        
         return (this.value[0] == 1);
     }
     
+    @JsonProperty
     public void setValueBoolean(boolean b) {
         byte[] val = new byte[1];
         if (b) {
@@ -150,20 +168,32 @@ public class WSExtra implements Comparable {
         }
     }
     
+    @JsonIgnore
     public byte[] getValueImageFile() {
+        if (this.dataType != ExtraTypeConstants.EXTRA_TYPE_IMAGE) {
+            return null;
+        }
+        
         return this.value;
     }
-    
+ 
+    @JsonProperty
     public void setValueImageFile(String fileName) {
          this.setValueFile(fileName);
          this.dataType = ExtraTypeConstants.EXTRA_TYPE_IMAGE;
     }
     
+    @JsonIgnore
     public Integer getValueInteger() {
+        if (this.dataType != ExtraTypeConstants.EXTRA_TYPE_INT) {
+            return null;
+        }
+        
         String s = new String(this.value);
         return Integer.parseInt(s);
     }
     
+    @JsonProperty
     public void setValueInteger(Integer i) throws UnsupportedEncodingException {
         this.value = i.toString().getBytes("US-ASCII");
         this.dataType = ExtraTypeConstants.EXTRA_TYPE_INT;
@@ -177,7 +207,7 @@ public class WSExtra implements Comparable {
         this.mergeFn = mergeFn;
     }
 
-    public boolean isIsToDevice() {
+    public Boolean isIsToDevice() {
         return isToDevice;
     }
 

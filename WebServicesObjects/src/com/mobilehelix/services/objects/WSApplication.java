@@ -10,6 +10,8 @@ import java.util.List;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 public class WSApplication {
     private String client;
@@ -87,6 +89,7 @@ public class WSApplication {
         this.appName = appName;
     }
 
+    @JsonProperty
     public void setUniqueID(Long uniqueID) {
         this.uniqueID = uniqueID;
     }
@@ -123,6 +126,7 @@ public class WSApplication {
         return this.appGenId;
     }
     
+    @JsonIgnore
     public Long getUniqueID() {
         return uniqueID;
     }
