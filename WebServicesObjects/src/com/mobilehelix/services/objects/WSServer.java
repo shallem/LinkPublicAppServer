@@ -14,6 +14,8 @@ import java.util.LinkedList;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
  *
@@ -32,126 +34,27 @@ public class WSServer implements Comparable {
     private Integer status;
     private String region;
     private Date lastContact;
-    private Date lastSucessfulContact;
+    private Date lastSuccessfulContact;
     private Integer[] appTypes;
     private String additionalClients;
     private Boolean pingServer;
+    private String version;
     
     public WSServer() {
-    }
-    
-    /**
-     * Used when we are creating a server record during the install process for a gateway,
-     * mongo server, etc. and prior to registering that server.
-     * @param serverName
-     * @param serverType
-     * @param region 
-     */
-    public WSServer(String serverName,
-            Integer serverType,
-            String region) {
-        this.serverName = serverName;
-        this.serverType = serverType;
-        this.region = region;
-    }
-    
-    public WSServer(String serverName,
-            Integer serverType,
-            String publicIP,
-            Integer pubPort,
-            String privateIP,
-            Integer privPort,
-            String region,
-            Integer[] appTypes) {
-        this.serverName = serverName;
-        this.serverType = serverType;
-        this.publicIP = publicIP;
-        this.privateIP = privateIP;
-        this.publicPort = pubPort;
-        this.privatePort = privPort;
-        this.region = region;
-        this.status = null;
-        this.appTypes = appTypes;
-        this.lastContact = null;
-        this.lastSucessfulContact = null;
-    }
-
-    public WSServer(String serverName,
-            Integer serverType,
-            String publicIP,
-            String privateIP,
-            Integer pubport,
-            Integer privport,
-            Integer status,
-            String region,
-            Date lastContact,
-            Date lastSuccessfulContact,
-            Integer[] appTypes,
-            String additionalClients) {
-        this.serverName = serverName;
-        this.serverType = serverType;
-        this.publicIP = publicIP;
-        this.privateIP = privateIP;
-        this.publicPort = pubport;
-        this.privatePort = privport;
-        this.status = status;
-        this.region = region;
-        this.lastContact = lastContact;
-        this.lastSucessfulContact = lastSuccessfulContact;
-        this.appTypes = appTypes;
-        this.additionalClients = additionalClients;
-    }
-    
-    /**
-     * Partial constructor used to send a forwarding destination for a message. Primarily
-     * this is used to indicate that a message sent to a Gateway should be forwarded
-     * along to another server. That forwardee's information is encapsulated in this
-     * object.
-     * 
-     * @param publicIP
-     * @param publicPort
-     * @param sessionID
-     * @param appTypes 
-     */
-    public WSServer(String serverName,
-            Long serverID,
-            Integer status,
-            String pubIP,
-            Integer pubPort,
-            String privIP,
-            Integer privPort,
-            String region,
-            byte[] sessionID,
-            int serverType,
-            Date lastContact,
-            Integer[] appTypes,
-            String additionalClients) {
-        this.serverName = serverName;
-        this.serverID = serverID;
-        this.status = status;
-        this.publicIP = pubIP;
-        this.publicPort = pubPort;
-        this.privateIP = privIP;
-        this.privatePort = privPort;
-        this.region = region;
-        this.sessionID = sessionID;
-        this.serverType = serverType;
-        this.appTypes = appTypes;
-        this.lastContact = lastContact;
-        this.additionalClients = additionalClients;
-    }
-    
+    }    
     
     public String getServerName() {
         return this.serverName;
     }
 
+    @JsonIgnore
     public Date getLastContact() {
         return lastContact;
     }
 
-    public Date getLastSucessfulContact() {
-        return lastSucessfulContact;
+    @JsonIgnore
+    public Date getLastSuccessfulContact() {
+        return lastSuccessfulContact;
     }
 
     public String getRegion() {
@@ -174,10 +77,12 @@ public class WSServer implements Comparable {
         return sessionID;
     }
 
+    @JsonIgnore
     public Long getServerID() {
         return serverID;
     }
 
+    @JsonProperty
     public void setServerID(Long serverID) {
         this.serverID = serverID;
     }
@@ -210,8 +115,8 @@ public class WSServer implements Comparable {
         this.lastContact = lastContact;
     }
 
-    public void setLastSucessfulContact(Date lastSucessfulContact) {
-        this.lastSucessfulContact = lastSucessfulContact;
+    public void setLastSuccessfulContact(Date lastSucessfulContact) {
+        this.lastSuccessfulContact = lastSucessfulContact;
     }
 
     public void setAppTypes(Integer[] appTypes) {
@@ -265,6 +170,14 @@ public class WSServer implements Comparable {
     public void setPingServer(Boolean pingServer) {
         this.pingServer = pingServer;
     }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
         
     public void fieldsToBSON(JsonGenerator gen) throws IOException {
         if (this.serverID != null) {
@@ -307,9 +220,9 @@ public class WSServer implements Comparable {
             gen.writeFieldName("lastcontact");
             gen.writeString(this.lastContact.toString());
         }
-        if (this.lastSucessfulContact != null) {
+        if (this.lastSuccessfulContact != null) {
             gen.writeFieldName("lastsuccess");
-            gen.writeString(this.lastSucessfulContact.toString());
+            gen.writeString(this.lastSuccessfulContact.toString());
         }
         if (this.sessionID != null) {
             gen.writeFieldName("sessid");
@@ -372,7 +285,7 @@ public class WSServer implements Comparable {
                 {
                     SimpleDateFormat formatter = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy");
                     String lastSuccessfulContactStr = parser.getText();
-                    newServer.lastSucessfulContact = formatter.parse(lastSuccessfulContactStr);
+                    newServer.lastSuccessfulContact = formatter.parse(lastSuccessfulContactStr);
                     break;
                 }
             case "apptypes":
@@ -424,7 +337,7 @@ public class WSServer implements Comparable {
             this.publicIP, this.privateIP, this.publicPort, 
             this.privatePort, this.status, this.region, 
             this.lastContact != null ? this.lastContact.toString() : "null", 
-            this.lastSucessfulContact != null ? this.lastSucessfulContact.toString() : "null",
+            this.lastSuccessfulContact != null ? this.lastSuccessfulContact.toString() : "null",
             this.appTypes != null ? Arrays.toString(this.appTypes) : "null" }));
     }
 
