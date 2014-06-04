@@ -8,16 +8,22 @@
   </target>
 
   <target name="ApplicationServerServices">
-    <ant dir="ApplicationServerWebServices" target="jar" useNativeBaseDir="true"/>
+    <ant dir="ApplicationServerWebServices" target="jar" useNativeBaseDir="true">
+      <property file="${UserPropertiesFile}"/>
+    </ant>
   </target>
 
 
   <target name="ApplicationServer-ejbPublic">
-    <ant dir="ApplicationServer-ejbPublic" target="dist" useNativeBaseDir="true"/>
+    <ant dir="ApplicationServer-ejbPublic" target="dist" useNativeBaseDir="true">
+      <property file="${UserPropertiesFile}"/>
+    </ant>
   </target>
 
   <target name="ApplicationServer-adminws">
-    <ant dir="ApplicationServer-adminws" target="dist" useNativeBasedir="true"/>
+    <ant dir="ApplicationServer-adminws" target="dist" useNativeBasedir="true">
+      <property file="${UserPropertiesFile}"/>
+    </ant>
   </target>
 
   <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic"/>
