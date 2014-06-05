@@ -26,7 +26,7 @@
     </ant>
   </target>
 
-  <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic"/>
+  <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic,ApplicationServer-adminws"/>
 
   <target name="clean">
     <ant dir="ApplicationServerWebServices" target="clean" useNativeBaseDir="true">
