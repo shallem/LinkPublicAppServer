@@ -15,6 +15,7 @@
  */
 package com.mobilehelix.appserver.session;
 
+import com.mobilehelix.appserver.conn.ConnectionContainer;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationFacade;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
@@ -30,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -85,6 +87,9 @@ public class Session {
         
     /* Map from app IDs to policies. */
     private Map<Long, List<WSExtra> > policyMap;
+    
+    /* Map of connection objects stored in this session. */
+    private ConcurrentHashMap<String, ConnectionContainer> connMap;
     
     public Session(ApplicationServerCreateSessionRequest sess, 
             ApplicationInitializer appInit) throws AppserverSystemException {
@@ -158,6 +163,7 @@ public class Session {
             this.deviceType = deviceType;
             this.appFacades = new TreeMap<>();
             this.client = client;
+            this.connMap = new ConcurrentHashMap<>();
             
             // Do a JNDI lookup of the app registry.
             InitialContext ictx = new InitialContext();
@@ -369,24 +375,6 @@ public class Session {
         Integer[] ret = new Integer[this.appGenIDs.size()];
         return this.appGenIDs.toArray(ret);
     }
-
-    /*
-     * case "email_allow_push":
-                            this.pushAllowed = (wse.value[0] == 1) ? true : false;
-                            break;
-                        case "email_allow_push_subject":
-                            this.pushSubjectAllowed = (wse.value[0] == 1) ? true : false;
-                            break;
-                        case "email_allow_push_sender":
-                            this.pushSenderAllowed = (wse.value[0] == 1) ? true : false;
-                            break;
-                        case "email_alternative_subject":
-                            this.altSubject = wse.getValue();
-                            break;
-                        case "email_alternative_sender":
-                            this.altSender = wse.getValue();
-                            break;
-     */
     
     public WSExtra getPolicy(Long appID, String tag) {
         if (this.policyMap != null) {
@@ -408,9 +396,21 @@ public class Session {
         for (ApplicationFacade af : this.appFacades.values()) {
             af.close();
         }
+        for (ConnectionContainer cc : this.connMap.values()) {
+            cc.close();
+        }
     }
     
     public void getProperties(Map<String, Object> props) {
         this.initAS.getControllerConnection().getProperties(props);
     }    
+    
+    public ConnectionContainer getConnectionForType(Class c) {
+        return connMap.get(c.getName());
+    }
+    
+    public void saveConnectionForType(Class c,
+            ConnectionContainer cc) {
+        this.connMap.put(c.getName(), cc);
+    }
 }
