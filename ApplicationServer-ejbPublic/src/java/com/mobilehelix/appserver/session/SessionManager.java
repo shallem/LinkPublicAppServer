@@ -20,9 +20,14 @@ import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -43,8 +48,9 @@ import org.apache.commons.codec.binary.Base64;
 @Singleton
 @EJB(name="java:global/SessionManager", beanInterface=SessionManager.class)
 public class SessionManager {
-
-    private HashMap<String, Session> globalSessionMap;
+    private static final Logger LOG = Logger.getLogger(SessionManager.class.getName());
+    
+    private ConcurrentHashMap<String, Session> globalSessionMap;
     private Session debugSession;
 
     /* EJB to perform async init on application settings. */
@@ -61,14 +67,26 @@ public class SessionManager {
     
     @PostConstruct
     public void init() {
-        globalSessionMap = new HashMap<>();
+        globalSessionMap = new ConcurrentHashMap<>();
         
         // Determine what type of app registry we have ...
     }
 
+    public String hashSessionID(byte[] sessionKey) throws AppserverSystemException {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(sessionKey);
+            return Base64.encodeBase64String(md.digest());
+        } catch(NoSuchAlgorithmException ex) {
+            LOG.log(Level.SEVERE, "Failed to hash session key.", ex);
+            throw new AppserverSystemException("Failed to generate session ID hash.",
+                    "SessionIDHashingFailed");
+        }
+    }
+    
     public void addSession(ApplicationServerCreateSessionRequest sess)
             throws AppserverSystemException {
-        String sessIDB64 = new String(Base64.encodeBase64(sess.getSessionKey()));
+        String sessIDB64 = this.hashSessionID(sess.getSessionKey());
         Session appServerSession = new Session(sess, appInit);
         globalSessionMap.put(sessIDB64, appServerSession);
     }
@@ -78,8 +96,8 @@ public class SessionManager {
         sess.doAppInit(appIDs, appGenIDs, appInit);
     }
 
-    public void deleteSession(byte[] sessionKey) {
-        String sessIDB64 = new String(Base64.encodeBase64(sessionKey));
+    public void deleteSession(byte[] sessionHash) {
+        String sessIDB64 = Base64.encodeBase64String(sessionHash);
         
         Session s = globalSessionMap.get(sessIDB64);
         if (s != null) {
@@ -88,7 +106,7 @@ public class SessionManager {
         }
     }
 
-    private String getSessIDFromRequest(HttpServletRequest req) {
+    private String getSessIDFromRequest(HttpServletRequest req) throws AppserverSystemException {
         String sessIDB64 = req.getHeader(HTTPHeaderConstants.MH_SESSION_ID_HEADER);
         if ((sessIDB64 == null)  && (req.getCookies() != null)) {
             for (Cookie c : req.getCookies()) {
@@ -98,7 +116,12 @@ public class SessionManager {
                 }
             }
         }
-        return sessIDB64;
+        // Decode the B64-encoded key.
+        if (sessIDB64 != null) {
+            byte[] sessID = Base64.decodeBase64(sessIDB64);
+            return this.hashSessionID(sessID);
+        }
+        return null;
     }
 
     public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
