@@ -58,13 +58,23 @@ public interface PushReceiver {
     /**
      * Called each time the user creates a new session on this server. On each session
      * create the user's credentials may have changed. Any other relevant state should
-     * be updated here.
+     * be updated here as well, including the user's policy.
      * 
      * @param userid
      * @param password 
      */
     public void refresh(String userid,
-            String password);
+            String password,
+            ApplicationSettings appSettings);
+    
+    /**
+     * Called by other components of the app server to let the push session know that the
+     * user has refreshed data from the server. The idea is that counters or other state
+     * should be reset after a user refreshes the data that he/she is being notified of. For 
+     * example, this will reset the badge counts each time a user logs into the Link app and
+     * accesses his or her email.
+     */
+    public void refresh();
     
     /**
      * Called when a POST request to the push servlet using the unique ID of this object (specified

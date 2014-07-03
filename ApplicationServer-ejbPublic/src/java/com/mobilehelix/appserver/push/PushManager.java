@@ -86,7 +86,7 @@ public class PushManager {
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
                 if (receiver.matches(sess.getClient(), sess.getCredentials().getUsername(), appID)) {
-                    receiver.refresh(sess.getCredentials().getUsername(), sess.getCredentials().getPassword());
+                    receiver.refresh();
                 }
             }
         }
@@ -128,7 +128,7 @@ public class PushManager {
                     if (receiver.matches(newSess.getClient(), newSess.getUserID(), appID)) {
                         found = true;
                         LOG.log(Level.FINE, "Refreshing push session for {0}", combinedUser);
-                        receiver.refresh(newSess.getUserID(), newSess.getPassword());
+                        receiver.refresh(newSess.getUserID(), newSess.getPassword(), as);
                     }
                 }
             }
