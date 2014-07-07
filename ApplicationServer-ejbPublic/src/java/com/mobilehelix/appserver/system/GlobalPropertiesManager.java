@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mobilehelix.appserver.session;
+package com.mobilehelix.appserver.system;
 
 import java.util.Map;
 import javax.annotation.PostConstruct;

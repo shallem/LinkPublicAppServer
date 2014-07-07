@@ -22,6 +22,7 @@ import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
+import com.mobilehelix.appserver.system.ControllerConnectionBase;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
@@ -403,6 +404,10 @@ public class Session {
     
     public void getProperties(Map<String, Object> props) {
         this.initAS.getControllerConnection().getProperties(props);
+    } 
+    
+    public ControllerConnectionBase getControllerConnection() {
+        return this.initAS.getControllerConnection();
     }    
     
     public ConnectionContainer getConnectionForType(Class c) {

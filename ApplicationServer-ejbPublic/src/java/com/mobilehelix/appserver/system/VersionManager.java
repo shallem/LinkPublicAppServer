@@ -18,8 +18,6 @@ import javax.ejb.Startup;
 @Singleton
 @Startup
 public class VersionManager {
-    private static final Logger LOG = Logger.getLogger(VersionManager.class.getName());
-    
     static private final String versionProperties =
             "/com/mobilehelix/version/version.properties";
     private boolean initDone = false;
