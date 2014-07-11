@@ -126,6 +126,10 @@ public class ControllerConnectionBase {
         return (long)2;
     }
     
+    public String getPushServerName() {
+        return "";
+    }
+    
     public void setApplicationRegistry(ApplicationServerRegistry appRegistry) {
         this.appRegistry = appRegistry;
     }
