@@ -8,8 +8,8 @@ import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
-import com.mobilehelix.services.objects.ApplicationServerPingRequest;
-import com.mobilehelix.services.objects.ApplicationServerPingResponse;
+import com.mobilehelix.services.objects.PingRequest;
+import com.mobilehelix.services.objects.PingResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,7 +45,7 @@ public class PingWS {
         Long serverID = (long)-1;
         
         try {
-            ApplicationServerPingRequest preq = ApplicationServerPingRequest.fromBson(b);
+            PingRequest preq = PingRequest.fromBson(b);
             String reqSessionID = new String(preq.getServerSessId());
             if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
@@ -68,7 +68,7 @@ public class PingWS {
             }
         }
         
-        ApplicationServerPingResponse resp = new ApplicationServerPingResponse(statusCode, msg);
+        PingResponse resp = new PingResponse(statusCode, msg);
         if (statusCode == WSResponse.SUCCESS) {
             // Add the result for the main app server.
             resp.addServer(initEJB.getServerID(), sessMgr.getSessionCount());
