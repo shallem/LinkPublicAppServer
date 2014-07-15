@@ -125,4 +125,7 @@ public class InitApplicationServer {
         return this.controllerConnection.getPushServerID();
     }
            
+    public String getPushServerName() {
+        return this.controllerConnection.getPushServerName();
+    }
 }
