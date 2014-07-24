@@ -414,6 +414,10 @@ public class Session {
         return connMap.get(c.getName());
     }
     
+    public ApplicationSettings getCurrentApplication() {
+        return this.currentApplication;
+    }
+    
     public void saveConnectionForType(Class c,
             ConnectionContainer cc) {
         this.connMap.put(c.getName(), cc);
