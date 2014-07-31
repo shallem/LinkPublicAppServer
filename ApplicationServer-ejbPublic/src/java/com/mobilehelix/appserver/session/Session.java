@@ -182,6 +182,10 @@ public class Session {
         }
     }
 
+    public ApplicationSettings getCurrentApplication() {
+        return currentApplication;
+    }
+    
     public ApplicationFacade getCurrentFacade() {
         return currentFacade;
     }
