@@ -319,7 +319,7 @@ public class Session {
             throw new AppserverSystemException("Failed to lookup current application in process request.",
                             "SessionCannotFindApp");
         }
-        
+               
         if (this.currentFacade == null) {
             /* First time we have been here ... */
             didCreate = true;
@@ -416,7 +416,7 @@ public class Session {
     
     public ConnectionContainer getConnectionForType(Class c) {
         return connMap.get(c.getName());
-    }
+    }    
     
     public void saveConnectionForType(Class c,
             ConnectionContainer cc) {

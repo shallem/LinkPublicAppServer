@@ -47,17 +47,28 @@ public class SweepSessionWS {
             if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
-                msg = "Failed to authentication request.";
+                msg = "Failed to authenticate request.";
             } else {
+                int expired = sreq.getSessionKeysToDelete().size();
+                int deleted = 0;
+                
                 for (byte[] toDelete : sreq.getSessionKeysToDelete()) {
-                    sessionMgr.deleteSession(toDelete);
+                    if (this.sessionMgr.deleteSession(toDelete)) {
+                        deleted++;
+                    }
                 }
                 
-                statusCode = WSResponse.SUCCESS;
-                msg = "Success";
+                if (deleted == expired) {
+                    statusCode = WSResponse.SUCCESS;
+                    msg = "Success";
+                } else {
+                    statusCode = WSResponse.PARTIAL_SUCCESS;
+                    msg = String.valueOf(deleted) + " sessions swept out of " +
+                            String.valueOf(expired);
+                }
             }
         } catch(Exception e) {
-            LOGGER.log(Level.SEVERE, "Sweep session failed with exception.", e);
+            LOGGER.log(Level.SEVERE, "Sweep sessions failed with exception.", e);
             msg = e.getLocalizedMessage();
             statusCode = WSResponse.FAILURE;
             if (msg == null) {

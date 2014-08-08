@@ -23,7 +23,6 @@ import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,14 +96,20 @@ public class SessionManager {
         sess.doAppInit(appIDs, appGenIDs, appInit);
     }
 
-    public void deleteSession(byte[] sessionHash) {
-        String sessIDB64 = Base64.encodeBase64String(sessionHash);
-        
-        Session s = globalSessionMap.get(sessIDB64);
+    public boolean deleteSession(byte[] sessionHash) {
+        boolean res = true;
+        String sessIDB64 = Base64.encodeBase64String(sessionHash);        
+        Session s = this.globalSessionMap.get(sessIDB64);
+
         if (s != null) {
             s.close();
-            globalSessionMap.remove(sessIDB64);
+            this.globalSessionMap.remove(sessIDB64);
+        } else {
+            LOG.log(Level.WARNING, "Session with id [" + sessIDB64 + "] not found");
+            res = false;
         }
+        
+        return res;
     }
 
     private String getSessIDFromRequest(HttpServletRequest req) throws AppserverSystemException {
