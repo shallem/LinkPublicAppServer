@@ -15,10 +15,13 @@
                     <file>${reference.ApplicationServer-ejbPublic.dist}</file>
                 </library>
                 <library dirs="200">
-                    <file>${reference.WebServicesCore.jar}</file>
+                    <file>${reference.ApplicationServerWebServices.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${reference.ApplicationServerWebServices.jar}</file>
+                    <file>${file.reference.commons-io-2.4.jar}</file>
+                </library>
+                <library dirs="200">
+                    <file>${reference.WebServicesCore.jar}</file>
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>

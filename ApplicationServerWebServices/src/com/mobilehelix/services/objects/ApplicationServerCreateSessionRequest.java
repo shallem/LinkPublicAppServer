@@ -44,6 +44,7 @@ public class ApplicationServerCreateSessionRequest {
     private Long[] appIDs;
     private Integer[] appGenIDs;
     private byte[] serverSessionID;
+    private int serverType;
     
     public ApplicationServerCreateSessionRequest() {
     }
@@ -151,6 +152,14 @@ public class ApplicationServerCreateSessionRequest {
     public void setServerSessionID(byte[] serverSessionID) {
         this.serverSessionID = serverSessionID;
     }
+
+    public int getServerType() {
+        return serverType;
+    }
+
+    public void setServerType(int serverType) {
+        this.serverType = serverType;
+    }
     
     public byte[] toBson() throws IOException {
         //serialize data
@@ -160,6 +169,7 @@ public class ApplicationServerCreateSessionRequest {
         JsonGenerator gen = factory.createJsonGenerator(baos);
         gen.writeStartObject();
 	gen.writeBinaryField("serverkey", this.serverSessionID);
+        gen.writeNumberField("servertype", this.serverType);
         gen.writeFieldName("userid");
         gen.writeString(this.userID);
         gen.writeFieldName("password");
@@ -259,6 +269,9 @@ public class ApplicationServerCreateSessionRequest {
                     break;
                 case "serverkey":
                     ret.setServerSessionID((byte[])parser.getEmbeddedObject());
+                    break;
+                case "servertype":
+                    ret.setServerType(parser.getIntValue());
                     break;
             }
         }

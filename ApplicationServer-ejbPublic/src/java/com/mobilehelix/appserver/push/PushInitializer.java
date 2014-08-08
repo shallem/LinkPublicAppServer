@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mobilehelix.appserver.ejb;
+package com.mobilehelix.appserver.push;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.session.CredentialsManager;
-import com.mobilehelix.appserver.session.Session;
+import com.mobilehelix.appserver.settings.ApplicationSettings;
 import java.util.concurrent.Future;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
@@ -29,9 +28,17 @@ import javax.ejb.Stateless;
  */
 @Stateless
 @Asynchronous
-public class ApplicationInitializer {
-    public Future<Integer> doInit(ApplicationFacade af, Session session, CredentialsManager credentials) 
+public class PushInitializer {
+    public Future<Boolean> doInit(PushReceiver pr, 
+            String appServerHostName,
+            String uniqueID, 
+            String clientid,
+            String userid,
+            String password,
+            String deviceType,
+            ApplicationSettings appSettings,
+            PushCompletion onComplete) 
             throws AppserverSystemException {
-        return new AsyncResult<>(af.doInitOnSessionCreate(session, credentials));
+        return new AsyncResult<>(pr.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, onComplete));
     }
 }

@@ -17,6 +17,7 @@ package com.mobilehelix.appserver.ejb;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
+import com.mobilehelix.appserver.session.Session;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
@@ -76,7 +77,7 @@ public abstract class ApplicationFacade {
      * @return
      * @throws AppserverSystemException 
      */
-    public abstract Integer doInitOnSessionCreate(CredentialsManager credentials) 
+    public abstract Integer doInitOnSessionCreate(Session session, CredentialsManager credentials) 
             throws AppserverSystemException;
     
     /**
@@ -85,7 +86,7 @@ public abstract class ApplicationFacade {
      * @return
      * @throws AppserverSystemException 
      */
-    public abstract Integer doInitOnLoad(HttpServletRequest req,
+    public abstract Integer doInitOnLoad(Session session, HttpServletRequest req,
             CredentialsManager credentials) throws AppserverSystemException;
 
     /**

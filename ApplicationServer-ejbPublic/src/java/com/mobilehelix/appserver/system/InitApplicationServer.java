@@ -1,15 +1,27 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright 2013 Mobile Helix, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.session.GlobalPropertiesManager;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -24,6 +36,7 @@ import javax.ejb.Startup;
 @Startup
 @EJB(name="java:global/InitApplicationServer", beanInterface=InitApplicationServer.class)
 public class InitApplicationServer {
+    private static final Logger LOG = Logger.getLogger(InitApplicationServer.class.getName());
     
     // Global properties
     @EJB
@@ -32,6 +45,10 @@ public class InitApplicationServer {
     // Global session manager
     @EJB
     private SessionManager sessionMgr;
+
+    // Global version manager.
+    @EJB
+    private VersionManager versionMgr;
     
     private boolean isInitialized = false;
     
@@ -63,9 +80,17 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) throws AppserverSystemException {
+    public void processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {
+        LOG.log(Level.FINE, "Received init request with parameters: PublicIP={0},PubPort={1},PrivateIP={2},PrivPort={3}",
+                new Object[]{
+                    asir.getAsPubIP(),
+                    asir.getAsPubPort().toString(),
+                    asir.getAsPrivIP(),
+                    asir.getAsPrivPort().toString()
+                });
+        
         /* Register with the Controller, if we have one. */
-        this.controllerConnection.processInitRequest(asir, privIP);
+        this.controllerConnection.processInitRequest(asir, versionMgr.getVersion());
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;
@@ -85,7 +110,7 @@ public class InitApplicationServer {
     }
     
     public boolean isIsInitialized() {
-        return isInitialized;
+        return this.isInitialized;
     }
     
     public boolean validateSessionID(String incomingSessID) {
@@ -94,5 +119,13 @@ public class InitApplicationServer {
     
     public Long getServerID() {
         return this.controllerConnection.getServerID();
+    }
+    
+    public Long getPushServerID() {
+        return this.controllerConnection.getPushServerID();
+    }
+           
+    public String getPushServerName() {
+        return this.controllerConnection.getPushServerName();
     }
 }

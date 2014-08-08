@@ -15,66 +15,62 @@
  */
 package com.mobilehelix.appserver.ws;
 
-import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.appserver.command.UpgradeCommand;
 import com.mobilehelix.services.interfaces.WSResponse;
-import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
+import com.mobilehelix.services.objects.WSAdminCommand;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Context;
 
 /**
  *
  * @author shallem
  */
 @Stateless
-@Path("/initas")
+@Path("/admin")
 @PermitAll
-public class InitAppserverWS {
-    private static final Logger LOGGER = Logger
-        .getLogger(InitAppserverWS.class.getName());
-        
-    @Context
-    private HttpServletRequest request;
+public class AdminCommandWS {
+    private static final Logger LOG = Logger.getLogger(AdminCommandWS.class.getName());
     
     @EJB
-    private InitApplicationServer initEJB;
+    private UpgradeCommand upgradeCmd;
     
     @POST
-    public byte[] InitAS(byte [] b) {
+    public byte[] runCmd(byte [] b) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
-
-        ApplicationServerInitRequest asir = null;
-        
         try {
-            asir = ApplicationServerInitRequest.fromBson(b);
-            initEJB.processInitRequest(asir);
-        
-            statusCode = WSResponse.SUCCESS;
-            msg = "Success";
-        } catch(Exception e) {
-                LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
-            msg = e.getLocalizedMessage();
-            statusCode = WSResponse.FAILURE;
+            WSAdminCommand adminCmd = WSAdminCommand.fromBson(b);
             
-            if (msg == null) {
-                msg = "Unspecified failure ("+e.getClass().getSimpleName()+")";
+            switch(adminCmd.getCommandName()) {
+                case "upgrade":
+                    // Run the upgrade.
+                    msg = upgradeCmd.run();
+                    break;
+                default:
+                    break;
             }
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, "Failed to de-serialize admin command.", ex);
+            statusCode = WSResponse.FAILURE;
+            msg = (ex.getLocalizedMessage() != null ? ex.getLocalizedMessage() : ex.getMessage());
         }
         
+        if (msg == null) {
+            msg = "Success";
+            statusCode = WSResponse.SUCCESS;
+        }
         GenericBsonResponse gbr = new GenericBsonResponse(statusCode, msg);
         try {
             return gbr.toBson();
         } catch (IOException ioe) {
-            LOGGER.log(Level.SEVERE, "Failed to serialize gateway cert response.", ioe);
+            LOG.log(Level.SEVERE, "Failed to serialize delete app response.", ioe);
         }
         return null;
     }

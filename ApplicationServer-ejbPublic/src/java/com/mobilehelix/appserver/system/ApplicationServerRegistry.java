@@ -16,12 +16,17 @@
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.settings.ApplicationSettingsFactory;
 import com.mobilehelix.services.objects.WSApplication;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import javax.annotation.PostConstruct;
+import javax.annotation.security.PermitAll;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -34,6 +39,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@PermitAll
 @EJB(name="java:global/ApplicationServerRegistry", beanInterface=ApplicationServerRegistry.class)
 public class ApplicationServerRegistry {
     // Indexed by client, then app ID.
@@ -105,17 +111,25 @@ public class ApplicationServerRegistry {
     }
     
     /**
-     * Used while debugging. Get the first application settings object of the right type.
+     * Get the first application settings object of the right type that is contained
+     * within the supplied session.
+     * 
      * @param apptype
      * @return 
      */
-    public ApplicationSettings getSettingsForApplicationType(String client, int apptype) {
+    public ApplicationSettings getSettingsForApplicationType(String client, 
+            int apptype,
+            Session sess) {
         TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
         if (cliMap == null) {
             return null;
         }
+        
+        Set<Long> appIDSet = new TreeSet<>();
+        appIDSet.addAll(Arrays.asList(sess.getAppIDs()));
         for (ApplicationSettings appSettings : cliMap.values()) {
-            if (appSettings.getAppType() == apptype) {
+            if (appSettings.getAppType() == apptype &&
+                    appIDSet.contains(appSettings.getAppID())) {
                 return appSettings;
             }
         }
@@ -136,5 +150,27 @@ public class ApplicationServerRegistry {
             return;
         }
         cliMap.remove(appID);
+    }
+    
+    public Long[] getAppIDs(String client) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        Long[] ret = new Long[cliMap.keySet().size()];
+        return cliMap.keySet().toArray(ret);
+    }
+    
+    public Integer[] getAppGenIDs(String client) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        if (cliMap == null) {
+            return null;
+        }
+        Integer[] ret = new Integer[cliMap.keySet().size()];
+        int i = 0;
+        for (ApplicationSettings as : cliMap.values()) {
+            ret[i++] = as.getAppGenID();
+        }
+        return ret;
     }
 }
