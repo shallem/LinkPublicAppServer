@@ -401,9 +401,11 @@ public class Session {
         for (ApplicationFacade af : this.appFacades.values()) {
             af.close();
         }
+        this.appFacades.clear();
         for (ConnectionContainer cc : this.connMap.values()) {
             cc.close();
         }
+        this.connMap.clear();
     }
     
     public void getProperties(Map<String, Object> props) {
