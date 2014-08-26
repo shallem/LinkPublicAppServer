@@ -230,17 +230,10 @@ public class Session {
      * Find the record for the application this request is attempting to access. Return
      * true if the record is found, false if not. If not, the caller should redirect the
      * request to an error landing page.
-     * 
-     * @param req
-     * @param apptype
-     * @return 
      */
-    private void findApplication(HttpServletRequest req,
+    public void initCurrentApplication(String appID, String appGenID,
             int apptype) throws AppserverSystemException {
         
-        String appID = this.getAppIDFromRequest(req);
-        String appGenID = this.getAppGenFromRequest(req);
-
         if (this.currentApplication != null) {
             /* Make sure the app didn't change ... */
             if (appID != null &&
@@ -279,20 +272,23 @@ public class Session {
         if (this.currentApplication != null) {
             // Whenever we change apps, we reset the current facade.
             this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
-        }
+        } else {
+            /* Could not lookup the application. Fail. */
+            throw new AppserverSystemException("Failed to lookup current application in process request.",
+                            "SessionCannotFindApp");
+        }        
     }
     
     /**
      * Should be called when a GET page request arrives.
      */
-    public void processRequest(HttpServletRequest req, int apptype) 
+    public void processRequest(HttpServletRequest req, int appType) 
             throws AppserverSystemException {        
         String reqUsername = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_USERNAME_HEADER);
         String reqPassword = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_PASSWORD_HEADER);
 
         boolean didChangeUser = false;
         boolean didChangePassword = false;
-        boolean didCreate = false;
         
         /* Handle operations that are fully encapsulated in the request first. */
         if (reqUsername != null) {
@@ -312,40 +308,40 @@ public class Session {
             });   
         
         /* Setup the application and facade. */
-        this.findApplication(req, apptype);
+        String appID = this.getAppIDFromRequest(req);
+        String appGenID = this.getAppGenFromRequest(req);
+        this.initCurrentApplication(appID, appGenID, appType);        
+        this.initCurrentFacade(didChangeUser || didChangePassword);
+    }
+
+    
+    public int initCurrentFacade(boolean reinit) throws AppserverSystemException {
+        int status = 0;
         
-        if (this.currentApplication == null) {
-            /* Could not lookup the application. Fail. */
-            throw new AppserverSystemException("Failed to lookup current application in process request.",
-                            "SessionCannotFindApp");
-        }
-               
         if (this.currentFacade == null) {
             /* First time we have been here ... */
-            didCreate = true;
-                
             /* This will generally only happen in debug sessions. */
             this.currentFacade = this.currentApplication.createFacade(this, appRegistry, debugOn);
             
             /* Store the mapping from app ID to facade. */
             this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
-        } 
-        
-        if (!didCreate) {
+        } else {
             /* Block until the app facade init is done. This init is started when the session
              * is created.
              */
-            Integer status = this.currentFacade.getInitStatus();
+            status = this.currentFacade.getInitStatus();
         }
         
         /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
-        if (!this.currentFacade.getInitOnLoadDone() || didChangeUser || didChangePassword) {
+        if (!this.currentFacade.getInitOnLoadDone() || reinit) {
             /* Need to re-init the facade because credentials have changed. */
-            this.currentFacade.doInitOnLoad(this, req, credentials);
+            this.currentFacade.doInitOnLoad(this, credentials);
             
             /* Inidicate the first load is one. */
             this.currentFacade.setInitOnLoadDone();
         }   
+        
+        return status;
     }
 
     public String getServerBaseURL() {

@@ -84,11 +84,12 @@ public class SessionManager {
         }
     }
     
-    public void addSession(ApplicationServerCreateSessionRequest sess)
+    public Session addSession(ApplicationServerCreateSessionRequest sess)
             throws AppserverSystemException {
         String sessIDB64 = this.hashSessionID(sess.getSessionKey());
         Session appServerSession = new Session(sess, appInit);
         globalSessionMap.put(sessIDB64, appServerSession);
+        return appServerSession;
     }
 
     public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
