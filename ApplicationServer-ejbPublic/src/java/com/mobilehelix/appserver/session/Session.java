@@ -28,6 +28,7 @@ import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,7 @@ public class Session {
     private InitApplicationServer initAS;
     
     /* Map from appID to the app-specific facade for that app ID. */
-    private TreeMap<Long, ApplicationFacade> appFacades;    
+    private final TreeMap<Long, ApplicationFacade> appFacades;    
 
     /* Full settings object for the current application. */
     private ApplicationSettings currentApplication;
@@ -81,19 +82,29 @@ public class Session {
     private String client;
     
     /* List of app IDs in the session. */
-    private List<Long> appIDs;
+    private final List<Long> appIDs;
     
     /* List of app gen IDs in the session. */
-    private List<Integer> appGenIDs;
+    private final List<Integer> appGenIDs;
         
     /* Map from app IDs to policies. */
-    private Map<Long, List<WSExtra> > policyMap;
+    private final Map<Long, List<WSExtra> > policyMap;
     
     /* Map of connection objects stored in this session. */
-    private ConcurrentHashMap<String, ConnectionContainer> connMap;
+    private final ConcurrentHashMap<String, ConnectionContainer> connMap;
+
+    /* Map used to extend properties of session with app specific data */
+    private final Map<String, Object> contextMap;
+
     
     public Session(ApplicationServerCreateSessionRequest sess, 
             ApplicationInitializer appInit) throws AppserverSystemException {
+        this.appIDs = new LinkedList<>();
+        this.appGenIDs = new LinkedList<>();
+        this.contextMap = new HashMap<>();
+        this.connMap = new ConcurrentHashMap<>();
+        this.policyMap = new HashMap<>();
+        this.appFacades = new TreeMap<>();
         this.init(sess.getClient(), sess.getUserID(), sess.getPassword(), sess.getDeviceType(), false);
         // Do application-specific init for each application in the session.
         if (sess.getAppIDs() == null) {
@@ -105,15 +116,18 @@ public class Session {
     
     public Session(String client, String username, String password) throws AppserverSystemException {
         // ONLY used for debugging.
+        this.appIDs = new LinkedList<>();
+        this.appGenIDs = new LinkedList<>();
+        this.contextMap = new HashMap<>();
+        this.connMap = new ConcurrentHashMap<>();
+        this.policyMap = new HashMap<>();
+        this.appFacades = new TreeMap<>();
         this.init(client, username, password, "iPhone", true);
     }
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
-            ApplicationInitializer appInit) throws AppserverSystemException {
-        this.appIDs = new LinkedList<>();
-        this.appGenIDs = new LinkedList<>();
-        
+            ApplicationInitializer appInit) throws AppserverSystemException {        
         List<ApplicationSettings> sessApps = new LinkedList<>();
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
@@ -134,7 +148,7 @@ public class Session {
         
         try {
             // Now download all app policies for this session.
-            policyMap = initAS.getControllerConnection().downloadAppPolicies(this);
+            this.policyMap.putAll(this.initAS.getControllerConnection().downloadAppPolicies(this));
         } catch (IOException ex) {
             throw new AppserverSystemException("Failed to load app policies.",
                     "SessionCannotLoadAppPolicies",
@@ -143,7 +157,7 @@ public class Session {
         
         // Now, with policies in hand, initialize all apps.
         for (ApplicationSettings as : sessApps) {
-            ApplicationFacade af = as.createFacade(this, appRegistry, false);
+            ApplicationFacade af = as.createFacade(this, this.appRegistry, false);
             if (af != null) {
                 af.setInitStatus(appInit.doInit(af, this, this.credentials));
                 af.setAppID(as.getAppID());
@@ -162,9 +176,7 @@ public class Session {
             credentials = new CredentialsManager(client, username, password);
             this.debugOn = debugOn;
             this.deviceType = deviceType;
-            this.appFacades = new TreeMap<>();
             this.client = client;
-            this.connMap = new ConcurrentHashMap<>();
             
             // Do a JNDI lookup of the app registry.
             InitialContext ictx = new InitialContext();
@@ -337,13 +349,21 @@ public class Session {
             /* Need to re-init the facade because credentials have changed. */
             this.currentFacade.doInitOnLoad(this, credentials);
             
-            /* Inidicate the first load is one. */
+            /* Indicate the first load is one. */
             this.currentFacade.setInitOnLoadDone();
         }   
         
         return status;
     }
 
+    public Object getProperty(String key) {
+        return this.contextMap.get(key);
+    }
+    
+    public void setProperty(String key, Object value) {
+        this.contextMap.put(key, value);
+    }
+    
     public String getServerBaseURL() {
         return serverBaseURL;
     }
@@ -391,6 +411,14 @@ public class Session {
             }
         }
         return null;
+    }
+    
+    // Return the session IDs of the child sessions created by this instance
+    public void getChildren(List<byte[]> sessionIds) {
+       byte[] szSessionId = (byte[]) this.getProperty("szSessionId");
+       
+       if (szSessionId != null)
+           sessionIds.add(szSessionId);
     }
     
     public void close() {
