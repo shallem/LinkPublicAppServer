@@ -8,7 +8,6 @@
             <included-library dirs="200">file.reference.jcifs-1.3.17.jar</included-library>
             <included-library dirs="200">file.reference.jersey-bundle-1.14.jar</included-library>
             <included-library dirs="200">file.reference.commons-httpclient-3.1.jar</included-library>
-            <included-library dirs="200">reference.WebServicesCore.jar</included-library>
             <included-library dirs="200">file.reference.httpclient-4.3.4.jar</included-library>
             <included-library dirs="200">file.reference.httpcore-4.3.2.jar</included-library>
             <source-roots>
@@ -29,6 +28,14 @@
             </reference>
             <reference>
                 <foreign-project>WebServicesCore</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>WebUtils</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>
