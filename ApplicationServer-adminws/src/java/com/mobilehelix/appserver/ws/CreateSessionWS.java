@@ -52,7 +52,7 @@ public class CreateSessionWS {
             if (!initEJB.validateSessionID(reqSessionID)) {
                 /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
-                msg = "Failed to authentication request.";
+                msg = "Failed to authenticate request.";
             } else if (!initEJB.isIsInitialized()) {
                 statusCode = WSResponse.FAILURE;
                 msg = "Cannot create a session on the app server because it is not initialized.";

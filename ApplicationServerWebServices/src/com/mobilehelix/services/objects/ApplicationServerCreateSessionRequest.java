@@ -47,6 +47,9 @@ public class ApplicationServerCreateSessionRequest {
     private int serverType;
     
     public ApplicationServerCreateSessionRequest() {
+        this.deviceLatitude = new Double(0);
+        this.deviceLongitude = new Double(0);
+        this.deviceRegion = "unavailable";
     }
     
     public int getSessionExpirationType() {
