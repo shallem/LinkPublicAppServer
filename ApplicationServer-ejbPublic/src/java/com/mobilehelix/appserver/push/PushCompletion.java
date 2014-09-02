@@ -4,7 +4,6 @@
  */
 package com.mobilehelix.appserver.push;
 
-import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -40,5 +39,10 @@ public class PushCompletion {
             this.userPushMap.put(combinedUser, receivers);
         } 
         receivers.add(newReceiver);
+    }
+    
+    public void fail() {
+        // On fail we do nothing ... the next time the user logs in we will try
+        // again.
     }
 }

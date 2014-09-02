@@ -16,16 +16,17 @@
 package com.mobilehelix.appserver.push;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.MessageFormat;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
@@ -33,6 +34,7 @@ import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import javax.ejb.EJB;
+import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import org.apache.commons.codec.binary.Hex;
@@ -49,6 +51,7 @@ public class PushManager {
     private static final Logger LOG = Logger.getLogger(PushManager.class.getName());
     
     
+    public static byte[] notFoundResponse;
     private ConcurrentHashMap<String, ConcurrentLinkedQueue<PushReceiver> > userPushMap;
     private ConcurrentHashMap<String, PushReceiver> idMap;
     
@@ -141,6 +144,7 @@ public class PushManager {
                     pushInit.doInit(newReceiver, 
                             asHostPlusPort, 
                             uniqueID, 
+                            combinedUser,
                             newSess.getClient(), 
                             newSess.getUserID(), 
                             newSess.getPassword(), 
@@ -163,6 +167,34 @@ public class PushManager {
                         new String[] { ex.getMessage() });
             }
         } 
+    }
+    
+    public void storeSession(String uniqueID,
+            String combinedUser,
+            PushReceiver newReceiver) {
+        idMap.put(uniqueID, newReceiver);
+        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        if (receivers == null) {
+            receivers = new ConcurrentLinkedQueue<>();
+            this.userPushMap.put(combinedUser, receivers);
+        } 
+        receivers.add(newReceiver);
+    }
+    
+    public void removeSession(String uniqueID,
+            String combinedUser) {
+        idMap.remove(uniqueID);
+        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        if (receivers != null) {
+            Iterator<PushReceiver> it = receivers.iterator();
+            while (it.hasNext()) {
+                PushReceiver pr = it.next();
+                if (pr.getUniqueID().equals(uniqueID)) {
+                    receivers.iterator().remove();
+                    break;
+                }
+            }
+        }
     }
     
     private String getUniqueID(String clientid,
@@ -189,5 +221,28 @@ public class PushManager {
     
     public int getPushSessionCount() {
         return idMap.keySet().size();
+    }
+    
+    public static void setNotFoundResponse(byte[] b) {
+        PushManager.notFoundResponse = b;
+    }
+    
+    public static byte[] getNotFoundResponse() {
+        return PushManager.notFoundResponse;
+    }
+    
+    /**
+     * Periodic method that invokes the override-able check method on all push 
+     * sessions. This is a way for a push session to ensure that it is still alive
+     * every 10 minutes.
+     */
+    @Schedule(minute="*/10")
+    public void doCheck() {
+        for (PushReceiver pr : this.idMap.values()) {
+            if (pr.check() == false) {
+                // Delete the push session ...
+                this.removeSession(pr.getUniqueID(), pr.getCombinedUser());
+            }
+        }
     }
 }
