@@ -23,6 +23,7 @@ import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,11 +85,12 @@ public class SessionManager {
         }
     }
     
-    public void addSession(ApplicationServerCreateSessionRequest sess)
+    public Session addSession(ApplicationServerCreateSessionRequest sess)
             throws AppserverSystemException {
         String sessIDB64 = this.hashSessionID(sess.getSessionKey());
         Session appServerSession = new Session(sess, appInit);
         globalSessionMap.put(sessIDB64, appServerSession);
+        return appServerSession;
     }
 
     public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
@@ -102,6 +104,13 @@ public class SessionManager {
         Session s = this.globalSessionMap.get(sessIDB64);
 
         if (s != null) {
+            // If this session created child sessions, sweep the children as well
+            List<byte[]> childrenIds = new ArrayList<>();
+            s.getChildren(childrenIds);
+            
+            for (byte[] id : childrenIds)
+                this.deleteSession(id);
+            
             s.close();
             this.globalSessionMap.remove(sessIDB64);
         } else {
