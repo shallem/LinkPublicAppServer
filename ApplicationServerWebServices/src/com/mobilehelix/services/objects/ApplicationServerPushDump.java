@@ -54,8 +54,11 @@ public class ApplicationServerPushDump extends WSResponse {
     @Override
     protected void fromBson(byte[] b) throws IOException {
         JsonParser parser = WSResponse.InitFromBSON(b);
-        while (parser.nextToken() != JsonToken.END_OBJECT) {
+        JsonToken nxtToken = parser.nextToken();
+        while (nxtToken != JsonToken.END_OBJECT) {
+            parser.nextToken();
             this.addPushSession(ApplicationServerPushSession.fromBson(parser));
+            nxtToken = parser.nextToken();
         }
     }
     
