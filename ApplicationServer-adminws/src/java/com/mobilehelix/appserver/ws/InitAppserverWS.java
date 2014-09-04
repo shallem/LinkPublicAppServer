@@ -39,10 +39,7 @@ import javax.ws.rs.core.Context;
 @PermitAll
 public class InitAppserverWS {
     private static final Logger LOGGER = Logger
-        .getLogger(InitAppserverWS.class.getName());
-        
-    @Context
-    private HttpServletRequest request;
+        .getLogger(InitAppserverWS.class.getName());    
     
     @EJB
     private InitApplicationServer initEJB;
@@ -56,10 +53,8 @@ public class InitAppserverWS {
         
         try {
             asir = ApplicationServerInitRequest.fromBson(b);
-            initEJB.processInitRequest(asir);
-        
+            msg = initEJB.processInitRequest(asir);
             statusCode = WSResponse.SUCCESS;
-            msg = "Success";
         } catch(Exception e) {
                 LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
             msg = e.getLocalizedMessage();

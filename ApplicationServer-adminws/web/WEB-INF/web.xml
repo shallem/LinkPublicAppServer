@@ -20,6 +20,9 @@
         </cookie-config>
         <tracking-mode>COOKIE</tracking-mode>
     </session-config>
+    <login-config>
+        <auth-method>CLIENT-CERT</auth-method>
+    </login-config>
     <security-constraint>
         <display-name>HttpsConstraint</display-name>
         <web-resource-collection>

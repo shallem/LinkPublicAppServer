@@ -49,8 +49,9 @@ public class CreateSessionWS {
         try {
             creq = ApplicationServerCreateSessionRequest.fromBson(b);
             String reqSessionID = new String(creq.getServerSessionID());
+            
             if (!initEJB.validateSessionID(reqSessionID)) {
-                /* Cannot authenticate this request. */
+                    /* Cannot authenticate this request. */
                 statusCode = WSResponse.FAILURE;
                 msg = "Failed to authenticate request.";
             } else if (!initEJB.isIsInitialized()) {

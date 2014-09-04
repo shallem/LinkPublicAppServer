@@ -80,7 +80,7 @@ public class InitApplicationServer {
      * and is referenced by the com.mobilehelix.certdir system property.
      * @param storePass 
      */
-    public void processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {
+    public String processInitRequest(ApplicationServerInitRequest asir) throws AppserverSystemException {
         LOG.log(Level.FINE, "Received init request with parameters: PublicIP={0},PubPort={1},PrivateIP={2},PrivPort={3}",
                 new Object[]{
                     asir.getAsPubIP(),
@@ -90,7 +90,7 @@ public class InitApplicationServer {
                 });
         
         /* Register with the Controller, if we have one. */
-        this.controllerConnection.processInitRequest(asir, versionMgr.getVersion());
+        String ret = this.controllerConnection.processInitRequest(asir, versionMgr.getVersion());
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;
@@ -103,6 +103,7 @@ public class InitApplicationServer {
             sessionMgr.setDebugSession(null);
             System.setProperty("jcifs.util.loglevel", "3");
         }
+        return ret;
     }
     
     public ControllerConnectionBase getControllerConnection() {

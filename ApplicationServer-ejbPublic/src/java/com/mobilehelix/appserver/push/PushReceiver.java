@@ -33,7 +33,12 @@ import com.mobilehelix.appserver.settings.ApplicationSettings;
  */
 public abstract class PushReceiver {
     private String uniqueID;
+    private String clientid;
+    private String userid;
+    private String password;
+    private String deviceType;
     private String combinedUser;
+    private Long appID;
     
     /**
      * Invoked in the async init from the push manager. This method is responsible
@@ -46,10 +51,17 @@ public abstract class PushReceiver {
             String userid,
             String password,
             String deviceType,
+            Long appID,
             ApplicationSettings appSettings,
             PushCompletion pushAccepted) throws AppserverSystemException {
         this.uniqueID = uniqueID;
         this.combinedUser = combinedUser;
+        this.clientid = clientid;
+        this.userid = userid;
+        this.password = password;
+        this.deviceType = deviceType;
+        this.appID = appID;
+        
         return this.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, pushAccepted);
     }
     
@@ -141,5 +153,25 @@ public abstract class PushReceiver {
      */
     public final String getCombinedUser() {
         return this.combinedUser;
+    }
+
+    public final String getClientid() {
+        return clientid;
+    }
+
+    public final String getUserid() {
+        return userid;
+    }
+
+    public final String getPassword() {
+        return password;
+    }
+
+    public final String getDeviceType() {
+        return deviceType;
+    }
+
+    public Long getAppID() {
+        return appID;
     }
 }

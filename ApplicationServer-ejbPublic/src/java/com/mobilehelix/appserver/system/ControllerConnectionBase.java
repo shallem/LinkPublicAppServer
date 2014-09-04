@@ -71,7 +71,7 @@ public class ControllerConnectionBase {
         // Do nothing. We have no controller.
     }
     
-    public void processInitRequest(ApplicationServerInitRequest asir, String version) 
+    public String processInitRequest(ApplicationServerInitRequest asir, String version) 
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
         this.globalProperties.setClientName(asir.getClientName());
@@ -91,6 +91,7 @@ public class ControllerConnectionBase {
          * no different than restarting the app server.
          */
         this.sessionMgr.sweepAllSessions();
+        return "";
     }
     
     /**
