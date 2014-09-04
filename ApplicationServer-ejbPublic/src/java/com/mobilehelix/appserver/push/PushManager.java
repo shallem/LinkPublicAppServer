@@ -249,7 +249,7 @@ public class PushManager {
      * sessions. This is a way for a push session to ensure that it is still alive
      * every 10 minutes.
      */
-    @Schedule(minute="*/10")
+    @Schedule(minute="*/10",hour="*")
     public void doCheck() {
         for (PushReceiver pr : this.idMap.values()) {
             if (pr.check() == false) {

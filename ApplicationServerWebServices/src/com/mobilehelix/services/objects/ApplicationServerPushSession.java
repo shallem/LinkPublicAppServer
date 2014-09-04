@@ -108,10 +108,11 @@ public class ApplicationServerPushSession extends WSRequest {
 
     public static ApplicationServerPushSession fromBson(JsonParser parser) throws IOException {
         ApplicationServerPushSession asps = new ApplicationServerPushSession();
-        while (parser.nextToken() != JsonToken.END_OBJECT) {
+        JsonToken nxtTok = parser.nextToken();
+        while (nxtTok != JsonToken.END_OBJECT) {
             String fieldName = parser.getCurrentName();
             // Move past field name token.
-            parser.nextToken();
+            nxtTok = parser.nextToken();
             switch (fieldName) {
                 case "id":
                     asps.setUniqueID(parser.getText());
@@ -132,6 +133,7 @@ public class ApplicationServerPushSession extends WSRequest {
                     asps.setAppID(parser.getLongValue());
                     break;
             }
+            nxtTok = parser.nextToken();
         }
 
         return asps;
