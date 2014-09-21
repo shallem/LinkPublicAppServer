@@ -5,6 +5,7 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.services.objects.GetLogRequest;
+import com.mobilehelix.webutils.logutils.LogUtils;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,9 +35,6 @@ public class GetLogWS {
     
     // Glassfish Instance Root folder system variable
     private static String glassfishInstanceRootPropertyName = "com.sun.aas.instanceRoot";
- 
-    // "log" sub-folder name
-    private static String glassfishDomainLogsFolderName = "logs";
     
     @POST
     @Produces("application/octet-stream")
@@ -52,35 +50,28 @@ public class GetLogWS {
                 throw new IOException( "Cannot find Glassfish instanceRoot. Is the com.sun.aas.instanceRoot system property set?" );
             }
  
-            // Instance Root + /logs folder
-            File logsFolder = new File( instanceRoot + File.separator + glassfishDomainLogsFolderName );
-            File serverLogFile = new File( logsFolder, "server.log" );
+            final File tmpConcat = LogUtils.concatGlassfishLogs(req.getnBytes(), 7, instanceRoot);
+            final FileInputStream concatInputStream = new FileInputStream(tmpConcat);
+            final DeflaterInputStream zippedServerLog = new DeflaterInputStream(concatInputStream);
             
-            if (serverLogFile.exists()) {
-                FileInputStream serverLogStream = new FileInputStream(serverLogFile);
-                if (serverLogFile.length() > req.getnBytes()) {
-                    serverLogStream.skip(serverLogFile.length() - req.getnBytes());
-                }
-                final DeflaterInputStream zippedServerLog = new DeflaterInputStream(serverLogStream);
-                return Response.ok(new StreamingOutput() {
-                    @Override
-                    public void write(OutputStream out) throws IOException, WebApplicationException {
-                        try {
-                            IOUtils.copy(zippedServerLog, out);
-                        } catch(Exception e) {
-                            LOG.log(Level.SEVERE, "Failed to return zipped server log file.", e);
-                            throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
-                        } finally {
-                            out.close();
-                        }
+            return Response.ok(new StreamingOutput() {
+                @Override
+                public void write(OutputStream out) throws IOException, WebApplicationException {
+                    try {
+                        IOUtils.copy(zippedServerLog, out);
+                    } catch(Exception e) {
+                        LOG.log(Level.SEVERE, "Failed to return zipped server log file.", e);
+                        throw new WebApplicationException(Response.status(Response.Status.INTERNAL_SERVER_ERROR).build());
+                    } finally {
+                        out.close();
+                        concatInputStream.close();
+                        tmpConcat.delete();
                     }
-                }).build();
-            }
+                }
+            }).build();
         } catch(IOException ioe) {
             LOG.log(Level.SEVERE, "Failed to read the app server log.", ioe);
             return Response.serverError().build();
-        }
-        
-        return Response.noContent().build();
+        }        
     }
 }

@@ -31,7 +31,40 @@ import com.mobilehelix.appserver.settings.ApplicationSettings;
  * 
  * @author shallem
  */
-public interface PushReceiver {
+public abstract class PushReceiver {
+    private String uniqueID;
+    private String clientid;
+    private String userid;
+    private String password;
+    private String deviceType;
+    private String combinedUser;
+    private Long appID;
+    
+    /**
+     * Invoked in the async init from the push manager. This method is responsible
+     * for calling the override-able create method.
+     */
+    public final boolean doCreate(String appServerHostName,
+            String uniqueID, 
+            String combinedUser,
+            String clientid,
+            String userid,
+            String password,
+            String deviceType,
+            Long appID,
+            ApplicationSettings appSettings,
+            PushCompletion pushAccepted) throws AppserverSystemException {
+        this.uniqueID = uniqueID;
+        this.combinedUser = combinedUser;
+        this.clientid = clientid;
+        this.userid = userid;
+        this.password = password;
+        this.deviceType = deviceType;
+        this.appID = appID;
+        
+        return this.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, pushAccepted);
+    }
+    
     /**
      * Create the push subscription to the origin data source (e.g., Exchange). This
      * routine is only called if an existing push receiver DOES NOT exist on this 
@@ -46,7 +79,7 @@ public interface PushReceiver {
      * @return True if this app is now waiting for push notifications; false if not.
      * @throws AppserverSystemException 
      */
-    public boolean create(String appServerHostName,
+    public abstract boolean create(String appServerHostName,
             String uniqueID, 
             String clientid,
             String userid,
@@ -63,7 +96,7 @@ public interface PushReceiver {
      * @param userid
      * @param password 
      */
-    public void refresh(String userid,
+    public abstract void refresh(String userid,
             String password,
             ApplicationSettings appSettings);
     
@@ -74,7 +107,14 @@ public interface PushReceiver {
      * example, this will reset the badge counts each time a user logs into the Link app and
      * accesses his or her email.
      */
-    public void refresh();
+    public abstract void refresh();
+    
+    /**
+     * Called every 10 minutes. Gives the push session the opportunity to check to see if it is
+     * still alive, if such a mechanism exists. This method should return true if the push session
+     * is still valid and false if not. On false, the push manager will delete the push session.
+     */
+    public abstract boolean check();
     
     /**
      * Called when a POST request to the push servlet using the unique ID of this object (specified
@@ -83,18 +123,55 @@ public interface PushReceiver {
      * @param input Raw input data supplied as the post body.
      * @return Return the data to send in response to the incoming https request.
      */
-    public byte[] receive(byte[] input);
+    public abstract byte[] receive(byte[] input);
 
     /**
      * Called to determine if a receiver matches the unique combination of client, user, and app ID.
      * Should return true if it does.
      */
-    public boolean matches(String client,
+    public abstract boolean matches(String client,
             String userid,
             Long appID);
     
     /**
      * Called prior to shutdown to terminate this subscription.
      */
-    public void unsubscribe();
+    public abstract void unsubscribe();
+    
+    /**
+     * Return the unique ID stored in this push receiver.
+     */
+    public final String getUniqueID() {
+        return this.uniqueID;
+    }
+    
+    /**
+     * Return the combined user/client that represents the identify of the owner of
+     * this receiver.
+     * 
+     * @return 
+     */
+    public final String getCombinedUser() {
+        return this.combinedUser;
+    }
+
+    public final String getClientid() {
+        return clientid;
+    }
+
+    public final String getUserid() {
+        return userid;
+    }
+
+    public final String getPassword() {
+        return password;
+    }
+
+    public final String getDeviceType() {
+        return deviceType;
+    }
+
+    public Long getAppID() {
+        return appID;
+    }
 }

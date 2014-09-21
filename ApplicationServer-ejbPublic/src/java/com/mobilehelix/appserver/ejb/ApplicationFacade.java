@@ -22,7 +22,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Abstract base class that defines an interface to application-specific initialization.
@@ -86,7 +85,7 @@ public abstract class ApplicationFacade {
      * @return
      * @throws AppserverSystemException 
      */
-    public abstract Integer doInitOnLoad(Session session, HttpServletRequest req,
+    public abstract Integer doInitOnLoad(Session session,
             CredentialsManager credentials) throws AppserverSystemException;
 
     /**

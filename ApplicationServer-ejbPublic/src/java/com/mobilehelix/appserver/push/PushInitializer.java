@@ -32,13 +32,15 @@ public class PushInitializer {
     public Future<Boolean> doInit(PushReceiver pr, 
             String appServerHostName,
             String uniqueID, 
+            String combinedUser,
             String clientid,
             String userid,
             String password,
             String deviceType,
+            Long appID,
             ApplicationSettings appSettings,
             PushCompletion onComplete) 
             throws AppserverSystemException {
-        return new AsyncResult<>(pr.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, onComplete));
+        return new AsyncResult<>(pr.doCreate(appServerHostName, uniqueID, combinedUser, clientid, userid, password, deviceType, appID, appSettings, onComplete));
     }
 }

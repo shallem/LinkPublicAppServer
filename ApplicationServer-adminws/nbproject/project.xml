@@ -23,6 +23,9 @@
                 <library dirs="200">
                     <file>${reference.WebServicesCore.jar}</file>
                 </library>
+                <library dirs="200">
+                    <file>${reference.WebUtils.jar}</file>
+                </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
             <source-roots>
@@ -51,6 +54,14 @@
             </reference>
             <reference>
                 <foreign-project>WebServicesCore</foreign-project>
+                <artifact-type>jar</artifact-type>
+                <script>build.xml</script>
+                <target>jar</target>
+                <clean-target>clean</clean-target>
+                <id>jar</id>
+            </reference>
+            <reference>
+                <foreign-project>WebUtils</foreign-project>
                 <artifact-type>jar</artifact-type>
                 <script>build.xml</script>
                 <target>jar</target>
