@@ -96,6 +96,23 @@ public class PushManager {
         }
     }
     
+    public String getCombinedUser(String client, String userID) {
+        return MessageFormat.format("{0}|{1}", new Object[]{ client, userID });
+    }
+
+    public PushReceiver getReceiver(String client, String userID, Long appID) {
+        String combinedUser = this.getCombinedUser(client, userID);
+        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        if (receivers != null && !receivers.isEmpty()) {
+            for (PushReceiver receiver : receivers) {
+                if (receiver.matches(client, userID, appID)) {
+                    return receiver;
+                }
+            }
+        }
+        return null;
+    }
+    
     public void addSession(String client, String userID, String password, String deviceType,
             Long appID, Integer appGenID) throws AppserverSystemException {
         ApplicationSettings as = 
@@ -116,7 +133,7 @@ public class PushManager {
 
         // See if we have a push receiver for client/user/app
         boolean found = false;
-        String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ client, userID });
+        String combinedUser = this.getCombinedUser(client, userID);
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
