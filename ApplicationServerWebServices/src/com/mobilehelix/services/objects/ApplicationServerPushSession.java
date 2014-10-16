@@ -26,7 +26,6 @@ public class ApplicationServerPushSession extends WSRequest {
     private Long appID;
     
     public ApplicationServerPushSession() {
-        
     }
 
     public String getUniqueID() {
@@ -76,7 +75,7 @@ public class ApplicationServerPushSession extends WSRequest {
     public void setAppID(Long appID) {
         this.appID = appID;
     }
-    
+
     @Override
     public byte[] toBson() throws IOException {
         //serialize data

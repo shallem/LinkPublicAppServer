@@ -43,6 +43,10 @@ public class CredentialsManager {
     public void setClient(String client) {
         this.client = client;
     }
+    
+    public String getAuthUsername() {
+        return this.username;
+    }
 
     public String getPassword() {
         if (this.requestPassword != null) {
