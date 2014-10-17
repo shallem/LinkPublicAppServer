@@ -98,7 +98,8 @@ public abstract class PushReceiver {
      */
     public abstract void refresh(String userid,
             String password,
-            ApplicationSettings appSettings);
+            ApplicationSettings appSettings,
+            boolean isSessionCreate);
     
     /**
      * Called by other components of the app server to let the push session know that the
