@@ -182,6 +182,12 @@ public class PushManager {
         Long[] appIDs = newSess.getAppIDs();
         Integer[] appGenIDs = newSess.getAppGenIDs();
         
+        this.addSession(appIDs, appGenIDs, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), 
+                        newSess.getDeviceType());
+    }
+    
+    public void addSession(Long[] appIDs, Integer[] appGenIDs,
+            String client, String userID, String password, String deviceType) throws AppserverSystemException {
         if (this.asHostPlusPort == null) {
             this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsHttpPort().toString();
         }
@@ -189,8 +195,7 @@ public class PushManager {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
-            this.addSession(newSess.getClient(), newSess.getUserID(), newSess.getPassword(), 
-                        newSess.getDeviceType(),
+            this.addSession(client, userID, password, deviceType,
                         appID, appGenID);
         } 
     }
