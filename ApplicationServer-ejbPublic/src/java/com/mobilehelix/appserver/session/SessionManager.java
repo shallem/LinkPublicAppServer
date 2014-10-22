@@ -19,6 +19,7 @@ import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import java.security.MessageDigest;
@@ -65,6 +66,10 @@ public class SessionManager {
     /* App server init object. */
     @EJB
     private InitApplicationServer initAS;
+    
+    /* Used when creating debug sessions ... */
+    @EJB
+    private PushManager pushMgr;
     
     @PostConstruct
     public void init() {
@@ -139,23 +144,33 @@ public class SessionManager {
         return null;
     }
 
+    public void createDebugSession() throws AppserverSystemException {
+        List<Long> appIDs = new LinkedList<>();
+        List<Integer> appGenIDs = new LinkedList<>();
+        this.debugSession = new Session(globalProperties.getClientName(),
+            this.getDebugUser(),
+            this.getDebugPassword());
+                    
+        initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
+            this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);
+                    
+        Long[] appIDsArr = new Long[appIDs.size()];
+        Integer[] appGenIDsArr = new Integer[appGenIDs.size()];
+        appIDsArr = appIDs.toArray(appIDsArr);
+        appGenIDsArr = appGenIDs.toArray(appGenIDsArr);
+        
+        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, appInit);
+                    
+        // Also create a push session.
+        this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");
+    }
+    
     public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
         String sessIDB64 = this.getSessIDFromRequest(req);
         if (sessIDB64 == null) {
             if (this.isDebugOn()) {
                 if (this.debugSession == null) {
-                    List<Long> appIDs = new LinkedList<>();
-                    List<Integer> appGenIDs = new LinkedList<>();
-                    this.debugSession = new Session(globalProperties.getClientName(),
-                            this.getDebugUser(),
-                            this.getDebugPassword());
-                    
-                    initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
-                            this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);
-                    
-                    Long[] appIDsArr = new Long[appIDs.size()];
-                    Integer[] appGenIDsArr = new Integer[appGenIDs.size()];
-                    this.debugSession.doAppInit(appIDs.toArray(appIDsArr), appGenIDs.toArray(appGenIDsArr), appInit);
+                    this.createDebugSession();
                 }
                 return this.debugSession;
             }
