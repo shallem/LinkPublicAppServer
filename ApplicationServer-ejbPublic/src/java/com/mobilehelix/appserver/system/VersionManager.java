@@ -8,6 +8,7 @@ import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 
@@ -17,6 +18,7 @@ import javax.ejb.Startup;
  */
 @Singleton
 @Startup
+@EJB(name="java:global/VersionManager", beanInterface=VersionManager.class)
 public class VersionManager {
     static private final String versionProperties =
             "/com/mobilehelix/version/version.properties";
