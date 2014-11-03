@@ -40,11 +40,6 @@ public class NoCacheFilter implements Filter {
         if (reqURI.contains("javax.faces.resource")) {
             res.setHeader("Cache-Control", "public");
         } else if (req.getMethod().equals("GET")) {
-            // The app server code is always cacheable. The Controller uses the app server version
-            // in the URL sent to the client to ensure that any changes to the app server code result
-            // in new downloads. Making the app server xhtml and resources cacheable is a huge performance
-            // win. Note that all AJAX requests are POSTs, and all web services should not go through this
-            // filter. Web service requests determine their cacheability individually.
             res.setHeader("Cache-Control", "public");
         } else {
             res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
