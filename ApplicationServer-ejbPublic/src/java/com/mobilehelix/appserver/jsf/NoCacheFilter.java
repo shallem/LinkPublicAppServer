@@ -39,6 +39,8 @@ public class NoCacheFilter implements Filter {
         
         if (reqURI.contains("javax.faces.resource")) {
             res.setHeader("Cache-Control", "public");
+        } else if (req.getMethod().equals("GET")) {
+            res.setHeader("Cache-Control", "public");
         } else {
             res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         }
