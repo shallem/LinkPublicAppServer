@@ -96,6 +96,23 @@ public class PushManager {
         }
     }
     
+    public String getCombinedUser(String client, String userID) {
+        return MessageFormat.format("{0}|{1}", new Object[]{ client, userID });
+    }
+
+    public PushReceiver getReceiver(String client, String userID, Long appID) {
+        String combinedUser = this.getCombinedUser(client, userID);
+        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+        if (receivers != null && !receivers.isEmpty()) {
+            for (PushReceiver receiver : receivers) {
+                if (receiver.matches(client, userID, appID)) {
+                    return receiver;
+                }
+            }
+        }
+        return null;
+    }
+    
     public void addSession(String client, String userID, String password, String deviceType,
             Long appID, Integer appGenID) throws AppserverSystemException {
         ApplicationSettings as = 
@@ -116,14 +133,14 @@ public class PushManager {
 
         // See if we have a push receiver for client/user/app
         boolean found = false;
-        String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ client, userID });
+        String combinedUser = this.getCombinedUser(client, userID);
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
                 if (receiver.matches(client, userID, appID)) {
                     found = true;
                     LOG.log(Level.FINE, "Refreshing push session for {0}", combinedUser);
-                    receiver.refresh(userID, password, as);
+                    receiver.refresh(userID, password, as, true);
                 }
             }
         }
@@ -165,6 +182,12 @@ public class PushManager {
         Long[] appIDs = newSess.getAppIDs();
         Integer[] appGenIDs = newSess.getAppGenIDs();
         
+        this.addSession(appIDs, appGenIDs, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), 
+                        newSess.getDeviceType());
+    }
+    
+    public void addSession(Long[] appIDs, Integer[] appGenIDs,
+            String client, String userID, String password, String deviceType) throws AppserverSystemException {
         if (this.asHostPlusPort == null) {
             this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsHttpPort().toString();
         }
@@ -172,8 +195,7 @@ public class PushManager {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
-            this.addSession(newSess.getClient(), newSess.getUserID(), newSess.getPassword(), 
-                        newSess.getDeviceType(),
+            this.addSession(client, userID, password, deviceType,
                         appID, appGenID);
         } 
     }

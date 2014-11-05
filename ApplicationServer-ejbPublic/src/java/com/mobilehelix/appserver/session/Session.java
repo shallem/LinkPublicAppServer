@@ -202,6 +202,15 @@ public class Session {
         return currentFacade;
     }
     
+    public ApplicationFacade getCurrentFacade(HttpServletRequest req, int apptype) {
+        String appid = this.getAppIDFromRequest(req);
+        if (appid != null) {
+            return this.getAppFacade(Long.parseLong(appid));
+        } else {
+            return this.getFacadeForType(apptype);
+        }
+    }
+    
     public ApplicationFacade getAppFacade(long appid) {
         return this.appFacades.get(appid);
     }
@@ -213,6 +222,16 @@ public class Session {
             }
         }
         return null;
+    }
+    
+    public List<ApplicationFacade> getAllFacadesForType(int apptype) {
+        List<ApplicationFacade> ret = new LinkedList<>();
+        for (ApplicationFacade af : this.appFacades.values()) {
+            if (af.getAppType() == apptype) {
+                ret.add(af);
+            }
+        }
+        return ret;
     }
     
     private String getValueFromCookieName(HttpServletRequest req,
