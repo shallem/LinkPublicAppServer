@@ -20,13 +20,19 @@
     </ant>
   </target>
 
+  <target name="LinkSDKSerializer">
+    <ant dir="LinkSDKSerializer" target="jar" useNativeBaseDir="true">
+      <property file="${UserPropertiesFile}"/>
+    </ant>
+  </target>
+
   <target name="ApplicationServer-adminws">
     <ant dir="ApplicationServer-adminws" target="dist" useNativeBasedir="true">
       <property file="${UserPropertiesFile}"/>
     </ant>
   </target>
 
-  <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic,ApplicationServer-adminws"/>
+  <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic,ApplicationServer-adminws,LinkSDKSerializer"/>
 
   <target name="clean">
     <ant dir="ApplicationServerWebServices" target="clean" useNativeBaseDir="true">
@@ -36,6 +42,9 @@
       <property file="${UserPropertiesFile}"/>
     </ant>
     <ant dir="ApplicationServer-adminws" target="clean" useNativeBasedir="true">
+      <property file="${UserPropertiesFile}"/>
+    </ant>
+    <ant dir="LinkSDKSerializer" target="clean" useNativeBasedir="true">
       <property file="${UserPropertiesFile}"/>
     </ant>
   </target>
