@@ -20,8 +20,6 @@ import com.mobilehelix.appserver.session.CredentialsManager;
 import com.mobilehelix.appserver.session.Session;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Abstract base class that defines an interface to application-specific initialization.
@@ -42,17 +40,11 @@ public abstract class ApplicationFacade {
      * blocks waiting for the init to finish.
      * 
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
-    public Integer getInitStatus() {
-        if (initStatus == null) {
-            return null;
-        }
-        try {
+    public Integer getInitStatus() throws InterruptedException, ExecutionException {
             return initStatus.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, "Asynchronous init failed.", ex);
-            return null;
-        }
     }
 
     public void setInitStatus(Future<Integer> initStatus) {

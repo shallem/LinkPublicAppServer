@@ -341,7 +341,12 @@ public class Session {
             /* Block until the app facade init is done. This init is started when the session
              * is created.
              */
-            status = this.currentFacade.getInitStatus();
+            try {
+                status = this.currentFacade.getInitStatus();
+            } catch (Exception e) {
+                throw new AppserverSystemException(e,  "SessionInitializationFailed",
+                    "Asynchronous init failed.");
+            }
         }
         
         /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
