@@ -69,11 +69,11 @@
     properties which you can use, check the target you are overriding in the
     nbproject/build-impl.xml file. 
 
-    -->
-
     <target name="-post-jar">
       <ant dir="../../LinkHTML5SDK" target="prepare"
 	   useNativeBasedir="true"
 	   inheritAll="false"/>
     </target>
+    -->
+
 </project>
