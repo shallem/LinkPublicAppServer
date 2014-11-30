@@ -1,10 +1,5 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.appserver.ws;
 
-import com.mobilehelix.appserver.email.push.EmailPushReceiver;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.push.PushReceiver;
