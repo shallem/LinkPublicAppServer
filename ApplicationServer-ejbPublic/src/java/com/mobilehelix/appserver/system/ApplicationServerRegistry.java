@@ -42,6 +42,9 @@ import javax.ejb.Startup;
 @PermitAll
 @EJB(name="java:global/ApplicationServerRegistry", beanInterface=ApplicationServerRegistry.class)
 public class ApplicationServerRegistry {
+    // Special app Gen ID value used to indicate that this app should NOT be refreshed from the Controller.
+    public static final int FORCE_NO_REFRESH = -1;
+    
     // Indexed by client, then app ID.
     private TreeMap<String, TreeMap<Long, ApplicationSettings> > appMap;
     private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
@@ -101,6 +104,15 @@ public class ApplicationServerRegistry {
     }
     
     public ApplicationSettings getSettingsForAppID(String client, Long appID, Integer appGenID) throws AppserverSystemException {
+        // Lookup the application first and see if the appGenID matches the one provided.
+        if (appID != null && appGenID != null) {
+            ApplicationSettings s = this.getSettingsForAppID(client, appID);
+            if (s != null && (appGenID == ApplicationServerRegistry.FORCE_NO_REFRESH ||
+                    s.getAppGenID().equals(appGenID))) {
+                return s;
+            }
+        }
+        
         // If we have a connection to the Controller, refresh the app first.
         controllerConnection.refreshApplication(client, appID, appGenID);
         TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
