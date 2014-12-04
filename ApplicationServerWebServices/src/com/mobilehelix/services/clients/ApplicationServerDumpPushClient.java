@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.services.clients;
 
 import com.mobilehelix.services.interfaces.RestClient;
