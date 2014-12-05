@@ -217,13 +217,21 @@ public class PushManager {
         idMap.remove(uniqueID);
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null) {
+            Integer idx = 0;
+            Integer nsessions = receivers.size();
             Iterator<PushReceiver> it = receivers.iterator();
             while (it.hasNext()) {
                 PushReceiver pr = it.next();
                 if (pr.getUniqueID().equals(uniqueID)) {
+                    LOG.log(Level.WARNING, "Removing push session {0} or {1} for combined user {3}", new Object[] {
+                        idx,
+                        nsessions,
+                        combinedUser
+                    });
                     receivers.iterator().remove();
                     break;
                 }
+                ++idx;
             }
         }
     }

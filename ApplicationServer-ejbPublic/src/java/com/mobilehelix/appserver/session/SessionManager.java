@@ -98,10 +98,10 @@ public class SessionManager {
         return appServerSession;
     }
 
-    public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
+    /*public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
             throws AppserverSystemException {
         sess.doAppInit(appIDs, appGenIDs, appInit);
-    }
+    }*/
 
     public boolean deleteSession(byte[] sessionHash) {
         boolean res = true;
@@ -159,7 +159,7 @@ public class SessionManager {
         appIDsArr = appIDs.toArray(appIDsArr);
         appGenIDsArr = appGenIDs.toArray(appGenIDsArr);
         
-        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, appInit);
+        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, null, appInit);
                     
         // Also create a push session.
         this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");

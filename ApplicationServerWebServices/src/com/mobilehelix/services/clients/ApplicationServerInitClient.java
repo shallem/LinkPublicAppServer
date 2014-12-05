@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.services.clients;
 
 import com.mobilehelix.services.interfaces.RestClient;
@@ -17,21 +13,21 @@ import java.io.IOException;
 public class ApplicationServerInitClient extends RestClient {
     
     // Parameters that we send to the app server service.
-    private String controllerIP;
-    private Integer controllerPort;
-    private String asPrivIP;
-    private String asPubIP;
-    private Integer asPubPort;
-    private Integer asPrivPort;
-    private Integer asHttpPort;
-    private String clientName;
-    private String serverName;
-    private String storePass;
-    private String debugPassword;
-    private byte[] clientKeystore;
-    private String appScriptsDir;
-    private String phantomJsBin;
-    private String rootDir;
+    private final String controllerIP;
+    private final Integer controllerPort;
+    private final String asPrivIP;
+    private final String asPubIP;
+    private final Integer asPubPort;
+    private final Integer asPrivPort;
+    private final Integer asHttpPort;
+    private final String clientName;
+    private final String serverName;
+    private final String storePass;
+    private final String debugPassword;
+    private final byte[] clientKeystore;
+    private final String appScriptsDir;
+    private final String phantomJsBin;
+    private final String rootDir;
 
     
     public ApplicationServerInitClient(String asIP,

@@ -28,11 +28,11 @@ import java.util.List;
  * @author shallem
  */
 public abstract class ApplicationSettings<T> {
-    private String client;
-    private Long appID;
-    private String appName;
-    private Integer appGenID;
-    private Integer appType;
+    private final String client;
+    private final Long appID;
+    private final String appName;
+    private final Integer appGenID;
+    private final Integer appType;
     
     public ApplicationSettings(String client, WSApplication app) {
         this.client = client;
@@ -40,6 +40,14 @@ public abstract class ApplicationSettings<T> {
         this.appName = app.getAppName();
         this.appGenID = app.getAppGenID();
         this.appType = app.getAppType();
+    }
+
+    public ApplicationSettings(String client, long appID, String appName, int appGenID, int appType)  {
+        this.client = client;
+        this.appID = appID;
+        this.appName = appName;
+        this.appGenID = appGenID;
+        this.appType = appType;
     }
 
     public String getClient() {
