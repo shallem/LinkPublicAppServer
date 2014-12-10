@@ -45,11 +45,13 @@ public class ApplicationServerCreateSessionRequest {
     private Integer[] appGenIDs;
     private byte[] serverSessionID;
     private int serverType;
+    private List<WSExtraGroup> appProfiles;
     
     public ApplicationServerCreateSessionRequest() {
         this.deviceLatitude = new Double(0);
         this.deviceLongitude = new Double(0);
         this.deviceRegion = "unavailable";
+        this.appProfiles = new LinkedList<>();
     }
     
     public int getSessionExpirationType() {
@@ -163,6 +165,14 @@ public class ApplicationServerCreateSessionRequest {
     public void setServerType(int serverType) {
         this.serverType = serverType;
     }
+
+    public List<WSExtraGroup> getAppProfiles() {
+        return appProfiles;
+    }
+
+    public void setAppProfiles(List<WSExtraGroup> appProfiles) {
+        this.appProfiles = appProfiles;
+    }
     
     public byte[] toBson() throws IOException {
         //serialize data
@@ -204,6 +214,13 @@ public class ApplicationServerCreateSessionRequest {
             gen.writeArrayFieldStart("appgens");
             for (Integer appGenID : this.appGenIDs) {
                 gen.writeNumber(appGenID);
+            }
+            gen.writeEndArray();
+        }
+        if (this.appProfiles != null) {
+            gen.writeArrayFieldStart("appprofiles");
+            for (WSExtraGroup wseg : this.appProfiles) {
+                wseg.toBson(gen, WSExtra.SerializeOptions.INCLUDE_ALL);
             }
             gen.writeEndArray();
         }
@@ -263,6 +280,12 @@ public class ApplicationServerCreateSessionRequest {
                     }
                     ret.appGenIDs = new Integer[appGenIDs.size()];
                     ret.appGenIDs = appGenIDs.toArray(ret.appGenIDs);
+                    break;
+                case "appprofiles":
+                    while (parser.nextToken() != JsonToken.END_ARRAY) {
+                        WSExtraGroup wseg = WSExtraGroup.fromBson(parser);
+                        ret.getAppProfiles().add(wseg);
+                    }
                     break;
                 case "lat":
                     ret.setDeviceLatitude(parser.getDoubleValue());

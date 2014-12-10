@@ -26,8 +26,10 @@ import com.mobilehelix.appserver.system.ControllerConnectionBase;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
+import com.mobilehelix.services.objects.WSExtraGroup;
 import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -88,7 +90,7 @@ public class Session {
     private final List<Integer> appGenIDs;
         
     /* Map from app IDs to policies. */
-    private final Map<Long, List<WSExtra> > policyMap;
+    private final Map<Long, Collection<WSExtra> > policyMap;
     
     /* Map of connection objects stored in this session. */
     private final ConcurrentHashMap<String, ConnectionContainer> connMap;
@@ -97,7 +99,7 @@ public class Session {
     private final Map<String, Object> contextMap;
 
     
-    public Session(ApplicationServerCreateSessionRequest sess, 
+    public Session(ApplicationServerCreateSessionRequest createRequest, 
             ApplicationInitializer appInit) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
@@ -105,13 +107,13 @@ public class Session {
         this.connMap = new ConcurrentHashMap<>();
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
-        this.init(sess.getClient(), sess.getUserID(), sess.getPassword(), sess.getDeviceType(), false);
+        this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
-        if (sess.getAppIDs() == null) {
+        if (createRequest.getAppIDs() == null) {
             return;
         }
         
-        this.doAppInit(sess.getAppIDs(), sess.getAppGenIDs(), appInit);
+        this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles(), appInit);
     }
     
     public Session(String client, String username, String password) throws AppserverSystemException {
@@ -127,6 +129,7 @@ public class Session {
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
+            List<WSExtraGroup> appProfiles,
             ApplicationInitializer appInit) throws AppserverSystemException {        
         List<ApplicationSettings> sessApps = new LinkedList<>();
         for (int i = 0; i < appIDs.length; ++i) {
@@ -146,13 +149,21 @@ public class Session {
             this.appGenIDs.add(appGenID);
         }
         
-        try {
-            // Now download all app policies for this session.
-            this.policyMap.putAll(this.initAS.getControllerConnection().downloadAppPolicies(this));
-        } catch (IOException ex) {
-            throw new AppserverSystemException("Failed to load app policies.",
-                    "SessionCannotLoadAppPolicies",
-                    new String[] { ex.getMessage() });
+        if (appProfiles == null) {
+            // Debug session
+            try {
+                // Now download all app policies for this session.
+                this.policyMap.putAll(this.initAS.getControllerConnection().downloadAppPolicies(this));
+            } catch (IOException ex) {
+                throw new AppserverSystemException("Failed to load app policies.",
+                        "SessionCannotLoadAppPolicies",
+                        new String[] { ex.getMessage() });
+            }
+        } else {
+            // Device session
+            for (WSExtraGroup wseg : appProfiles) {
+                this.policyMap.put(wseg.getId(), wseg.getExtras());
+            }
         }
         
         // Now, with policies in hand, initialize all apps.
@@ -424,7 +435,7 @@ public class Session {
     
     public WSExtra getPolicy(Long appID, String tag) {
         if (this.policyMap != null) {
-            List<WSExtra> policyList = this.policyMap.get(appID);
+            Collection<WSExtra> policyList = this.policyMap.get(appID);
             if (policyList == null) {
                 return null;
             }
