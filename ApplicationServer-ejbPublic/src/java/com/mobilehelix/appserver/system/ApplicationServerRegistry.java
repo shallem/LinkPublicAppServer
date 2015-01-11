@@ -48,6 +48,7 @@ public class ApplicationServerRegistry {
     // Indexed by client, then app ID.
     private TreeMap<String, TreeMap<Long, ApplicationSettings> > appMap;
     private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
+    private TreeMap<String, TreeSet<Long>> ignoreMap; 
     
     @EJB
     private InitApplicationServer initAS;
@@ -58,6 +59,7 @@ public class ApplicationServerRegistry {
     public void init() {
         this.appMap = new TreeMap<>();
         this.factoryMap = new TreeMap<>();
+        this.ignoreMap = new TreeMap<>();
         this.controllerConnection = initAS.getControllerConnection();
         this.controllerConnection.setApplicationRegistry(this);
     }
@@ -78,7 +80,14 @@ public class ApplicationServerRegistry {
             ApplicationSettingsFactory sf = factoryMap.get(wsa.getAppType());
             if (sf == null) {
                 // No factory; we cannot handle settings for this application in
-                // this server.
+                // this server. However, we want to track this app ID so that we never
+                // try to download settings for it ...
+                TreeSet<Long> ignoreSet = ignoreMap.get(client);
+                if (ignoreSet == null) {
+                    ignoreSet = new TreeSet<>();
+                    ignoreMap.put(client, ignoreSet);
+                }
+                ignoreSet.add(wsa.getUniqueID());
                 continue;
             }
             ApplicationSettings newAppSettings = sf.createInstance(client, wsa);
@@ -110,11 +119,20 @@ public class ApplicationServerRegistry {
             if (s != null && (appGenID == ApplicationServerRegistry.FORCE_NO_REFRESH ||
                     s.getAppGenID().equals(appGenID))) {
                 return s;
+            } else if (s == null) {
+                // Check the ignore map.
+                TreeSet<Long> ignoreSet = ignoreMap.get(client);
+                if (ignoreSet != null && ignoreSet.contains(appID)) {
+                    return null;
+                }
             }
         }
         
         // If we have a connection to the Controller, refresh the app first.
-        controllerConnection.refreshApplication(client, appID, appGenID);
+        if (controllerConnection != null) {
+            controllerConnection.refreshApplication(client, appID, appGenID);
+        }
+        
         TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
         if (cliMap == null) {
             return null;
