@@ -298,11 +298,9 @@ public class Session {
         return this.getValueFromCookieName(req, HTTPHeaderConstants.MH_APP_GEN_HEADER);
     }
     
-    /**
-     * Find the record for the application this request is attempting to access. Return
-     * true if the record is found, false if not. If not, the caller should redirect the
-     * request to an error landing page.
-     */
+     // Find the record for the application this request is attempting to access. Return
+     // true if the record is found, false if not. If not, the caller should redirect the
+     //request to an error landing page.
     public void initCurrentApplication(String appID, String appGenID,
             int apptype) throws AppserverSystemException {
         
@@ -391,12 +389,13 @@ public class Session {
         int status = 0;
         
         if (this.currentFacade == null) {
-            /* First time we have been here ... */
-            /* This will generally only happen in debug sessions. */
-            this.currentFacade = this.currentApplication.createFacade(this, appRegistry, debugOn);
-            
-            /* Store the mapping from app ID to facade. */
-            this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
+                /* Store the mapping from app ID to facade. */
+                if (this.currentApplication != null) {
+                    /* First time we have been here ... */
+                    /* This will generally only happen in debug sessions. */
+                    this.currentFacade = this.currentApplication.createFacade(this, appRegistry, debugOn);            
+                    this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
+            }
         } else {
             /* Block until the app facade init is done. This init is started when the session
              * is created.
@@ -409,14 +408,16 @@ public class Session {
             }
         }
         
-        /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
-        if (!this.currentFacade.getInitOnLoadDone() || reinit) {
-            /* Need to re-init the facade because credentials have changed. */
-            this.currentFacade.doInitOnLoad(this, credentials);
-            
-            /* Indicate the first load is one. */
-            this.currentFacade.setInitOnLoadDone();
-        }   
+        if (this.currentFacade != null) {
+            /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
+            if (!this.currentFacade.getInitOnLoadDone() || reinit) {
+                /* Need to re-init the facade because credentials have changed. */
+                this.currentFacade.doInitOnLoad(this, credentials);
+
+                /* Indicate the first load is one. */
+                this.currentFacade.setInitOnLoadDone();
+            }   
+        }
         
         return status;
     }
