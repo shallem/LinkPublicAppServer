@@ -27,6 +27,7 @@ import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
+import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collection;
@@ -50,6 +51,9 @@ import javax.servlet.http.HttpServletRequest;
 public class Session {
 
     private static final Logger LOG = Logger.getLogger(Session.class.getName());
+    
+    /* Global prefs tags. */
+    public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
     
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
@@ -98,6 +102,11 @@ public class Session {
     /* Map used to extend properties of session with app specific data */
     private final Map<String, Object> contextMap;
 
+    /* Map from resource IDs to a list of user prefs. The special resource ID -1 is used
+       for global prefs.
+    */
+    private final Map<Long, List<WSUserPreference>> prefsMap;
+    
     
     public Session(ApplicationServerCreateSessionRequest createRequest, 
             ApplicationInitializer appInit) throws AppserverSystemException {
@@ -107,12 +116,32 @@ public class Session {
         this.connMap = new ConcurrentHashMap<>();
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
+        this.prefsMap = new ConcurrentHashMap<>();
+        
         this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
         if (createRequest.getAppIDs() == null) {
             return;
         }
         
+        // Capture prefs.
+        if (createRequest.getUserSettings() != null) {
+            for (WSUserPreference wuas : createRequest.getUserSettings()) {
+                List<WSUserPreference> prefsList = null;
+                Long resourceID = (long)-1;
+                if (wuas.getResourceID() != null) {
+                    resourceID = wuas.getResourceID();
+                }
+                prefsList = this.prefsMap.get(resourceID);
+                if (prefsList == null) {
+                    prefsList = new LinkedList<>();
+                    this.prefsMap.put(resourceID, prefsList);
+                }
+                prefsList.add(wuas);
+            }
+        }
+        
+        // Initialize apps.
         this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles(), appInit);
     }
     
@@ -124,6 +153,7 @@ public class Session {
         this.connMap = new ConcurrentHashMap<>();
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
+        this.prefsMap = new ConcurrentHashMap<>();
         this.init(client, username, password, "iPhone", true);
     }
     
@@ -482,5 +512,35 @@ public class Session {
     public void saveConnectionForType(Class c,
             ConnectionContainer cc) {
         this.connMap.put(c.getName(), cc);
+    }
+    
+    public void addPref(Long resourceID, WSUserPreference pref) {
+        if (resourceID == null) {
+            resourceID = (long)-1;
+        }
+        List<WSUserPreference> prefsList = this.prefsMap.get(resourceID);
+        if (prefsList == null) {
+            prefsList = new LinkedList<>();
+            this.prefsMap.put(resourceID, prefsList);
+        }
+        prefsList.add(pref);
+    }
+    
+    public WSUserPreference getPref(Long resourceID, String tag) {
+        if (resourceID == null) {
+            resourceID = (long)-1;
+        }
+        WSUserPreference ret = null;
+        List<WSUserPreference> prefsList = this.prefsMap.get(resourceID);
+        if (prefsList != null) {
+            for (WSUserPreference pref : prefsList) {
+                if (pref.getTag().equals(tag)) {
+                    ret = pref;
+                    break;
+                }
+            }
+        }
+        
+        return ret;
     }
 }
