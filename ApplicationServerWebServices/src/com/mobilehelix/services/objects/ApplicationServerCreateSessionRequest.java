@@ -46,12 +46,14 @@ public class ApplicationServerCreateSessionRequest {
     private byte[] serverSessionID;
     private int serverType;
     private List<WSExtraGroup> appProfiles;
+    private List<WSUserPreference> userSettings;
     
     public ApplicationServerCreateSessionRequest() {
         this.deviceLatitude = new Double(0);
         this.deviceLongitude = new Double(0);
         this.deviceRegion = "unavailable";
         this.appProfiles = new LinkedList<>();
+        this.userSettings = new LinkedList<>();
     }
     
     public int getSessionExpirationType() {
@@ -173,6 +175,14 @@ public class ApplicationServerCreateSessionRequest {
     public void setAppProfiles(List<WSExtraGroup> appProfiles) {
         this.appProfiles = appProfiles;
     }
+
+    public List<WSUserPreference> getUserSettings() {
+        return userSettings;
+    }
+
+    public void setUserSettings(List<WSUserPreference> userSettings) {
+        this.userSettings = userSettings;
+    }
     
     public byte[] toBson() throws IOException {
         //serialize data
@@ -221,6 +231,13 @@ public class ApplicationServerCreateSessionRequest {
             gen.writeArrayFieldStart("appprofiles");
             for (WSExtraGroup wseg : this.appProfiles) {
                 wseg.toBson(gen, WSExtra.SerializeOptions.INCLUDE_ALL);
+            }
+            gen.writeEndArray();
+        }
+        if (this.userSettings != null) {
+            gen.writeArrayFieldStart("prefs");
+            for (WSUserPreference wuas : this.userSettings) {
+                wuas.toBson(gen);
             }
             gen.writeEndArray();
         }
@@ -285,6 +302,12 @@ public class ApplicationServerCreateSessionRequest {
                     while (parser.nextToken() != JsonToken.END_ARRAY) {
                         WSExtraGroup wseg = WSExtraGroup.fromBson(parser);
                         ret.getAppProfiles().add(wseg);
+                    }
+                    break;
+                case "prefs":
+                    while (parser.nextToken() != JsonToken.END_ARRAY) {
+                        WSUserPreference wuas = WSUserPreference.fromBson(parser);
+                        ret.getUserSettings().add(wuas);
                     }
                     break;
                 case "lat":
