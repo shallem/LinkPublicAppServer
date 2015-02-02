@@ -70,10 +70,10 @@ public class JSONSerializer {
     private static final String TEXT_INDEX_FIELD_NAME = "__hx_text_index";
     
     private class GlobalFilterField {
-        private String displayName;
-        private int[] intValues;
-        private String[] stringValues;
-        private String[] valueNames;
+        private final String displayName;
+        private final int[] intValues;
+        private final String[] stringValues;
+        private final String[] valueNames;
         
         public GlobalFilterField(String displayName,
                 int[] intValues,
@@ -218,6 +218,16 @@ public class JSONSerializer {
                 m = c.getMethod("getUpdates", new Class<?>[]{});
                 this.iterateOverObjectField(jg, obj, visitedClasses, m);
                 
+                m = c.getMethod("getDeleteSpec", new Class<?>[]{});
+                Criteria deleteSpec = (Criteria)m.invoke(obj, new Object[]{});
+                if (deleteSpec != null) {
+                    jg.writeObjectFieldStart("deleteSpec");
+                    jg.writeStringField("field", deleteSpec.getField());
+                    jg.writeStringField("op", deleteSpec.getOpString());
+                    jg.writeStringField("value", deleteSpec.getValue());
+                    jg.writeEndObject();
+                }
+                
                 jg.writeEndObject();
                 return true;
             } else if (this.isAggregateObject(c)) {
@@ -231,6 +241,19 @@ public class JSONSerializer {
                 for (Map.Entry<String, Object> e : a.getAggregateMap().entrySet()) {
                     this.serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
                 }
+                
+                jg.writeEndObject();
+                return true;
+            } else if (this.isParamObject(c)) {
+                jg.writeStartObject();
+                
+                /* Mark as a param object for the client code. */
+                jg.writeNumberField(TYPE_FIELD_NAME, 1004);
+                
+                /* Write the param. */
+                ParamObject po = (ParamObject)obj;
+                this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
                 
                 jg.writeEndObject();
                 return true;
@@ -341,6 +364,27 @@ public class JSONSerializer {
                 } catch (SecurityException  ex) {
                     throw new IOException("Invalid contents of DeltaObject. " + ""
                             + "Missing getAdds method in class " + c.getName());
+                }
+            } else if (this.isParamObject(c)) {
+                try {
+                    Method m = c.getMethod("getSyncObject", new Class<?>[]{});
+                    Class<?> returnType = m.getReturnType();
+                    if (!this.serializeObjectForSchema(jg, returnType, 
+                            visitedClasses, fieldName, alternateName)) {
+                        /* The object neither has any fields marked as ClientData nor
+                         * does it have a toString method - this is not legal.
+                        */
+                        throw new IOException("Object types must either have fields " +
+                                "marked ClientData or have a toString method in class " + 
+                                c.getName());
+                    }
+                    return true;
+                } catch (NoSuchMethodException ex) {
+                    throw new IOException("Invalid contents of ParamObject. " +
+                            "Missing getParamObject method in class " + c.getName());
+                } catch (SecurityException  ex) {
+                    throw new IOException("Invalid contents of ParamObject. " + ""
+                            + "Missing getParamObject method in class " + c.getName());
                 }
             }
             
@@ -505,7 +549,7 @@ public class JSONSerializer {
                 jg.writeEndObject();
                 return true;
             }  else {
-                throw new IOException("Client data must have at least one field annotated as a ClientData field: " + c.getName());
+                throw new IOException("Class must have at least one field annotated as a ClientData field: " + c.getName());
             }
         }
     }
@@ -527,7 +571,9 @@ public class JSONSerializer {
     }
     
     private static boolean isNumberType(Class<?> returnType) {
-        if (returnType.getSuperclass().equals(java.lang.Number.class)) {
+        Class<?> superClass = returnType.getSuperclass();
+        
+        if (superClass != null && superClass.equals(java.lang.Number.class)) {
             return true;
         }
         return false;
@@ -699,9 +745,17 @@ public class JSONSerializer {
     }
     
     private boolean isAggregateObject(Class<?> c) {
-        if (c.getName().equals("org.helix.mobile.model.AggregateObject")) {
-            return true;
+        return c.getName().equals("org.helix.mobile.model.AggregateObject");
+    }
+    
+    private boolean isParamObject(Class<?> c) {
+        while (c != null) {
+            if (c.getName().equals("org.helix.mobile.model.ParamObject")) {
+                return true;
+            }
+            c = c.getSuperclass();
         }
+        
         return false;
     }
     

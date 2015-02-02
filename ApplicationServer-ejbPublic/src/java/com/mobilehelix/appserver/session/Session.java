@@ -403,8 +403,9 @@ public class Session {
             try {
                 status = this.currentFacade.getInitStatus();
             } catch (Exception e) {
-                throw new AppserverSystemException(e,  "SessionInitializationFailed",
-                    "Asynchronous init failed.");
+                throw new AppserverSystemException(e,
+                    "Asynchronous init failed.",
+                    "SessionInitializationFailed");
             }
         }
         
