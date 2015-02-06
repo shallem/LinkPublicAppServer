@@ -23,6 +23,7 @@ import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -50,6 +51,13 @@ public class ControllerConnectionBase {
             Long appID,
             Integer appGenID) throws AppserverSystemException {
         // Do nothing. We have no Controller.
+    }
+    
+    public void refreshUserPrefs(String client,
+            String userID,
+            Date lastMod,
+            Session sess) throws AppserverSystemException {
+        // Do nothing. We have no controller.
     }
     
     public Map<Long, List<WSExtra> > downloadAppPolicies(Session s) throws IOException {

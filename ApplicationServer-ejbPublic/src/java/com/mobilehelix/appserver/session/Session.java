@@ -127,17 +127,7 @@ public class Session {
         // Capture prefs.
         if (createRequest.getUserSettings() != null) {
             for (WSUserPreference wuas : createRequest.getUserSettings()) {
-                List<WSUserPreference> prefsList = null;
-                Long resourceID = (long)-1;
-                if (wuas.getResourceID() != null) {
-                    resourceID = wuas.getResourceID();
-                }
-                prefsList = this.prefsMap.get(resourceID);
-                if (prefsList == null) {
-                    prefsList = new LinkedList<>();
-                    this.prefsMap.put(resourceID, prefsList);
-                }
-                prefsList.add(wuas);
+                this.addPref(wuas.getResourceID(), wuas);
             }
         }
         
@@ -516,7 +506,7 @@ public class Session {
         this.connMap.put(c.getName(), cc);
     }
     
-    public void addPref(Long resourceID, WSUserPreference pref) {
+    public final void addPref(Long resourceID, WSUserPreference pref) {
         if (resourceID == null) {
             resourceID = (long)-1;
         }
@@ -524,6 +514,14 @@ public class Session {
         if (prefsList == null) {
             prefsList = new LinkedList<>();
             this.prefsMap.put(resourceID, prefsList);
+        }
+        for (WSUserPreference p : prefsList) {
+            if (p.getTag().equals(pref.getTag())) {
+                // Update.
+                p.setVal(pref.getVal());
+                p.setLastmod(pref.getLastmod());
+                return;
+            }            
         }
         prefsList.add(pref);
     }

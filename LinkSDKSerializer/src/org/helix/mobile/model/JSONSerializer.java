@@ -252,7 +252,12 @@ public class JSONSerializer {
                 
                 /* Write the param. */
                 ParamObject po = (ParamObject)obj;
-                this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                if (po.getParamObject() != null) {
+                    this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                }
+                if (po.getSyncObject() == null) {
+                    throw new IOException("All ParamObjects must have a non-null sync object that is returned from the server: " + c.getName());
+                }
                 this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
                 
                 jg.writeEndObject();
@@ -510,7 +515,7 @@ public class JSONSerializer {
 
                 /* Store the keys and sort fields in the object schema. */
                 if (keyField == null) {
-                    throw new IOException("Client data must have at least one field annotated as a ClientDataKey.");
+                    throw new IOException("Client data must have at least one field annotated as a ClientDataKey: " + c.getName());
                 }
                 jg.writeFieldName(KEY_FIELD_NAME);
                 jg.writeString(keyField);
