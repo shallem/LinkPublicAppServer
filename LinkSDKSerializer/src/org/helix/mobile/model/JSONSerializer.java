@@ -117,6 +117,24 @@ public class JSONSerializer {
     public JSONSerializer() {
     }
 
+    public String serializeError(String msg) {
+        try {
+            StringWriter outputString = new StringWriter();
+            JsonFactory jsonF = new JsonFactory();
+            
+            try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+                jg.writeStringField("error", msg);
+            }
+            
+            outputString.flush();
+            
+            return outputString.toString();
+        } catch (IOException ex) {
+            Logger.getLogger(JSONSerializer.class.getName()).log(Level.SEVERE, "Failed to serialize JSON error.", ex);
+            return "{ 'error' : 'Serialization of the error message failed. Please review the server logs.' }";
+        }
+    }
+    
     public String serializeObject(Object obj) throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
