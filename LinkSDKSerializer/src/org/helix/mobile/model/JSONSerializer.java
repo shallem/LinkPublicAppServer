@@ -123,7 +123,9 @@ public class JSONSerializer {
             JsonFactory jsonF = new JsonFactory();
             
             try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+                jg.writeStartObject();
                 jg.writeStringField("error", msg);
+                jg.writeEndObject();
             }
             
             outputString.flush();
