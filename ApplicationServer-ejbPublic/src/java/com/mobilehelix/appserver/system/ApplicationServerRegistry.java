@@ -129,7 +129,10 @@ public class ApplicationServerRegistry {
         }
         
         // If we have a connection to the Controller, refresh the app first.
-        controllerConnection.refreshApplication(client, appID, appGenID);
+        if (controllerConnection != null) {
+            controllerConnection.refreshApplication(client, appID, appGenID);
+        }
+        
         TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
         if (cliMap == null) {
             return null;
