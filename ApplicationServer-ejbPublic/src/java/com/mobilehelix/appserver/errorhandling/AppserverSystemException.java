@@ -29,6 +29,7 @@ public class AppserverSystemException extends Exception {
     
     private ArrayList<String> msgResourceKeys;
     private ArrayList<Object[]> msgResourceArgs;
+    private Integer errorCode;
     
     /*
      * Reference to resource bundle.
@@ -71,6 +72,17 @@ public class AppserverSystemException extends Exception {
         this.exceptionResources = commonResources;
     }
     
+    public AppserverSystemException(Exception e, String s, String key, Object[] args,
+            int errorCode) {
+        super(s);
+        this.initCause(e);
+        this.initLists(1);
+        this.msgResourceKeys.add(key);
+        this.msgResourceArgs.add(args);
+        this.exceptionResources = commonResources;
+        this.errorCode = errorCode;
+    }
+    
     public AppserverSystemException(String s, String key) {
         super(s);
         this.initLists(1);
@@ -87,6 +99,16 @@ public class AppserverSystemException extends Exception {
         this.initResourceBundle(appType);
     }
     
+    public AppserverSystemException(int appType, String s, String key,
+            int errorCode) {
+        super(s);
+        this.initLists(1);
+        this.msgResourceKeys.add(key);
+        this.msgResourceArgs.add(null);
+        this.initResourceBundle(appType);
+        this.errorCode = errorCode;
+    }
+    
     public AppserverSystemException(String s, String key, Object[] args) {
         super(s);
         this.initLists(1);
@@ -101,6 +123,16 @@ public class AppserverSystemException extends Exception {
         this.msgResourceKeys.add(key);
         this.msgResourceArgs.add(args);
         this.initResourceBundle(appType);
+    }
+    
+    public AppserverSystemException(int appType, String s, String key, Object[] args,
+            int errorCode) {
+        super(s);
+        this.initLists(1);
+        this.msgResourceKeys.add(key);
+        this.msgResourceArgs.add(args);
+        this.initResourceBundle(appType);
+        this.errorCode = errorCode;
     }
     
     public AppserverSystemException(String s, List<String> keys, List<Object[]> args) {
@@ -141,6 +173,10 @@ public class AppserverSystemException extends Exception {
     
     public int getMsgResourceCount() {
         return msgResourceKeys.size();
+    }
+
+    public Integer getErrorCode() {
+        return errorCode;
     }
     
     @Override

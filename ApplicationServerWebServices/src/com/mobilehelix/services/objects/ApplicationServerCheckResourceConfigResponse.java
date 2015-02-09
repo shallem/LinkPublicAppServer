@@ -45,10 +45,18 @@ public class ApplicationServerCheckResourceConfigResponse extends WSResponse {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();        
         JsonGenerator gen = factory.createJsonGenerator(baos);
         gen.writeStartObject();
+        gen.writeFieldName("status");
+        gen.writeNumber(this.statusCode);
+        
+        if (this.msg != null) {
+            gen.writeFieldName("msg");
+            gen.writeString(this.msg);
+        }
+        
         gen.writeArrayFieldStart("results");
         
         for (FileSystemInitTestResult r : this.results) {
-            gen.writeBinary(r.toBson());
+            r.toBson(gen);
         }
         
         gen.writeEndArray();
@@ -63,13 +71,25 @@ public class ApplicationServerCheckResourceConfigResponse extends WSResponse {
             ByteArrayInputStream bais = new ByteArrayInputStream(data);
             JsonParser parser = factory.createJsonParser(bais);
             parser.nextToken();
-            
+           
             while (parser.nextToken() != JsonToken.END_OBJECT) {
-                // Move past the field name token.
+                String fieldname = parser.getCurrentName();
                 parser.nextToken();
-                FileSystemInitTestResult result =  FileSystemInitTestResult.fromBson(parser.getBinaryValue());
-                this.addResult(result);
-            }
+                switch (fieldname) {
+                    case "msg":
+                        this.setMsg(parser.getText());
+                        break;                    
+                    case "status":
+                        this.setStatusCode(parser.getIntValue());
+                        break;                    
+                    case "results" :
+                        while (parser.nextToken() != JsonToken.END_ARRAY) {
+                            FileSystemInitTestResult result =  FileSystemInitTestResult.fromBson(parser);
+                            this.addResult(result);
+                        }
+                       break;
+                    }
+             }
     }
     
     
@@ -96,11 +116,7 @@ public class ApplicationServerCheckResourceConfigResponse extends WSResponse {
             return this.success;
         }
         
-        public static FileSystemInitTestResult fromBson(byte[] data) throws IOException {
-            BsonFactory factory = new BsonFactory();
-            ByteArrayInputStream bais = new ByteArrayInputStream(data);
-            JsonParser parser = factory.createJsonParser(bais);
-            parser.nextToken();
+        public static FileSystemInitTestResult fromBson(JsonParser parser) throws IOException {
             String name = "";
             String errMsg = "";
             boolean success = false;
@@ -125,17 +141,13 @@ public class ApplicationServerCheckResourceConfigResponse extends WSResponse {
             return new FileSystemInitTestResult(name, errMsg, success);            
         }
         
-        public byte[] toBson() throws IOException {
-            BsonFactory factory = new BsonFactory();
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            JsonGenerator gen = factory.createJsonGenerator(baos);
+        public void toBson(JsonGenerator gen) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("name", this.name);
             gen.writeStringField("msg", this.errorMessage);
             gen.writeBooleanField("success", this.success);
             gen.writeEndObject();
-            gen.close();
-            return baos.toByteArray();            
         }
     }
+  
 }
