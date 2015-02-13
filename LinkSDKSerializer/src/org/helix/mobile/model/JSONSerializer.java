@@ -282,6 +282,16 @@ public class JSONSerializer {
                 
                 jg.writeEndObject();
                 return true;
+            } else if (this.isErrorObject(c)) {
+                ClientWSResponse errObj = (ClientWSResponse)obj;
+                jg.writeStartObject();
+                jg.writeFieldName("error");
+                jg.writeStartObject();
+                jg.writeStringField("msg", errObj.getStatusMessage());
+                jg.writeNumberField("status", errObj.getStatusCode());
+                jg.writeEndObject();
+                jg.writeEndObject();
+                return true;
             } else if (this.hasClientDataMethods(c)) {
                 jg.writeStartObject();
                 
@@ -782,6 +792,10 @@ public class JSONSerializer {
         }
         
         return false;
+    }
+    
+    private boolean isErrorObject(Class<?> c) {
+        return c.equals(ClientWSResponse.class);
     }
     
     private String extractFieldName(String methodName) {
