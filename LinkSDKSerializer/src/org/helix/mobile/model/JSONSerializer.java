@@ -70,10 +70,10 @@ public class JSONSerializer {
     private static final String TEXT_INDEX_FIELD_NAME = "__hx_text_index";
     
     private class GlobalFilterField {
-        private String displayName;
-        private int[] intValues;
-        private String[] stringValues;
-        private String[] valueNames;
+        private final String displayName;
+        private final int[] intValues;
+        private final String[] stringValues;
+        private final String[] valueNames;
         
         public GlobalFilterField(String displayName,
                 int[] intValues,
@@ -117,6 +117,26 @@ public class JSONSerializer {
     public JSONSerializer() {
     }
 
+    public String serializeError(String msg) {
+        try {
+            StringWriter outputString = new StringWriter();
+            JsonFactory jsonF = new JsonFactory();
+            
+            try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+                jg.writeStartObject();
+                jg.writeStringField("error", msg);
+                jg.writeEndObject();
+            }
+            
+            outputString.flush();
+            
+            return outputString.toString();
+        } catch (IOException ex) {
+            Logger.getLogger(JSONSerializer.class.getName()).log(Level.SEVERE, "Failed to serialize JSON error.", ex);
+            return "{ 'error' : 'Serialization of the error message failed. Please review the server logs.' }";
+        }
+    }
+    
     public String serializeObject(Object obj) throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
@@ -218,6 +238,16 @@ public class JSONSerializer {
                 m = c.getMethod("getUpdates", new Class<?>[]{});
                 this.iterateOverObjectField(jg, obj, visitedClasses, m);
                 
+                m = c.getMethod("getDeleteSpec", new Class<?>[]{});
+                Criteria deleteSpec = (Criteria)m.invoke(obj, new Object[]{});
+                if (deleteSpec != null) {
+                    jg.writeObjectFieldStart("deleteSpec");
+                    jg.writeStringField("field", deleteSpec.getField());
+                    jg.writeStringField("op", deleteSpec.getOpString());
+                    jg.writeStringField("value", deleteSpec.getValue());
+                    jg.writeEndObject();
+                }
+                
                 jg.writeEndObject();
                 return true;
             } else if (this.isAggregateObject(c)) {
@@ -232,6 +262,34 @@ public class JSONSerializer {
                     this.serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
                 }
                 
+                jg.writeEndObject();
+                return true;
+            } else if (this.isParamObject(c)) {
+                jg.writeStartObject();
+                
+                /* Mark as a param object for the client code. */
+                jg.writeNumberField(TYPE_FIELD_NAME, 1004);
+                
+                /* Write the param. */
+                ParamObject po = (ParamObject)obj;
+                if (po.getParamObject() != null) {
+                    this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                }
+                if (po.getSyncObject() == null) {
+                    throw new IOException("All ParamObjects must have a non-null sync object that is returned from the server: " + c.getName());
+                }
+                this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
+                
+                jg.writeEndObject();
+                return true;
+            } else if (this.isErrorObject(c)) {
+                ClientWSResponse errObj = (ClientWSResponse)obj;
+                jg.writeStartObject();
+                jg.writeFieldName("error");
+                jg.writeStartObject();
+                jg.writeStringField("msg", errObj.getStatusMessage());
+                jg.writeNumberField("status", errObj.getStatusCode());
+                jg.writeEndObject();
                 jg.writeEndObject();
                 return true;
             } else if (this.hasClientDataMethods(c)) {
@@ -341,6 +399,27 @@ public class JSONSerializer {
                 } catch (SecurityException  ex) {
                     throw new IOException("Invalid contents of DeltaObject. " + ""
                             + "Missing getAdds method in class " + c.getName());
+                }
+            } else if (this.isParamObject(c)) {
+                try {
+                    Method m = c.getMethod("getSyncObject", new Class<?>[]{});
+                    Class<?> returnType = m.getReturnType();
+                    if (!this.serializeObjectForSchema(jg, returnType, 
+                            visitedClasses, fieldName, alternateName)) {
+                        /* The object neither has any fields marked as ClientData nor
+                         * does it have a toString method - this is not legal.
+                        */
+                        throw new IOException("Object types must either have fields " +
+                                "marked ClientData or have a toString method in class " + 
+                                c.getName());
+                    }
+                    return true;
+                } catch (NoSuchMethodException ex) {
+                    throw new IOException("Invalid contents of ParamObject. " +
+                            "Missing getParamObject method in class " + c.getName());
+                } catch (SecurityException  ex) {
+                    throw new IOException("Invalid contents of ParamObject. " + ""
+                            + "Missing getParamObject method in class " + c.getName());
                 }
             }
             
@@ -466,7 +545,7 @@ public class JSONSerializer {
 
                 /* Store the keys and sort fields in the object schema. */
                 if (keyField == null) {
-                    throw new IOException("Client data must have at least one field annotated as a ClientDataKey.");
+                    throw new IOException("Client data must have at least one field annotated as a ClientDataKey: " + c.getName());
                 }
                 jg.writeFieldName(KEY_FIELD_NAME);
                 jg.writeString(keyField);
@@ -505,7 +584,7 @@ public class JSONSerializer {
                 jg.writeEndObject();
                 return true;
             }  else {
-                throw new IOException("Client data must have at least one field annotated as a ClientData field: " + c.getName());
+                throw new IOException("Class must have at least one field annotated as a ClientData field: " + c.getName());
             }
         }
     }
@@ -527,7 +606,9 @@ public class JSONSerializer {
     }
     
     private static boolean isNumberType(Class<?> returnType) {
-        if (returnType.getSuperclass().equals(java.lang.Number.class)) {
+        Class<?> superClass = returnType.getSuperclass();
+        
+        if (superClass != null && superClass.equals(java.lang.Number.class)) {
             return true;
         }
         return false;
@@ -699,10 +780,22 @@ public class JSONSerializer {
     }
     
     private boolean isAggregateObject(Class<?> c) {
-        if (c.getName().equals("org.helix.mobile.model.AggregateObject")) {
-            return true;
+        return c.getName().equals("org.helix.mobile.model.AggregateObject");
+    }
+    
+    private boolean isParamObject(Class<?> c) {
+        while (c != null) {
+            if (c.getName().equals("org.helix.mobile.model.ParamObject")) {
+                return true;
+            }
+            c = c.getSuperclass();
         }
+        
         return false;
+    }
+    
+    private boolean isErrorObject(Class<?> c) {
+        return c.equals(ClientWSResponse.class);
     }
     
     private String extractFieldName(String methodName) {
