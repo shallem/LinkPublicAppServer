@@ -154,7 +154,9 @@ public class SessionManager {
                     
         initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
             this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);
-                    
+        initAS.getControllerConnection().refreshUserPrefs(globalProperties.getClientName(), 
+                this.debugSession.getCredentials().getUsernameNoDomain(), null, debugSession);
+        
         Long[] appIDsArr = new Long[appIDs.size()];
         Integer[] appGenIDsArr = new Integer[appGenIDs.size()];
         appIDsArr = appIDs.toArray(appIDsArr);

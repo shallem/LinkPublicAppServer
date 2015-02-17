@@ -130,16 +130,7 @@ public class Session {
         // Capture prefs.
         if (createRequest.getUserSettings() != null) {
             for (WSUserPreference wuas : createRequest.getUserSettings()) {
-                Long resourceID = -1L;
-                if (wuas.getResourceID() != null) {
-                    resourceID = wuas.getResourceID();
-                }
-                Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
-                if (prefs == null) {
-                    prefs = new HashSet<>();
-                    this.prefsMap.put(resourceID, prefs);
-                }
-                prefs.add(wuas);
+                this.addPref(wuas.getResourceID(), wuas);
             }
         }
         
@@ -405,8 +396,9 @@ public class Session {
             try {
                 status = this.currentFacade.getInitStatus();
             } catch (Exception e) {
-                throw new AppserverSystemException(e,  "SessionInitializationFailed",
-                    "Asynchronous init failed.");
+                throw new AppserverSystemException(e,
+                    "Asynchronous init failed.",
+                    "SessionInitializationFailed");
             }
         }
         
@@ -517,7 +509,7 @@ public class Session {
         this.connMap.put(c.getName(), cc);
     }
     
-    public void addPref(Long resourceID, WSUserPreference pref) {
+    public final void addPref(Long resourceID, WSUserPreference pref) {
         if (pref == null) {
             return;
         }        
