@@ -139,14 +139,14 @@ public class PushManager {
             for (PushReceiver receiver : receivers) {
                 if (receiver.matches(client, userID, appID)) {
                     found = true;
-                    LOG.log(Level.FINE, "Refreshing push session for {0}", combinedUser);
+                    LOG.log(Level.INFO, "Refreshing push session for {0}", combinedUser);
                     receiver.refresh(userID, password, as, true);
                 }
             }
         }
         try {
             if (!found) {
-                LOG.log(Level.FINE, "Creating push session for {0}", combinedUser);
+                LOG.log(Level.INFO, "Creating push session for {0}", combinedUser);
                 String uniqueID = this.getUniqueID(client, userID, appID);
                 PushReceiver newReceiver = as.getPushReceiver();
                 PushCompletion pushAccepted = new PushCompletion(this.userPushMap, this.idMap, uniqueID, combinedUser, newReceiver);
