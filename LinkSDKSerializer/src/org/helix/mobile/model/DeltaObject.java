@@ -46,5 +46,5 @@ public interface DeltaObject {
      * as either an alternative or in addition to an explicit delete list.
      */
     @ClientData
-    public Criteria getDeleteSpec();
+    public Criteria[] getDeleteSpec();
 }
