@@ -197,4 +197,9 @@ public class AppserverSystemException extends Exception {
             return this.getMsgResourceKey();
         }
     }
+    
+    @Override
+    public String getMessage() {
+        return this.getLocalizedMessage();
+    }
 }

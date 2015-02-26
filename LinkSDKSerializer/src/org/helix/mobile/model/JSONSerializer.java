@@ -239,13 +239,20 @@ public class JSONSerializer {
                 this.iterateOverObjectField(jg, obj, visitedClasses, m);
                 
                 m = c.getMethod("getDeleteSpec", new Class<?>[]{});
-                Criteria deleteSpec = (Criteria)m.invoke(obj, new Object[]{});
+                Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
                 if (deleteSpec != null) {
-                    jg.writeObjectFieldStart("deleteSpec");
-                    jg.writeStringField("field", deleteSpec.getField());
-                    jg.writeStringField("op", deleteSpec.getOpString());
-                    jg.writeStringField("value", deleteSpec.getValue());
-                    jg.writeEndObject();
+                    jg.writeArrayFieldStart("deleteSpec");
+                    for (Criteria crit : deleteSpec) {
+                        if (crit == null) {
+                            continue;
+                        }
+                        jg.writeStartObject();
+                        jg.writeStringField("field", crit.getField());
+                        jg.writeStringField("op", crit.getOpString());
+                        jg.writeStringField("value", crit.getValue());
+                        jg.writeEndObject();
+                    }
+                    jg.writeEndArray();
                 }
                 
                 jg.writeEndObject();
