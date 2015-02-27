@@ -243,6 +243,9 @@ public class JSONSerializer {
                 if (deleteSpec != null) {
                     jg.writeArrayFieldStart("deleteSpec");
                     for (Criteria crit : deleteSpec) {
+                        if (crit == null) {
+                            continue;
+                        }
                         jg.writeStartObject();
                         jg.writeStringField("field", crit.getField());
                         jg.writeStringField("op", crit.getOpString());

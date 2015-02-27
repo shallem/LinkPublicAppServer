@@ -239,10 +239,12 @@ public class Session {
     public ApplicationFacade getCurrentFacade(HttpServletRequest req, int apptype) {
         String appid = this.getAppIDFromRequest(req);
         if (appid != null) {
-            return this.getAppFacade(Long.parseLong(appid));
-        } else {
-            return this.getFacadeForType(apptype);
-        }
+            ApplicationFacade af = this.getAppFacade(Long.parseLong(appid));
+            if (af.getAppType() == apptype) {
+                return af;
+            }
+        } 
+        return this.getFacadeForType(apptype);
     }
     
     public ApplicationFacade getAppFacade(long appid) {
