@@ -32,9 +32,11 @@ import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -54,6 +56,7 @@ public class Session {
     
     /* Global prefs tags. */
     public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
+    public static final String COPY_ON_CHECKOUT_TAG = "checkout_copy";
     
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
@@ -105,7 +108,7 @@ public class Session {
     /* Map from resource IDs to a list of user prefs. The special resource ID -1 is used
        for global prefs.
     */
-    private final Map<Long, List<WSUserPreference>> prefsMap;
+    private final Map<Long, Set<WSUserPreference>> prefsMap;
     
     
     public Session(ApplicationServerCreateSessionRequest createRequest, 
@@ -509,33 +512,48 @@ public class Session {
     }
     
     public final void addPref(Long resourceID, WSUserPreference pref) {
+        if (pref == null) {
+            return;
+        }        
         if (resourceID == null) {
-            resourceID = (long)-1;
+            resourceID = -1L;
         }
-        List<WSUserPreference> prefsList = this.prefsMap.get(resourceID);
-        if (prefsList == null) {
-            prefsList = new LinkedList<>();
-            this.prefsMap.put(resourceID, prefsList);
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs == null) {
+            prefs = new HashSet<>();
+            this.prefsMap.put(resourceID, prefs);
+        } else {
+            prefs.remove(pref);
         }
-        for (WSUserPreference p : prefsList) {
-            if (p.getTag().equals(pref.getTag())) {
-                // Update.
-                p.setVal(pref.getVal());
-                p.setLastmod(pref.getLastmod());
-                return;
-            }            
-        }
-        prefsList.add(pref);
+        
+        prefs.add(pref);
     }
     
-    public WSUserPreference getPref(Long resourceID, String tag) {
+    public void removePref(Long resourceID, WSUserPreference pref) {
+        if (pref == null) {
+            return;
+        }        
         if (resourceID == null) {
-            resourceID = (long)-1;
+            resourceID = -1L;
+        }
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs == null) {
+           return;
+        }
+        prefs.remove(pref);
+    }
+        
+    public WSUserPreference getPref(Long resourceID, String tag) {
+        if (tag == null) {
+            return null;
+        }        
+        if (resourceID == null) {
+            resourceID = -1L;
         }
         WSUserPreference ret = null;
-        List<WSUserPreference> prefsList = this.prefsMap.get(resourceID);
-        if (prefsList != null) {
-            for (WSUserPreference pref : prefsList) {
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs != null) {
+            for (WSUserPreference pref : prefs) {
                 if (pref.getTag().equals(tag)) {
                     ret = pref;
                     break;
