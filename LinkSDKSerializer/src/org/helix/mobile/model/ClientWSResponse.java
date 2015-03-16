@@ -73,19 +73,24 @@ public class ClientWSResponse {
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
 
-        JsonGenerator jg = jsonF.createJsonGenerator(outputString);
-        jg.writeStartObject();
-        jg.writeFieldName("status");
-        jg.writeNumber(statusCode);
-        jg.writeFieldName("msg");
-        jg.writeString(statusMessage);
-        jg.writeArrayFieldStart("objects");
-        for (Object obj : this.responseObjects) {
-            js.serializeObject(obj, jg);
+        try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+            jg.writeStartObject();
+            
+            // The client reads either the return status of the return code field. Both are required
+            jg.writeFieldName("status"); 
+            jg.writeNumber(statusCode);
+            jg.writeFieldName("code");
+            jg.writeNumber(statusCode);
+            
+            jg.writeFieldName("msg");
+            jg.writeString(statusMessage);
+            jg.writeArrayFieldStart("objects");
+            for (Object obj : this.responseObjects) {
+                js.serializeObject(obj, jg);
+            }
+            jg.writeEndArray();
+            jg.writeEndObject();
         }
-        jg.writeEndArray();
-        jg.writeEndObject();
-        jg.close();
 
         outputString.flush();
 
