@@ -522,7 +522,10 @@ public class Session {
         if (prefs == null) {
             prefs = new HashSet<>();
             this.prefsMap.put(resourceID, prefs);
+        } else {
+            prefs.remove(pref);
         }
+        
         prefs.add(pref);
     }
     
