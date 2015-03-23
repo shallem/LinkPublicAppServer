@@ -282,10 +282,9 @@ public class JSONSerializer {
                 if (po.getParamObject() != null) {
                     this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
                 }
-                if (po.getSyncObject() == null) {
-                    throw new IOException("All ParamObjects must have a non-null sync object that is returned from the server: " + c.getName());
+                if (po.getSyncObject() != null) {
+                    this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
                 }
-                this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
                 
                 jg.writeEndObject();
                 return true;
