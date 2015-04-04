@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -397,10 +398,25 @@ public class Session {
              */
             try {
                 status = this.currentFacade.getInitStatus();
+            } catch (ExecutionException ee) {
+                // Just re-throw so that the underlying error message is preserved.
+                if (ee.getCause() instanceof AppserverSystemException) {
+                    throw (AppserverSystemException)ee.getCause();
+                } else {
+                    throw new AppserverSystemException(ee,
+                        "Asynchronous init failed.",
+                        "SessionInitializationFailed",
+                        new Object[] {
+                            ee.getCause().getMessage()
+                        });
+                }
             } catch (Exception e) {
                 throw new AppserverSystemException(e,
                     "Asynchronous init failed.",
-                    "SessionInitializationFailed");
+                    "SessionInitializationFailed",
+                    new Object[] {
+                        e.getMessage()
+                    });
             }
         }
         
