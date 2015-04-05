@@ -33,7 +33,7 @@ public class InitFilter {
     private static final String NOINIT = "The application server has not been initialized. Please run the init-application-server ant target from the command line.";
     private static final String NOAUTH = "Authentication is denied.";
     private static final String ERROR = "The app server failed to respond to this request: {0}";
-    private static final String META_VIEWPORT = "<meta name=\"viewport\" content=\"width =device-width,initial-scale=1,user-scalable=no\">";
+    private static final String META_VIEWPORT = "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\">";
     private InitialContext ictx;
     protected InitApplicationServer appServerSettings;
     protected SessionManager sessionManager;
