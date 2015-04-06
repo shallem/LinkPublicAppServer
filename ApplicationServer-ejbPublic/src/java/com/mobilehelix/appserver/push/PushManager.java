@@ -20,7 +20,7 @@ import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.GlobalPropertiesManager;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.CreateSessionRequest;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -178,7 +178,7 @@ public class PushManager {
         }
     }
     
-    public void addSession(ApplicationServerCreateSessionRequest newSess) throws AppserverSystemException {
+    public void addSession(CreateSessionRequest newSess) throws AppserverSystemException {
         Long[] appIDs = newSess.getAppIDs();
         Integer[] appGenIDs = newSess.getAppGenIDs();
         
