@@ -9,7 +9,7 @@ import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.constants.ServerTypeConstants;
 import com.mobilehelix.services.interfaces.WSResponse;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.util.logging.Level;
@@ -45,9 +45,9 @@ public class CreateSessionWS {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
 
-        ApplicationServerCreateSessionRequest creq; 
+        CreateSessionRequest creq; 
         try {
-            creq = ApplicationServerCreateSessionRequest.fromBson(b);
+            creq = CreateSessionRequest.fromBson(b);
             String reqSessionID = new String(creq.getServerSessionID());
             
             if (!initEJB.validateSessionID(reqSessionID)) {

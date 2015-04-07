@@ -24,7 +24,7 @@ import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
 import com.mobilehelix.services.objects.WSUserPreference;
@@ -112,7 +112,7 @@ public class Session {
     private final Map<Long, Set<WSUserPreference>> prefsMap;
     
     
-    public Session(ApplicationServerCreateSessionRequest createRequest, 
+    public Session(CreateSessionRequest createRequest, 
             ApplicationInitializer appInit) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
