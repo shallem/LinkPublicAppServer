@@ -24,7 +24,7 @@ import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
 import com.mobilehelix.services.objects.WSUserPreference;
@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -114,7 +115,7 @@ public class Session {
     private final Map<Long, Set<WSUserPreference>> prefsMap;
     
     
-    public Session(ApplicationServerCreateSessionRequest createRequest, 
+    public Session(CreateSessionRequest createRequest, 
             ApplicationInitializer appInit) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
@@ -405,10 +406,25 @@ public class Session {
              */
             try {
                 status = this.currentFacade.getInitStatus();
+            } catch (ExecutionException ee) {
+                // Just re-throw so that the underlying error message is preserved.
+                if (ee.getCause() instanceof AppserverSystemException) {
+                    throw (AppserverSystemException)ee.getCause();
+                } else {
+                    throw new AppserverSystemException(ee,
+                        "Asynchronous init failed.",
+                        "SessionInitializationFailed",
+                        new Object[] {
+                            ee.getCause().getMessage()
+                        });
+                }
             } catch (Exception e) {
                 throw new AppserverSystemException(e,
                     "Asynchronous init failed.",
-                    "SessionInitializationFailed");
+                    "SessionInitializationFailed",
+                    new Object[] {
+                        e.getMessage()
+                    });
             }
         }
         

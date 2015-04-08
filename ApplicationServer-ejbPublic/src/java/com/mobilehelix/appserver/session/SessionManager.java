@@ -21,7 +21,7 @@ import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.services.objects.CreateSessionRequest;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -90,7 +90,7 @@ public class SessionManager {
         }
     }
     
-    public Session addSession(ApplicationServerCreateSessionRequest sess)
+    public Session addSession(CreateSessionRequest sess)
             throws AppserverSystemException {
         String sessIDB64 = this.hashSessionID(sess.getSessionKey());
         Session appServerSession = new Session(sess, appInit);
