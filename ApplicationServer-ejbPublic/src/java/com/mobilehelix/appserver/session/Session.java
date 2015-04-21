@@ -353,6 +353,16 @@ public class Session {
         }        
     }
     
+    public void processRequest(Long appID, int appType) throws AppserverSystemException {
+        if (appID == null) {
+            throw new AppserverSystemException("Invalid app ID.", "InvalidAppID", new Object[]{ "null" });
+        }
+        
+        /* Setup the application and facade. */
+        this.initCurrentApplication(appID.toString(), null, appType);        
+        this.initCurrentFacade(false);
+    }
+    
     /**
      * Should be called when a GET page request arrives.
      */

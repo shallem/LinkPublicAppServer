@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
+import javax.xml.bind.annotation.XmlRootElement;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 
@@ -32,6 +33,7 @@ import org.codehaus.jackson.JsonGenerator;
  *
  * @author shallem
  */
+@XmlRootElement
 public class ClientWSResponse {
 
     private int statusCode;
@@ -41,14 +43,14 @@ public class ClientWSResponse {
     public ClientWSResponse() {
         this.statusCode = -1;
         this.statusMessage = "Uninitialized.";
-        this.responseObjects = new LinkedList<Object>();
+        this.responseObjects = new LinkedList<>();
     }
     
     public ClientWSResponse(int statusCode,
             String statusMessage) {
         this.statusCode = statusCode;
         this.statusMessage = statusMessage;
-        this.responseObjects = new LinkedList<Object>();
+        this.responseObjects = new LinkedList<>();
     }
 
     public ClientWSResponse(int statusCode,
@@ -97,10 +99,18 @@ public class ClientWSResponse {
         return outputString.toString();
     }
 
+    public int getCode() {
+        return this.getStatusCode();
+    }
+    
     public int getStatusCode() {
         return statusCode;
     }
 
+    public String getMsg() {
+        return this.getStatusMessage();
+    }
+    
     public String getStatusMessage() {
         return statusMessage;
     }
@@ -108,9 +118,25 @@ public class ClientWSResponse {
     public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
     }
+    
+    public void setCode(int statusCode) {
+        this.setStatusCode(statusCode);
+    }
 
+    public void setMsg(String msg) {
+        this.setStatusMessage(statusMessage);
+    }
+    
     public void setStatusMessage(String statusMessage) {
         this.statusMessage = statusMessage;
+    }
+    
+    public List<Object> getObjects() {
+        return this.responseObjects;
+    }
+    
+    public void setObjects(List<Object> objs) {
+        this.responseObjects = objs;
     }
 
     public static String SerializationFailureObject() {
