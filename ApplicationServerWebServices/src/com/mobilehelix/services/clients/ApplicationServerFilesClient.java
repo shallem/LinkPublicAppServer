@@ -6,7 +6,6 @@ import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import java.io.IOException;
 import java.util.TreeMap;
 import org.apache.commons.codec.EncoderException;
-import org.helix.mobile.model.ClientWSResponse;
 
 /**
  *
@@ -20,12 +19,16 @@ public class ApplicationServerFilesClient extends RestClient {
         super(host, "/clientws/files/" + op, props);
     }
     
-    public ClientWSResponse getRoots(String sessID, Long appID) throws UniformInterfaceException, IOException, EncoderException {
+    public String getRoots(String sessID, Long appID) throws UniformInterfaceException, IOException, EncoderException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
         super.appendQueryParameters(paramsMap);
         
-        return super.runJSONGet(ClientWSResponse.class);
+        byte[] res = super.runGet();
+        if (res != null) {
+            return new String(res);
+        }
+        return null;
     }
 }

@@ -359,7 +359,7 @@ public class Session {
         }
         
         /* Setup the application and facade. */
-        this.initCurrentApplication(appID.toString(), null, appType);        
+        this.initCurrentApplication(appID.toString(), Integer.toString(ApplicationServerRegistry.FORCE_NO_REFRESH), appType);        
         this.initCurrentFacade(false);
     }
     
