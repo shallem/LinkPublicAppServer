@@ -31,4 +31,28 @@ public class ApplicationServerFilesClient extends RestClient {
         }
         return null;
     }
+    
+    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws UniformInterfaceException, IOException, EncoderException {
+        TreeMap<String, String> paramsMap = new TreeMap<>();
+        paramsMap.put("sessionid", sessID);
+        paramsMap.put("appid", appID.toString());
+        if (rootDigest != null) {
+            paramsMap.put("digest", rootDigest);
+        } else {
+            paramsMap.put("digest", "ROOT");
+        }
+        if (syncTarget != null) {
+            paramsMap.put("target", syncTarget);
+        }
+        if (state != null) {
+            paramsMap.put("state", state);
+        }
+        super.appendQueryParameters(paramsMap);
+        
+        byte[] res = super.runGet();
+        if (res != null) {
+            return new String(res);
+        }
+        return null;
+    } 
 }
