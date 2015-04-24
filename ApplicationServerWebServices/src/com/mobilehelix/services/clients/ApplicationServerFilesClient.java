@@ -55,4 +55,20 @@ public class ApplicationServerFilesClient extends RestClient {
         }
         return null;
     } 
+    
+    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws UniformInterfaceException, IOException, EncoderException {
+        TreeMap<String, String> paramsMap = new TreeMap<>();
+        paramsMap.put("sessionid", sessID);
+        paramsMap.put("appid", appID.toString());
+        if (rootDigest != null) {
+            paramsMap.put("digest", rootDigest);
+        } else {
+            paramsMap.put("digest", "ROOT");
+        }
+        paramsMap.put("id", fileID);
+        paramsMap.put("filename", fileName);
+        super.appendQueryParameters(paramsMap);
+        
+        return super.runGet();
+    } 
 }
