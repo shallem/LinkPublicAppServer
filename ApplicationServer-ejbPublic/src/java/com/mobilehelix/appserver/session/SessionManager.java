@@ -78,7 +78,7 @@ public class SessionManager {
         // Determine what type of app registry we have ...
     }
 
-    public String hashSessionID(byte[] sessionKey) throws AppserverSystemException {
+    private static String hashSessionID(byte[] sessionKey) throws AppserverSystemException {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             md.update(sessionKey);
@@ -92,7 +92,7 @@ public class SessionManager {
     
     public Session addSession(CreateSessionRequest sess)
             throws AppserverSystemException {
-        String sessIDB64 = this.hashSessionID(sess.getSessionKey());
+        String sessIDB64 = hashSessionID(sess.getSessionKey());
         Session appServerSession = new Session(sess, appInit);
         globalSessionMap.put(sessIDB64, appServerSession);
         return appServerSession;
@@ -138,8 +138,7 @@ public class SessionManager {
         }
         // Decode the B64-encoded key.
         if (sessIDB64 != null) {
-            byte[] sessID = Base64.decodeBase64(sessIDB64);
-            return this.hashSessionID(sessID);
+            return hashSessionID(Base64.decodeBase64(sessIDB64));
         }
         return null;
     }
