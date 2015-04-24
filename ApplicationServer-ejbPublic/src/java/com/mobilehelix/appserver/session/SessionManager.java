@@ -88,7 +88,7 @@ public class SessionManager {
             throw new AppserverSystemException("Failed to generate session ID hash.",
                     "SessionIDHashingFailed");
         }
-    }
+    }    
     
     public Session addSession(CreateSessionRequest sess)
             throws AppserverSystemException {
@@ -166,8 +166,7 @@ public class SessionManager {
         this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");
     }
     
-    public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
-        String sessIDB64 = this.getSessIDFromRequest(req);
+    public Session getSessionForRequest(String sessIDB64) throws AppserverSystemException {
         if (sessIDB64 == null) {
             if (this.isDebugOn()) {
                 if (this.debugSession == null) {
@@ -178,6 +177,11 @@ public class SessionManager {
             return null;
         }
         return globalSessionMap.get(sessIDB64);
+    }
+    
+    public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
+        String sessIDB64 = this.getSessIDFromRequest(req);
+        return this.getSessionForRequest(sessIDB64);
     }
 
     public Session getSessionForID(String sessIDB64) {
