@@ -59,6 +59,9 @@ public class Session {
     public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
     public static final String COPY_ON_CHECKOUT_TAG = "checkout_copy";
     
+    private static final long MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;
+    
+    
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
     
@@ -199,6 +202,11 @@ public class Session {
                 this.appFacades.put(as.getAppID(), af);
             }
         }
+    }
+    
+    public long getMaxDownloadSize() {
+        // TODO:  make dynamic
+        return MAX_DOWNLOAD_SIZE;
     }
     
     private void init(String client,
@@ -343,6 +351,16 @@ public class Session {
             throw new AppserverSystemException("Failed to lookup current application in process request.",
                             "SessionCannotFindApp");
         }        
+    }
+    
+    public void processRequest(Long appID, int appType) throws AppserverSystemException {
+        if (appID == null) {
+            throw new AppserverSystemException("Invalid app ID.", "InvalidAppID", new Object[]{ "null" });
+        }
+        
+        /* Setup the application and facade. */
+        this.initCurrentApplication(appID.toString(), Integer.toString(ApplicationServerRegistry.FORCE_NO_REFRESH), appType);        
+        this.initCurrentFacade(false);
     }
     
     /**
