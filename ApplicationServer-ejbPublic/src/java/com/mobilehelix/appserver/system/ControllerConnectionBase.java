@@ -103,6 +103,8 @@ public class ControllerConnectionBase {
         this.globalProperties.setScriptsDir(asir.getScriptsDir());
         this.globalProperties.setPhantomJsBin(asir.getPhantomJsBin());
         this.globalProperties.setRootDir(asir.getRootDir());
+        
+        this.globalProperties.setIsNoGateway(asir.isIsNoGateway());
 
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.

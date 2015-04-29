@@ -39,6 +39,9 @@ public class GlobalPropertiesManager {
     private String debugUser;
     private String debugPassword;
     
+    /* Indicates that there is no gateway required. */
+    private boolean isNoGateway;
+    
     /* Public and private IP addresses of this server. Note that the public IP
      * is the "externally accessible" address that is, for example, used to create
      * a push subscription in MS Exchange. The private ip/port is used by the gateway
@@ -57,6 +60,7 @@ public class GlobalPropertiesManager {
     
     @PostConstruct
     public void init() {
+        this.isNoGateway = false;
         this.readDebugProperties();
     }
     
@@ -155,6 +159,14 @@ public class GlobalPropertiesManager {
 
     public void setRootDir(String rootDir) {
         this.rootDir = rootDir;
+    }
+
+    public boolean isIsNoGateway() {
+        return isNoGateway;
+    }
+
+    public void setIsNoGateway(boolean isNoGateway) {
+        this.isNoGateway = isNoGateway;
     }
     
     public void asProperties(Map<String, Object> props) {

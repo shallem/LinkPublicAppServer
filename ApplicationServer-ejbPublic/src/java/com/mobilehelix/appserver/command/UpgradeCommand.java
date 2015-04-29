@@ -34,7 +34,7 @@ public class UpgradeCommand  {
         File errorFile = new File(globalProps.getRootDir() + File.separator + "LOG.err");
         pb.redirectError(errorFile);
         
-        LOG.log(Level.SEVERE, "The appgateway is about to autoupgrade.");
+        LOG.log(Level.SEVERE, "The appserver is about to autoupgrade.");
         Process proc = pb.start();
         
         try {

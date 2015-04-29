@@ -31,8 +31,10 @@ public class ApplicationServerInitRequest extends WSRequest {
     private String scriptsDir;
     private String phantomJsBin;
     private String rootDir;
+    private boolean isNoGateway;
     
     public ApplicationServerInitRequest() {    
+        this.isNoGateway = false;
     }
     
     public ApplicationServerInitRequest(String controllerIP,
@@ -49,7 +51,8 @@ public class ApplicationServerInitRequest extends WSRequest {
             String regionName,
             String scriptsDir,
             String phantomJsBin,
-            String rootDir) {
+            String rootDir,
+            boolean isNoGateway) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
         this.asPrivIP = asPrivIP;
@@ -66,6 +69,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.scriptsDir = scriptsDir;
         this.phantomJsBin = phantomJsBin;
         this.rootDir = rootDir;
+        this.isNoGateway = isNoGateway;
     }
 
     public String getClientName() {
@@ -195,6 +199,14 @@ public class ApplicationServerInitRequest extends WSRequest {
     public void setRootDir(String rootDir) {
         this.rootDir = rootDir;
     }
+
+    public boolean isIsNoGateway() {
+        return isNoGateway;
+    }
+
+    public void setIsNoGateway(boolean isNoGateway) {
+        this.isNoGateway = isNoGateway;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -234,6 +246,7 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeFieldName("phantomjsbin");
         gen.writeString(this.phantomJsBin);
         gen.writeStringField("rootdir", this.rootDir);
+        gen.writeBooleanField("nogateway", isNoGateway);
         gen.close();
         return baos.toByteArray();
     }
@@ -293,6 +306,9 @@ public class ApplicationServerInitRequest extends WSRequest {
                     break;
                 case "rootdir":
                     asir.setRootDir(parser.getText());
+                    break;
+                case "nogateway":
+                    asir.setIsNoGateway(parser.getBooleanValue());
                     break;
             }
         }
