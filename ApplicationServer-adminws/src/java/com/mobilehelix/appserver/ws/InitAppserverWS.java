@@ -51,7 +51,7 @@ public class InitAppserverWS {
         
         try {
             asir = ApplicationServerInitRequest.fromBson(b);
-            msg = initEJB.processInitRequest(asir);
+            msg = initEJB.processInitRequest(asir, 0);
             statusCode = WSResponse.SUCCESS;
         } catch(Exception e) {
                 LOGGER.log(Level.SEVERE, "App server init failed with exception.", e);
