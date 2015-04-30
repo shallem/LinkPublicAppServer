@@ -88,7 +88,7 @@ public class ControllerConnectionBase {
         return null;
     }
     
-    public String processInitRequest(ApplicationServerInitRequest asir, String version) 
+    public String processInitRequest(ApplicationServerInitRequest asir, String version, int nRetries) 
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
         this.globalProperties.setClientName(asir.getClientName());
