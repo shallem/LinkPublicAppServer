@@ -16,6 +16,9 @@
 package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.command.UpgradeCommand;
+import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.system.ApplicationServerRegistry;
+import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.objects.WSAdminCommand;
@@ -41,25 +44,48 @@ public class AdminCommandWS {
     @EJB
     private UpgradeCommand upgradeCmd;
     
+    @EJB
+    private ApplicationServerRegistry appRegistry;
+    
+    @EJB
+    private InitApplicationServer initEJB;
+    
     @POST
     public byte[] runCmd(byte [] b) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
         try {
             WSAdminCommand adminCmd = WSAdminCommand.fromBson(b);
-            
-            switch(adminCmd.getCommandName()) {
-                case "upgrade":
-                    // Run the upgrade.
-                    msg = upgradeCmd.run();
-                    break;
-                default:
-                    break;
+            if (!initEJB.validateSessionID(new String(adminCmd.getServerSessID()))) {
+                    /* Cannot authenticate this request. */
+                statusCode = WSResponse.FAILURE;
+                msg = "Failed to authenticate request.";
+            } else if (!initEJB.isIsInitialized()) {
+                statusCode = WSResponse.FAILURE;
+                msg = "Cannot create a session on the app server because it is not initialized.";
+            } else {
+                switch(adminCmd.getCommandName()) {
+                    case "upgrade":
+                        // Run the upgrade.
+                        msg = upgradeCmd.run();
+                        break;
+                    case "refreshapp":
+                        String client = adminCmd.getCommandArgs()[0];
+                        Long appID = Long.parseLong(adminCmd.getCommandArgs()[1]);
+                        appRegistry.refreshApplication(client, appID);
+                        break;
+                    default:
+                        break;
+                }
             }
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Failed to de-serialize admin command.", ex);
             statusCode = WSResponse.FAILURE;
             msg = (ex.getLocalizedMessage() != null ? ex.getLocalizedMessage() : ex.getMessage());
+        } catch (AppserverSystemException ex) {
+            LOG.log(Level.SEVERE, "Failed to update the app.", ex);
+            statusCode = WSResponse.FAILURE;
+            msg = ex.getLocalizedMessage();
         }
         
         if (msg == null) {
