@@ -51,9 +51,6 @@ public class ApplicationServerRegistry {
     private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
     private TreeMap<String, TreeSet<Long>> ignoreMap; 
     
-    @EJB
-    private InitApplicationServer initAS;
-    
     private ControllerConnectionBase controllerConnection;
     
     @PostConstruct
@@ -61,8 +58,6 @@ public class ApplicationServerRegistry {
         this.appMap = new TreeMap<>();
         this.factoryMap = new TreeMap<>();
         this.ignoreMap = new TreeMap<>();
-        this.controllerConnection = initAS.getControllerConnection();
-        this.controllerConnection.setApplicationRegistry(this);
     }
     
     public void addSettingsFactory(int appType, ApplicationSettingsFactory sf) {

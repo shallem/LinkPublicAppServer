@@ -54,6 +54,9 @@ public class InitApplicationServer {
     @EJB
     private VersionManager versionMgr;
     
+    @EJB
+    private ApplicationServerRegistry appRegistry;
+    
     private boolean isInitialized = false;
     
     private ControllerConnectionBase controllerConnection;
@@ -74,7 +77,8 @@ public class InitApplicationServer {
         }
         this.controllerConnection.setSessionMgr(sessionMgr);
         this.controllerConnection.setGlobalProperties(globalProperties);
-        
+        this.controllerConnection.setApplicationRegistry(this.appRegistry);
+
         // See if we can init from helix-init.properties in the instance root.
         // Check for the init properties file in the domain.
         try {
@@ -98,6 +102,7 @@ public class InitApplicationServer {
                 asir.setControllerPort(Integer.parseInt(initProperties.getProperty("ControllerHttpsPort")));
                 asir.setClientName(initProperties.getProperty("Client"));
                 asir.setServerName(initProperties.getProperty("ServerName"));
+                asir.setPushServerName(asir.getServerName() + "-PUSH");
                 asir.setStorePass(initProperties.getProperty("StorePass"));
                 asir.setIsNoGateway(Boolean.parseBoolean(initProperties.getProperty("NoGateway")));
                 asir.setRootDir(initProperties.getProperty("RootDir"));
