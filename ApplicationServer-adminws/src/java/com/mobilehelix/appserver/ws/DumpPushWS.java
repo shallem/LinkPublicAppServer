@@ -105,7 +105,7 @@ public class DumpPushWS {
             // is full of bogus credentials then it really doesn't create any leak of sensitive information.
             // Creating such push sessions will fail when the attempting to authenticate with A-D.
             if (!initEJB.isIsInitialized()) {
-                statusCode = WSResponse.FAILURE;
+                statusCode = WSResponse.NOINIT;
                 msg = "Cannot restore push sessions on the app server because it is not initialized.";
             } else {
                 statusCode = WSResponse.SUCCESS;
