@@ -60,6 +60,10 @@ public class ApplicationServerRegistry {
         this.ignoreMap = new TreeMap<>();
     }
     
+    public void setControllerConnection(ControllerConnectionBase b) {
+        this.controllerConnection = b;
+    }
+    
     public void addSettingsFactory(int appType, ApplicationSettingsFactory sf) {
         this.factoryMap.put(appType, sf);
     }
