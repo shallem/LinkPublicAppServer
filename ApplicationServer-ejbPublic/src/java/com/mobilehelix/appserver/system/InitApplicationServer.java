@@ -167,6 +167,7 @@ public class InitApplicationServer {
         
         /* Register with the Controller, if we have one. */
         String ret = this.controllerConnection.processInitRequest(asir, versionMgr.getVersion(), nRetries);
+        appRegistry.setControllerConnection(this.controllerConnection);
         
         /* Indicate that the server is now initialized. */
         this.isInitialized = true;
