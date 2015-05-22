@@ -126,13 +126,14 @@ public class InitApplicationServer {
                 }
 
                 // Read in the raw bytes from the keystore.
-                FileInputStream jksInstream = new FileInputStream(jksPath);
-                byte[] jksBytes = new byte[(int)length];
-                int nread = jksInstream.read(jksBytes);
-                if (nread < length) {
-                    throw new IOException("Failed to read full JKS file.");
+                try (FileInputStream jksInstream = new FileInputStream(jksPath)) {
+                    byte[] jksBytes = new byte[(int)length];
+                    int nread = jksInstream.read(jksBytes);
+                    if (nread < length) {
+                        throw new IOException("Failed to read full JKS file.");
+                    }
+                    asir.setKeyStore(jksBytes);
                 }
-                asir.setKeyStore(jksBytes);
                 
                 // Retry 5 times in case the Controller has not yet started/initialized.
                 this.processInitRequest(asir, 5);
