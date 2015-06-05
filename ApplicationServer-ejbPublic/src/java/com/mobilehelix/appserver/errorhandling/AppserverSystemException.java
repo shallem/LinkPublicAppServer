@@ -30,7 +30,7 @@ public class AppserverSystemException extends Exception {
     private ArrayList<String> msgResourceKeys;
     private ArrayList<Object[]> msgResourceArgs;
     private Integer errorCode;
-    private Long resourceID; // ID of the AppServer resource (EG. FileSystem in Filebox)
+    private String resource;  // JSON { "id": resourceID, (optional) "url", redirect_url,  (optional) "name" : resource_name }
     
     /*
      * Reference to resource bundle.
@@ -200,11 +200,12 @@ public class AppserverSystemException extends Exception {
         return this.getLocalizedMessage();
     }
 
-    public long getResourceID() {
-        return (this.resourceID == null) ? -1 : this.resourceID;
+     // JSON object { "id" : xxx, "url" : yyy } as String
+    public String getResource() {
+        return this.resource;
     }
 
-    public void setResourceID(Long resourceID) {
-        this.resourceID = resourceID;
+    public void setResource(String resource) {
+        this.resource = resource;
     }       
 }

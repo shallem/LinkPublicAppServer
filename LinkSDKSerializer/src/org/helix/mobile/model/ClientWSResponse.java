@@ -62,7 +62,9 @@ public class ClientWSResponse {
     }
 
     public void addObject(Object o) {
-        this.responseObjects.add(o);
+        if (o != null) {
+           this.responseObjects.add(o);
+        }
     }
 
     public String toJSON() throws IOException,
