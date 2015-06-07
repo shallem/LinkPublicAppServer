@@ -597,4 +597,8 @@ public class Session {
         
         return ret;
     }
+    
+    public Set<WSUserPreference> getAllPrefs(Long resourceID) {
+        return this.prefsMap.get(resourceID);
+    }
 }
