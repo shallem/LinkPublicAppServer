@@ -587,7 +587,7 @@ public class Session {
         WSUserPreference ret = null;
         Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
         if (prefs != null) {
-            for (WSUserPreference pref : prefs) {
+            for (WSUserPreference pref : prefs) {        
                 if (pref.getTag().equals(tag)) {
                     ret = pref;
                     break;
@@ -596,5 +596,9 @@ public class Session {
         }
         
         return ret;
+    }
+    
+    public Set<WSUserPreference> getAllPrefs(Long resourceID) {
+        return this.prefsMap.get(resourceID);
     }
 }
