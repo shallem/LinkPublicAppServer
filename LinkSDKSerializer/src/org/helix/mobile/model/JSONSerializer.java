@@ -292,10 +292,7 @@ public class JSONSerializer {
                 ClientWSResponse errObj = (ClientWSResponse)obj;
                 jg.writeStartObject();
                 jg.writeFieldName("error");
-                jg.writeStartObject();
-                jg.writeStringField("msg", errObj.getStatusMessage());
-                jg.writeNumberField("status", errObj.getStatusCode());
-                jg.writeEndObject();
+                errObj.toJSON(jg, this);
                 jg.writeEndObject();
                 return true;
             } else if (this.hasClientDataMethods(c)) {

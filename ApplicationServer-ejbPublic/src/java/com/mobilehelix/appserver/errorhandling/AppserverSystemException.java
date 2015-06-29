@@ -74,8 +74,7 @@ public class AppserverSystemException extends Exception {
         this.exceptionResources = getResourceBundle();
     }
     
-    public AppserverSystemException(Exception e, String s, String key, Object[] args,
-            int errorCode) {
+    public AppserverSystemException(Exception e, String s, String key, Object[] args, int errorCode) {
         super(s);
         this.initCause(e);
         this.initLists(1);
@@ -85,6 +84,11 @@ public class AppserverSystemException extends Exception {
         this.errorCode = errorCode;
     }
     
+    public AppserverSystemException(Exception e, String s, String key, Object[] args, int errorCode, String resource) {
+        this(e, s, key, args, errorCode);
+        this.resource = resource;
+    }
+        
     public AppserverSystemException(String s, String key) {
         super(s);
         this.initLists(1);
@@ -101,8 +105,7 @@ public class AppserverSystemException extends Exception {
         this.initResourceBundle(appType);
     }
     
-    public AppserverSystemException(int appType, String s, String key,
-            int errorCode) {
+    public AppserverSystemException(int appType, String s, String key, int errorCode) {
         super(s);
         this.initLists(1);
         this.msgResourceKeys.add(key);
@@ -135,6 +138,11 @@ public class AppserverSystemException extends Exception {
         this.msgResourceArgs.add(args);
         this.initResourceBundle(appType);
         this.errorCode = errorCode;
+    }
+    
+    public AppserverSystemException(int appType, String s, String key, Object[] args, int errorCode, String resource) {
+        this(appType, s, key, args, errorCode);
+        this.resource = resource;
     }
     
     public AppserverSystemException(String s, List<String> keys, List<Object[]> args) {
