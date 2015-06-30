@@ -66,6 +66,29 @@ public class ClientWSResponse {
            this.responseObjects.add(o);
         }
     }
+    
+    public void toJSON(JsonGenerator jg, JSONSerializer js)  throws IOException,
+            IllegalAccessException,
+            IllegalArgumentException,
+            InvocationTargetException,
+            NoSuchMethodException {
+        jg.writeStartObject();
+            
+        // The client reads either the return status of the return code field. Both are required
+        jg.writeFieldName("status"); 
+        jg.writeNumber(statusCode);
+        jg.writeFieldName("code");
+        jg.writeNumber(statusCode);
+
+        jg.writeFieldName("msg");
+        jg.writeString(statusMessage);
+        jg.writeArrayFieldStart("objects");
+        for (Object obj : this.responseObjects) {
+            js.serializeObject(obj, jg);
+        }
+        jg.writeEndArray();
+        jg.writeEndObject();
+    }
 
     public String toJSON() throws IOException,
             IllegalAccessException,
@@ -78,22 +101,7 @@ public class ClientWSResponse {
         JsonFactory jsonF = new JsonFactory();
 
         try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
-            jg.writeStartObject();
-            
-            // The client reads either the return status of the return code field. Both are required
-            jg.writeFieldName("status"); 
-            jg.writeNumber(statusCode);
-            jg.writeFieldName("code");
-            jg.writeNumber(statusCode);
-            
-            jg.writeFieldName("msg");
-            jg.writeString(statusMessage);
-            jg.writeArrayFieldStart("objects");
-            for (Object obj : this.responseObjects) {
-                js.serializeObject(obj, jg);
-            }
-            jg.writeEndArray();
-            jg.writeEndObject();
+            this.toJSON(jg, js);
         }
 
         outputString.flush();
