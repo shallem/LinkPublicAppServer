@@ -52,7 +52,7 @@ public class GlobalPropertiesManager {
     private Integer asPubPort;
     private Integer asPrivPort;
     private Integer asHttpPort;
-    
+    private String region;
     private String rootDir;
     private String scriptsDir;
     private String phantomJsBin;
@@ -75,6 +75,14 @@ public class GlobalPropertiesManager {
             this.debugUser = null;       
             this.debugPassword = null;
         }
+    }
+
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
     }
     
     public boolean isDebugOn() {
@@ -180,5 +188,6 @@ public class GlobalPropertiesManager {
         props.put("asHttpPort", this.asHttpPort);
         props.put("scriptsDir", this.scriptsDir);
         props.put("phantomJsBin", this.phantomJsBin);
+        props.put("region", this.region);
     }
 }
