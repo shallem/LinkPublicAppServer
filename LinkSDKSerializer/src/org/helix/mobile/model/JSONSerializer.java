@@ -190,130 +190,135 @@ public class JSONSerializer {
             String fieldName) throws IOException, IllegalAccessException, 
                                      IllegalArgumentException, InvocationTargetException, 
                                      NoSuchMethodException {
-        Class<?> c = obj.getClass();
-        
-        if (isSimpleType(c)) {
-            if (fieldName != null) {
-                jg.writeFieldName(fieldName);
-            }
-            this.addSimpleData(jg, obj);
-            return true;
-        } else if (c.isArray()) {
-            if (fieldName != null) {
-                jg.writeArrayFieldStart(fieldName);
-            } else {
-                jg.writeStartArray();
-            }
-            for (Object elem : (Object[]) obj) {
-                this.serializeObjectFields(jg, elem, visitedClasses, null);
-            }
-            jg.writeEndArray();
-            return true;
-        } else {
-            /* Next, iterate over all methods looking for property getters, of the form
-             * get<prop name>. Find those annotated with the ClientData annotation. Presuming
-             * the name format is right, convert the method name to a field name and add
-             * to the schema. Throw an IO exception is an annotated method has the wrong
-             * name format.
-             */
-            if (fieldName != null) {
-                jg.writeFieldName(fieldName);
-            }
-            if (this.isDeltaObject(c)) {
-                jg.writeStartObject();
-                
-                /* Mark as a delta object for the client code. */
-                jg.writeFieldName(TYPE_FIELD_NAME);
-                jg.writeNumber(1001);
+        try {
+            Class<?> c = obj.getClass();
 
-                Method m = c.getMethod("getAdds", new Class<?>[]{});
-                Class<?> returnType = m.getReturnType();
-                jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
-                jg.writeString(returnType.getComponentType().getName());
-                this.iterateOverObjectField(jg, obj, visitedClasses, m);
-                
-                m = c.getMethod("getDeletes", new Class<?>[]{});
-                this.iterateOverObjectField(jg, obj, visitedClasses, m);
-                
-                m = c.getMethod("getUpdates", new Class<?>[]{});
-                this.iterateOverObjectField(jg, obj, visitedClasses, m);
-                
-                m = c.getMethod("getDeleteSpec", new Class<?>[]{});
-                Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
-                if (deleteSpec != null) {
-                    jg.writeArrayFieldStart("deleteSpec");
-                    for (Criteria crit : deleteSpec) {
-                        if (crit == null) {
-                            continue;
-                        }
-                        jg.writeStartObject();
-                        jg.writeStringField("field", crit.getField());
-                        jg.writeStringField("op", crit.getOpString());
-                        jg.writeStringField("value", crit.getValue());
-                        jg.writeEndObject();
-                    }
-                    jg.writeEndArray();
+            if (isSimpleType(c)) {
+                if (fieldName != null) {
+                    jg.writeFieldName(fieldName);
                 }
-                
-                jg.writeEndObject();
+                this.addSimpleData(jg, obj);
                 return true;
-            } else if (this.isAggregateObject(c)) {
-                jg.writeStartObject();
-                
-                /* Mark as an aggreate object for the client code. */
-                jg.writeFieldName(TYPE_FIELD_NAME);
-                jg.writeNumber(1003);
-                
-                AggregateObject a = (AggregateObject)obj;
-                for (Map.Entry<String, Object> e : a.getAggregateMap().entrySet()) {
-                    this.serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
+            } else if (c.isArray()) {
+                if (fieldName != null) {
+                    jg.writeArrayFieldStart(fieldName);
+                } else {
+                    jg.writeStartArray();
                 }
-                
-                jg.writeEndObject();
-                return true;
-            } else if (this.isParamObject(c)) {
-                jg.writeStartObject();
-                
-                /* Mark as a param object for the client code. */
-                jg.writeNumberField(TYPE_FIELD_NAME, 1004);
-                
-                /* Write the param. */
-                ParamObject po = (ParamObject)obj;
-                if (po.getParamObject() != null) {
-                    this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                for (Object elem : (Object[]) obj) {
+                    this.serializeObjectFields(jg, elem, visitedClasses, null);
                 }
-                if (po.getSyncObject() != null) {
-                    this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
-                }
-                
-                jg.writeEndObject();
-                return true;
-            } else if (this.isErrorObject(c)) {
-                ClientWSResponse errObj = (ClientWSResponse)obj;
-                jg.writeStartObject();
-                jg.writeFieldName("error");
-                errObj.toJSON(jg, this);
-                jg.writeEndObject();
-                return true;
-            } else if (this.hasClientDataMethods(c)) {
-                jg.writeStartObject();
-                
-                /* Write the object type so that we can get the Schema back. */
-                jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
-                jg.writeString(c.getName());
-                
-                for (Method m : c.getMethods()) {
-                    Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
-                    if (clientDataAnnot != null) {
-                        this.iterateOverObjectField(jg, obj, visitedClasses, m);
-                    }
-                }
-                jg.writeEndObject();
+                jg.writeEndArray();
                 return true;
             } else {
-                throw new IOException("Cannot serialize an object with no ClientData fields in " +
-                        obj.getClass().getName());
+                /* Next, iterate over all methods looking for property getters, of the form
+                 * get<prop name>. Find those annotated with the ClientData annotation. Presuming
+                 * the name format is right, convert the method name to a field name and add
+                 * to the schema. Throw an IO exception is an annotated method has the wrong
+                 * name format.
+                 */
+                if (fieldName != null) {
+                    jg.writeFieldName(fieldName);
+                }
+                if (this.isDeltaObject(c)) {
+                    jg.writeStartObject();
+
+                    /* Mark as a delta object for the client code. */
+                    jg.writeFieldName(TYPE_FIELD_NAME);
+                    jg.writeNumber(1001);
+
+                    Method m = c.getMethod("getAdds", new Class<?>[]{});
+                    Class<?> returnType = m.getReturnType();
+                    jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
+                    jg.writeString(returnType.getComponentType().getName());
+                    this.iterateOverObjectField(jg, obj, visitedClasses, m);
+
+                    m = c.getMethod("getDeletes", new Class<?>[]{});
+                    this.iterateOverObjectField(jg, obj, visitedClasses, m);
+
+                    m = c.getMethod("getUpdates", new Class<?>[]{});
+                    this.iterateOverObjectField(jg, obj, visitedClasses, m);
+
+                    m = c.getMethod("getDeleteSpec", new Class<?>[]{});
+                    Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
+                    if (deleteSpec != null) {
+                        jg.writeArrayFieldStart("deleteSpec");
+                        for (Criteria crit : deleteSpec) {
+                            if (crit == null) {
+                                continue;
+                            }
+                            jg.writeStartObject();
+                            jg.writeStringField("field", crit.getField());
+                            jg.writeStringField("op", crit.getOpString());
+                            jg.writeStringField("value", crit.getValue());
+                            jg.writeEndObject();
+                        }
+                        jg.writeEndArray();
+                    }
+
+                    jg.writeEndObject();
+                    return true;
+                } else if (this.isAggregateObject(c)) {
+                    jg.writeStartObject();
+
+                    /* Mark as an aggreate object for the client code. */
+                    jg.writeFieldName(TYPE_FIELD_NAME);
+                    jg.writeNumber(1003);
+
+                    AggregateObject a = (AggregateObject)obj;
+                    for (Map.Entry<String, Object> e : a.getAggregateMap().entrySet()) {
+                        this.serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
+                    }
+
+                    jg.writeEndObject();
+                    return true;
+                } else if (this.isParamObject(c)) {
+                    jg.writeStartObject();
+
+                    /* Mark as a param object for the client code. */
+                    jg.writeNumberField(TYPE_FIELD_NAME, 1004);
+
+                    /* Write the param. */
+                    ParamObject po = (ParamObject)obj;
+                    if (po.getParamObject() != null) {
+                        this.serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                    }
+                    if (po.getSyncObject() != null) {
+                        this.serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
+                    }
+
+                    jg.writeEndObject();
+                    return true;
+                } else if (this.isErrorObject(c)) {
+                    ClientWSResponse errObj = (ClientWSResponse)obj;
+                    jg.writeStartObject();
+                    jg.writeFieldName("error");
+                    errObj.toJSON(jg, this);
+                    jg.writeEndObject();
+                    return true;
+                } else if (this.hasClientDataMethods(c)) {
+                    jg.writeStartObject();
+
+                    /* Write the object type so that we can get the Schema back. */
+                    jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
+                    jg.writeString(c.getName());
+
+                    for (Method m : c.getMethods()) {
+                        Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
+                        if (clientDataAnnot != null) {
+                            this.iterateOverObjectField(jg, obj, visitedClasses, m);
+                        }
+                    }
+                    jg.writeEndObject();
+                    return true;
+                } else {
+                    throw new IOException("Cannot serialize an object with no ClientData fields in " +
+                            obj.getClass().getName());
+                }
             }
+        } catch(Exception e) {
+            LOG.log(Level.SEVERE, "Failed to serialize field {0}", fieldName);
+            throw e;
         }
     }
 
