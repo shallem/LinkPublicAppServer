@@ -119,7 +119,7 @@ public class SessionManager {
             s.close();
             this.globalSessionMap.remove(sessIDB64);
         } else {
-            LOG.log(Level.WARNING, "Session with id [" + sessIDB64 + "] not found");
+            LOG.log(Level.WARNING, "Session with id [{0}] not found", sessIDB64);
             res = false;
         }
         

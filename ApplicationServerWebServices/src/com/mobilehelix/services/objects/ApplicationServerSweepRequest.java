@@ -19,7 +19,7 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class ApplicationServerSweepRequest extends WSRequest {
-    private byte[] serverSessId;
+    private final byte[] serverSessId;
     private final List<byte[]> sessionKeysToDelete;
     
     public ApplicationServerSweepRequest(byte[] serverSessId,
