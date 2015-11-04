@@ -245,6 +245,18 @@ public class Session {
         return currentFacade;
     }
     
+    public ApplicationFacade getCurrentFacade(int apptype) {
+        if (this.currentFacade != null) {
+            return this.currentFacade;
+        }
+        
+        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
+        if (allFs.isEmpty()) {
+            return null;
+        }
+        return allFs.get(0);
+    }
+    
     public ApplicationFacade getCurrentFacade(HttpServletRequest req, int apptype) {
         String appid = this.getAppIDFromRequest(req);
         if (appid != null) {
@@ -253,22 +265,17 @@ public class Session {
                 return af;
             }
         } 
-        return this.getFacadeForType(apptype);
+        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
+        if (allFs.isEmpty()) {
+            return null;
+        }
+        return allFs.get(0);
     }
     
     public ApplicationFacade getAppFacade(long appid) {
         return this.appFacades.get(appid);
     }
-    
-    public ApplicationFacade getFacadeForType(int apptype) {
-        for (ApplicationFacade af : this.appFacades.values()) {
-            if (af.getAppType() == apptype) {
-                return af;
-            }
-        }
-        return null;
-    }
-    
+        
     public List<ApplicationFacade> getAllFacadesForType(int apptype) {
         List<ApplicationFacade> ret = new LinkedList<>();
         for (ApplicationFacade af : this.appFacades.values()) {
@@ -305,68 +312,53 @@ public class Session {
      // Find the record for the application this request is attempting to access. Return
      // true if the record is found, false if not. If not, the caller should redirect the
      //request to an error landing page.
-    public void initCurrentApplication(String appID, String appGenID,
+    public ApplicationFacade initCurrentApplication(String appID, String appGenID,
             int apptype) throws AppserverSystemException {
-        
-        if (this.currentApplication != null) {
-            /* Make sure the app didn't change ... */
-            if (appID != null &&
-                    this.currentApplication.getAppID() == Long.parseLong(appID)) {
-                /* Make sure the currentFacade is for the current app. */
-                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
-                
-                /* Have already found the application and facade. */
-                return;
-            }
+        ApplicationFacade af = null;
+        ApplicationSettings app = null;
+        if (appID != null) {
+            app = this.appRegistry.getSettingsForAppID(client, Long.parseLong(appID), Integer.parseInt(appGenID));
             
-            /* If we are debugging, match by type. */
-            if (debugOn &&
-                    this.currentApplication.getAppType() == apptype) {
-                /* Make sure the currentFacade is for the current app. */
-                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID()); 
-                
-                /* Have already found the application and facade. */
-                return;
-            }
-            
-            /* If we fall through then we have changed applications. */
-        }
+
+        } else if (debugOn) {
+            app = this.appRegistry.getSettingsForApplicationType(client, apptype, this);
+        } 
         
-        if (appID != null && appGenID != null) {
-            // Get the per-app configuration.
-            this.currentApplication =
-                appRegistry.getSettingsForAppID(this.getClient(), Long.parseLong(appID), Integer.parseInt(appGenID));
-        } else if (this.debugOn && 
-                (appID == null || appGenID == null)) {
-            // Install defaults. For now (while debugging), look up config by type.
-            this.currentApplication =
-                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype, this);
-        }
-        
-        if (this.currentApplication != null) {
-            // Whenever we change apps, we reset the current facade.
-            this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
-        } else {
+        if (app == null) {
             /* Could not lookup the application. Fail. */
             throw new AppserverSystemException("Failed to lookup current application in process request.",
                             "SessionCannotFindApp");
-        }        
+        }
+        this.currentApplication = app;
+        af = this.appFacades.get(app.getAppID());
+        if (af == null) {
+            /* Could not lookup the application. Fail. */
+            throw new AppserverSystemException("Failed to lookup current facade in process request.",
+                            "SessionCannotFindFacade");
+        }
+        this.currentFacade = af;
+        return af;
     }
     
-    public void processRequest(Long appID, int appType) throws AppserverSystemException {
+    public ApplicationFacade processRequest(Long appID, int appType) throws AppserverSystemException {
         if (appID == null) {
             throw new AppserverSystemException("Invalid app ID.", "InvalidAppID", new Object[]{ "null" });
         }
         
         /* Setup the application and facade. */
-        this.initCurrentApplication(appID.toString(), Integer.toString(ApplicationServerRegistry.FORCE_NO_REFRESH), appType);        
-        this.initCurrentFacade(false);
+        ApplicationFacade af = this.initCurrentApplication(appID.toString(), Integer.toString(ApplicationServerRegistry.FORCE_NO_REFRESH), appType);        
+        this.initCurrentFacade(false, af);
+        return af;
     }
     
     /**
      * Should be called when a GET page request arrives.
+     * @param req
+     * @param appType
+     * @return 
+     * @throws com.mobilehelix.appserver.errorhandling.AppserverSystemException
      */
-    public void processRequest(HttpServletRequest req, int appType) 
+    public ApplicationFacade processRequest(HttpServletRequest req, int appType) 
             throws AppserverSystemException {        
         String reqUsername = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_USERNAME_HEADER);
         String reqPassword = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_PASSWORD_HEADER);
@@ -394,59 +386,48 @@ public class Session {
         /* Setup the application and facade. */
         String appID = this.getAppIDFromRequest(req);
         String appGenID = this.getAppGenFromRequest(req);
-        this.initCurrentApplication(appID, appGenID, appType);        
-        this.initCurrentFacade(didChangeUser || didChangePassword);
+        ApplicationFacade af = this.initCurrentApplication(appID, appGenID, appType);        
+        this.initCurrentFacade(didChangeUser || didChangePassword, af);
+        return af;
     }
 
     
-    public int initCurrentFacade(boolean reinit) throws AppserverSystemException {
+    public int initCurrentFacade(boolean reinit, ApplicationFacade af) throws AppserverSystemException {
         int status = 0;
         
-        if (this.currentFacade == null) {
-                /* Store the mapping from app ID to facade. */
-                if (this.currentApplication != null) {
-                    /* First time we have been here ... */
-                    /* This will generally only happen in debug sessions. */
-                    this.currentFacade = this.currentApplication.createFacade(this, appRegistry, debugOn);            
-                    this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
-            }
-        } else {
-            /* Block until the app facade init is done. This init is started when the session
-             * is created.
-             */
-            try {
-                status = this.currentFacade.getInitStatus();
-            } catch (ExecutionException ee) {
-                // Just re-throw so that the underlying error message is preserved.
-                if (ee.getCause() instanceof AppserverSystemException) {
-                    throw (AppserverSystemException)ee.getCause();
-                } else {
-                    throw new AppserverSystemException(ee,
-                        "Asynchronous init failed.",
-                        "SessionInitializationFailed",
-                        new Object[] {
-                            ee.getCause().getMessage()
-                        });
-                }
-            } catch (Exception e) {
-                throw new AppserverSystemException(e,
+        /* Block until the app facade init is done. This init is started when the session
+         * is created.
+         */
+        try {
+            status = af.getInitStatus();
+        } catch (ExecutionException ee) {
+            // Just re-throw so that the underlying error message is preserved.
+            if (ee.getCause() instanceof AppserverSystemException) {
+                throw (AppserverSystemException)ee.getCause();
+            } else {
+                throw new AppserverSystemException(ee,
                     "Asynchronous init failed.",
                     "SessionInitializationFailed",
                     new Object[] {
-                        e.getMessage()
+                        ee.getCause().getMessage()
                     });
             }
+        } catch (Exception e) {
+            throw new AppserverSystemException(e,
+                "Asynchronous init failed.",
+                "SessionInitializationFailed",
+                new Object[] {
+                    e.getMessage()
+                });
         }
         
-        if (this.currentFacade != null) {
-            /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
-            if (!this.currentFacade.getInitOnLoadDone() || reinit) {
-                /* Need to re-init the facade because credentials have changed. */
-                this.currentFacade.doInitOnLoad(this, credentials);
+       /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
+        if (!af.getInitOnLoadDone() || reinit) {
+            /* Need to re-init the facade because credentials have changed. */
+            af.doInitOnLoad(this, credentials);
 
-                /* Indicate the first load is one. */
-                this.currentFacade.setInitOnLoadDone();
-            }   
+            /* Indicate the first load is one. */
+            af.setInitOnLoadDone();
         }
         
         return status;
