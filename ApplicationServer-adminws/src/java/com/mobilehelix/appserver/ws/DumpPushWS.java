@@ -114,7 +114,7 @@ public class DumpPushWS {
                 for (ApplicationServerPushSession aps : req.getPushSessions()) {
                     try {
                         this.pushMgr.addSession(aps.getClientid(), aps.getUserid(), aps.getPassword(),
-                                aps.getDeviceType(), aps.getAppID(), 0);
+                                aps.getDeviceType(), aps.getAppID(), 0, null, null);
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()

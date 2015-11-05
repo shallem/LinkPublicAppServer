@@ -113,8 +113,14 @@ public class PushManager {
         return null;
     }
     
-    public void addSession(String client, String userID, String password, String deviceType,
-            Long appID, Integer appGenID) throws AppserverSystemException {
+    public void addSession(String client, 
+            String userID, 
+            String password, 
+            String deviceType,
+            Long appID, 
+            Integer appGenID,
+            String passwordVaultUserID,
+            String passwordVaultPassword) throws AppserverSystemException {
         ApplicationSettings as = 
                     appRegistry.getSettingsForAppID(client, appID, appGenID);
         if (as == null) {
@@ -140,7 +146,7 @@ public class PushManager {
                 if (receiver.matches(client, userID, appID)) {
                     found = true;
                     LOG.log(Level.INFO, "Refreshing push session for {0}", combinedUser);
-                    receiver.refresh(userID, password, as, true);
+                    receiver.refresh(userID, password, as, false, passwordVaultUserID, passwordVaultPassword);
                 }
             }
         }
@@ -195,8 +201,7 @@ public class PushManager {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
-            this.addSession(client, userID, password, deviceType,
-                        appID, appGenID);
+            this.addSession(client, userID, password, deviceType, appID, appGenID, null, null);
         } 
     }
     
