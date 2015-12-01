@@ -318,16 +318,19 @@ public class Session {
         ApplicationSettings app = null;
         if (appID != null) {
             app = this.appRegistry.getSettingsForAppID(client, Long.parseLong(appID), Integer.parseInt(appGenID));
-            
-
         } else if (debugOn) {
             app = this.appRegistry.getSettingsForApplicationType(client, apptype, this);
-        } 
+        } else {
+            LOG.log(Level.SEVERE, "Received a null app ID in a non-debug session.");
+        }
         
         if (app == null) {
             /* Could not lookup the application. Fail. */
             throw new AppserverSystemException("Failed to lookup current application in process request.",
-                            "SessionCannotFindApp");
+                            "SessionCannotFindApp",
+                            new Object[] {
+                                appID != null ? appID : "null"
+                            });
         }
         this.currentApplication = app;
         af = this.appFacades.get(app.getAppID());
