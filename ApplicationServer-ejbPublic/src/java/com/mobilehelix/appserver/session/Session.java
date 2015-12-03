@@ -88,6 +88,9 @@ public class Session {
     /* What type of device is this? */
     private String deviceType;
     
+    /* ID of this device. */
+    private long deviceID;
+    
     /* Base URL of the server servicing this request. */
     private String serverBaseURL;
     
@@ -124,6 +127,7 @@ public class Session {
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
+        this.deviceID = createRequest.getDeviceID();
         
         this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
@@ -454,6 +458,10 @@ public class Session {
 
     public String getDeviceType() {
         return deviceType;
+    }
+
+    public long getDeviceID() {
+        return deviceID;
     }
 
     public String getClient() {
