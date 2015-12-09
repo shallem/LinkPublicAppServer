@@ -181,7 +181,9 @@ public class InitApplicationServer {
             sessionMgr.setDebugSession(null);
             System.setProperty("jcifs.util.loglevel", "3");
         }
-        LOG.log(Level.INFO, "Application server initialization completed successfully.");
+        LOG.log(Level.INFO, "Application server initialization completed successfully for version {0}.", new Object[] {
+            versionMgr.getVersion()
+        });
         return ret;
     }
     
