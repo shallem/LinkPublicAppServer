@@ -40,6 +40,9 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -118,8 +121,7 @@ public class Session {
     private final Map<Long, Set<WSUserPreference>> prefsMap;
     
     
-    public Session(CreateSessionRequest createRequest, 
-            ApplicationInitializer appInit) throws AppserverSystemException {
+    public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
         this.contextMap = new HashMap<>();
@@ -143,7 +145,7 @@ public class Session {
         }
         
         // Initialize apps.
-        this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles(), appInit);
+        this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles());
     }
     
     public Session(String client, String username, String password) throws AppserverSystemException {
@@ -160,8 +162,7 @@ public class Session {
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
-            List<WSExtraGroup> appProfiles,
-            ApplicationInitializer appInit) throws AppserverSystemException {        
+            List<WSExtraGroup> appProfiles) throws AppserverSystemException {        
         List<ApplicationSettings> sessApps = new LinkedList<>();
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
@@ -198,10 +199,15 @@ public class Session {
         }
         
         // Now, with policies in hand, initialize all apps.
+        this.executeAppInitTasks(sessApps);
+    }
+    
+    private void executeAppInitTasks(List<ApplicationSettings> sessApps) {
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(8, sessApps.size()));
         for (ApplicationSettings as : sessApps) {
             ApplicationFacade af = as.createFacade(this, this.appRegistry, false);
             if (af != null) {
-                af.setInitStatus(appInit.doInit(af, this, this.credentials));
+                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
                 af.setAppID(as.getAppID());
                 this.appFacades.put(as.getAppID(), af);
             }

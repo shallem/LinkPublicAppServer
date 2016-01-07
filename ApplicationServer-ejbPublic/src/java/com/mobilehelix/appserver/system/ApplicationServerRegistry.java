@@ -152,7 +152,9 @@ public class ApplicationServerRegistry {
      * Get the first application settings object of the right type that is contained
      * within the supplied session.
      * 
+     * @param client
      * @param apptype
+     * @param sess
      * @return 
      */
     public ApplicationSettings getSettingsForApplicationType(String client, 
@@ -167,7 +169,8 @@ public class ApplicationServerRegistry {
         appIDSet.addAll(Arrays.asList(sess.getAppIDs()));
         for (ApplicationSettings appSettings : cliMap.values()) {
             if (appSettings.getAppType() == apptype &&
-                    appIDSet.contains(appSettings.getAppID())) {
+                    appIDSet.contains(appSettings.getAppID()) &&
+                    appSettings.isIsVisibleOnDevice()) {
                 return appSettings;
             }
         }
