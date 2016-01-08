@@ -414,6 +414,8 @@ public class Session {
         try {
             status = af.getInitStatus();
         } catch (ExecutionException ee) {
+            LOG.log(Level.SEVERE, "Exception collecting init status from the application facade.", ee);
+            
             // Just re-throw so that the underlying error message is preserved.
             if (ee.getCause() instanceof AppserverSystemException) {
                 throw (AppserverSystemException)ee.getCause();
@@ -426,6 +428,7 @@ public class Session {
                     });
             }
         } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Exception collecting init status from the application facade.", e);
             throw new AppserverSystemException(e,
                 "Asynchronous init failed.",
                 "SessionInitializationFailed",

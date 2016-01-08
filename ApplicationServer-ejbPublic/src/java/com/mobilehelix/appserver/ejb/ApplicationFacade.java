@@ -44,7 +44,10 @@ public abstract class ApplicationFacade {
      * @throws java.util.concurrent.ExecutionException 
      */
     public Integer getInitStatus() throws InterruptedException, ExecutionException {
-            return initStatus.get();
+        if (initStatus == null) {
+            return 0;
+        }
+        return initStatus.get();
     }
 
     public void setInitStatus(Future<Integer> initStatus) {
