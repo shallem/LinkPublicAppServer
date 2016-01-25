@@ -95,11 +95,17 @@ public abstract class PushReceiver {
      * 
      * @param userid
      * @param password 
+     * @param appSettings 
+     * @param isSessionCreate 
+     * @param passwordVaultUserID 
+     * @param passwordVaultPassword 
      */
     public abstract void refresh(String userid,
             String password,
             ApplicationSettings appSettings,
-            boolean isSessionCreate);
+            boolean isSessionCreate,
+            String passwordVaultUserID,
+            String passwordVaultPassword);
     
     /**
      * Called by other components of the app server to let the push session know that the
@@ -114,6 +120,7 @@ public abstract class PushReceiver {
      * Called every 10 minutes. Gives the push session the opportunity to check to see if it is
      * still alive, if such a mechanism exists. This method should return true if the push session
      * is still valid and false if not. On false, the push manager will delete the push session.
+     * @return 
      */
     public abstract boolean check();
     

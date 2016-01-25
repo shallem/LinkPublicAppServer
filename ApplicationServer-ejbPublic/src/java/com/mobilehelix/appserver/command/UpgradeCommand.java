@@ -4,15 +4,19 @@
  */
 package com.mobilehelix.appserver.command;
 
-import com.mobilehelix.webutils.procutils.StreamGobbler;
 import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 /**
  *
@@ -25,8 +29,26 @@ public class UpgradeCommand  {
     @EJB
     private GlobalPropertiesManager globalProps;
     
+    private String scriptExtension;
+    private String[] shellCmd;
+    
+    @PostConstruct
+    public void init() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            scriptExtension = ".bat";
+            shellCmd = new String[]{ "cmd.exe", "/c" };
+        } else {
+            scriptExtension = ".sh";
+            shellCmd = new String[]{ "bash" };
+        }
+    }
+    
     public String run() throws IOException {
-        ProcessBuilder pb = new ProcessBuilder("bash", globalProps.getRootDir() + File.separator + "autoupgrade.sh");
+        List<String> args = new LinkedList<>();
+        args.addAll(Arrays.asList(shellCmd));
+        String scriptPath = globalProps.getRootDir() + File.separator + "autoupgrade" + this.scriptExtension;
+        args.add(scriptPath);
+        ProcessBuilder pb = new ProcessBuilder(args);
         pb.directory(new File(globalProps.getRootDir()));
         
         File outputFile = new File(globalProps.getRootDir() + File.separator + "LOG.out");
