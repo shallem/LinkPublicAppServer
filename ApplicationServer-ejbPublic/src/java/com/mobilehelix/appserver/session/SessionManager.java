@@ -54,10 +54,6 @@ public class SessionManager {
     
     private ConcurrentHashMap<String, Session> globalSessionMap;
     private Session debugSession;
-
-    /* EJB to perform async init on application settings. */
-    @EJB
-    private ApplicationInitializer appInit;
     
     /* Global properties. */
     @EJB
@@ -93,7 +89,7 @@ public class SessionManager {
     public Session addSession(CreateSessionRequest sess)
             throws AppserverSystemException {
         String sessIDB64 = hashSessionID(sess.getSessionKey());
-        Session appServerSession = new Session(sess, appInit);
+        Session appServerSession = new Session(sess);
         globalSessionMap.put(sessIDB64, appServerSession);
         return appServerSession;
     }
@@ -160,7 +156,7 @@ public class SessionManager {
         appIDsArr = appIDs.toArray(appIDsArr);
         appGenIDsArr = appGenIDs.toArray(appGenIDsArr);
         
-        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, null, appInit);
+        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, null);
                     
         // Also create a push session.
         this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");

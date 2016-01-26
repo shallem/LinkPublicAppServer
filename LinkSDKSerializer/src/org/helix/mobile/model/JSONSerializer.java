@@ -267,6 +267,10 @@ public class JSONSerializer {
 
                     AggregateObject a = (AggregateObject)obj;
                     for (Map.Entry<String, Object> e : a.getAggregateMap().entrySet()) {
+                        if (e.getValue() == null) {
+                            LOG.log(Level.WARNING, "Received unexpected null value in aggregate map with key {0}", e.getKey());
+                            continue;
+                        }
                         this.serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
                     }
 

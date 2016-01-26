@@ -20,12 +20,15 @@ import com.mobilehelix.appserver.push.PushReceiver;
 import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.services.objects.WSApplication;
+import com.mobilehelix.services.objects.WSExtra;
+import com.mobilehelix.services.objects.WSExtraGroup;
 import java.util.Arrays;
 import java.util.List;
 
 /**
  *
  * @author shallem
+ * @param <T>
  */
 public abstract class ApplicationSettings<T> {
     private final String client;
@@ -33,6 +36,7 @@ public abstract class ApplicationSettings<T> {
     private final String appName;
     private final Integer appGenID;
     private final Integer appType;
+    private boolean isVisibleOnDevice;
     
     public ApplicationSettings(String client, WSApplication app) {
         this.client = client;
@@ -40,6 +44,14 @@ public abstract class ApplicationSettings<T> {
         this.appName = app.getAppName();
         this.appGenID = app.getAppGenID();
         this.appType = app.getAppType();
+        this.isVisibleOnDevice = true;
+        for (WSExtraGroup wseg : app.getAppExtraGroups()) {
+            for (WSExtra wse : wseg.getExtras()) {
+                if (wse.getTag().equals("web_app_to_device")) {
+                    this.isVisibleOnDevice = wse.getValueBoolean();
+                }
+            }
+        }
     }
 
     public ApplicationSettings(String client, long appID, String appName, int appGenID, int appType)  {
@@ -68,6 +80,10 @@ public abstract class ApplicationSettings<T> {
 
     public Integer getAppType() {
         return appType;
+    }
+
+    public boolean isIsVisibleOnDevice() {
+        return isVisibleOnDevice;
     }
     
     protected static List<String> parseStringList(String val) {
