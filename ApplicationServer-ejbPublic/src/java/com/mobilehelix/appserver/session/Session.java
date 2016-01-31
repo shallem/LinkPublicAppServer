@@ -199,7 +199,9 @@ public class Session {
         }
         
         // Now, with policies in hand, initialize all apps.
-        this.executeAppInitTasks(sessApps);
+        if (!sessApps.isEmpty()) {
+            this.executeAppInitTasks(sessApps);
+        }
     }
     
     private void executeAppInitTasks(List<ApplicationSettings> sessApps) {
