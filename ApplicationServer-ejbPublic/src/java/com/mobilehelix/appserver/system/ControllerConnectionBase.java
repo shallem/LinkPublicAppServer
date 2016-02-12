@@ -105,6 +105,7 @@ public class ControllerConnectionBase {
         this.globalProperties.setRootDir(asir.getRootDir());
         
         this.globalProperties.setIsNoGateway(asir.isIsNoGateway());
+        this.globalProperties.setRegion(asir.getRegionName());
 
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.

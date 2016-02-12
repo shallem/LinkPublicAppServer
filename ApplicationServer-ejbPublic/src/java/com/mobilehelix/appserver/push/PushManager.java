@@ -168,7 +168,6 @@ public class PushManager {
                         as,
                         pushAccepted);
                 /*
-
                 if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
                     LOG.log(Level.FINE, "Created push session for {0}, ID {1}", new Object[] {
                         combinedUser,

@@ -71,8 +71,21 @@ public class PingWS {
         PingResponse resp = new PingResponse(statusCode, msg);
         if (statusCode == WSResponse.SUCCESS) {
             // Add the result for the main app server.
-            resp.addServer(initEJB.getServerID(), sessMgr.getSessionCount());
-            resp.addServer(initEJB.getPushServerID(), pushMgr.getPushSessionCount());
+            Long id = initEJB.getServerID();
+            
+            if (id == null) {
+                 LOG.log(Level.SEVERE, "Server not registered. Server ID is null.");
+            } else {
+                resp.addServer(id, sessMgr.getSessionCount());
+            }
+            
+            id = initEJB.getPushServerID();
+            
+            if (id == null) {
+                 LOG.log(Level.SEVERE, "Push server not registered. Server ID is null.");
+            } else {            
+                resp.addServer(id, pushMgr.getPushSessionCount());
+            }
         }
                 
         try {
