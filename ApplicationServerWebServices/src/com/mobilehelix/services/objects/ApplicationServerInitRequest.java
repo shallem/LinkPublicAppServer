@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.services.objects;
 
 import com.mobilehelix.services.interfaces.WSRequest;
@@ -21,41 +17,59 @@ public class ApplicationServerInitRequest extends WSRequest {
     // Parameters that we send to the app server service.
     private String controllerIP;
     private Integer controllerPort;
+    private String asPrivIP;
     private String asPubIP;
     private Integer asPubPort;
     private Integer asPrivPort;
+    private Integer asHttpPort;
     private String clientName;
     private String serverName;
     private String pushServerName;
     private String storePass;
     private byte[] keyStore;
     private String regionName;
-
-    public ApplicationServerInitRequest() {
-        
+    private String scriptsDir;
+    private String phantomJsBin;
+    private String rootDir;
+    private boolean isNoGateway;
+    
+    public ApplicationServerInitRequest() {    
+        this.isNoGateway = false;
     }
     
     public ApplicationServerInitRequest(String controllerIP,
             Integer controllerPort,
+            String asPrivIP,
             String asPubIP,
             Integer asPubPort,
             Integer asPrivPort,
+            Integer asHttpPort,
             String clientName,
             String serverName,
             String storePass,
             byte[] keyStore,
-            String regionName) {
+            String regionName,
+            String scriptsDir,
+            String phantomJsBin,
+            String rootDir,
+            boolean isNoGateway) {
         this.controllerIP = controllerIP;
         this.controllerPort = controllerPort;
+        this.asPrivIP = asPrivIP;
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
         this.asPrivPort = asPrivPort;
+        this.asHttpPort = asHttpPort;
         this.clientName = clientName;
         this.serverName = serverName;
         this.pushServerName = this.serverName + "-PUSH";
         this.storePass = storePass;
         this.keyStore = keyStore;
         this.regionName = regionName;
+        this.scriptsDir = scriptsDir;
+        this.phantomJsBin = phantomJsBin;
+        this.rootDir = rootDir;
+        this.isNoGateway = isNoGateway;
     }
 
     public String getClientName() {
@@ -114,6 +128,14 @@ public class ApplicationServerInitRequest extends WSRequest {
         this.storePass = storePass;
     }
 
+    public String getAsPrivIP() {
+        return asPrivIP;
+    }
+
+    public void setAsPrivIP(String asPrivIP) {
+        this.asPrivIP = asPrivIP;
+    }
+    
     public String getAsPubIP() {
         return asPubIP;
     }
@@ -145,6 +167,46 @@ public class ApplicationServerInitRequest extends WSRequest {
     public void setRegionName(String regionName) {
         this.regionName = regionName;
     }
+
+    public Integer getAsHttpPort() {
+        return asHttpPort;
+    }
+
+    public void setAsHttpPort(Integer asHttpPort) {
+        this.asHttpPort = asHttpPort;
+    }
+
+    public String getScriptsDir() {
+        return this.scriptsDir;
+    }
+
+    public void setScriptsDir(String scriptsDir) {
+        this.scriptsDir = scriptsDir;
+    }
+
+    public String getPhantomJsBin() {
+        return phantomJsBin;
+    }
+
+    public void setPhantomJsBin(String phantomJsBin) {
+        this.phantomJsBin = phantomJsBin;
+    }
+
+    public String getRootDir() {
+        return rootDir;
+    }
+
+    public void setRootDir(String rootDir) {
+        this.rootDir = rootDir;
+    }
+
+    public boolean isIsNoGateway() {
+        return isNoGateway;
+    }
+
+    public void setIsNoGateway(boolean isNoGateway) {
+        this.isNoGateway = isNoGateway;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -159,12 +221,14 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeString(this.controllerIP);
         gen.writeFieldName("cport");
         gen.writeNumber(this.controllerPort);
+        gen.writeStringField("privip", this.asPrivIP);
         gen.writeFieldName("pubip");
         gen.writeString(this.asPubIP);
         gen.writeFieldName("pubport");
         gen.writeNumber(this.asPubPort);
         gen.writeFieldName("privport");
         gen.writeNumber(this.asPrivPort);
+        gen.writeNumberField("httpport", this.asHttpPort);
         gen.writeFieldName("client");
         gen.writeString(this.clientName);
         gen.writeFieldName("server");
@@ -177,7 +241,12 @@ public class ApplicationServerInitRequest extends WSRequest {
         gen.writeBinary(this.keyStore);        
         gen.writeFieldName("region");
         gen.writeString(this.regionName);
-
+        gen.writeFieldName("scriptsdir");
+        gen.writeString(this.scriptsDir);
+        gen.writeFieldName("phantomjsbin");
+        gen.writeString(this.phantomJsBin);
+        gen.writeStringField("rootdir", this.rootDir);
+        gen.writeBooleanField("nogateway", isNoGateway);
         gen.close();
         return baos.toByteArray();
     }
@@ -211,6 +280,9 @@ public class ApplicationServerInitRequest extends WSRequest {
                 case "keystore":
                     asir.setKeyStore((byte[])parser.getEmbeddedObject());
                     break;
+                case "privip":
+                    asir.setAsPrivIP(parser.getText());
+                    break;
                 case "pubip":
                     asir.setAsPubIP(parser.getText());
                     break;
@@ -223,8 +295,24 @@ public class ApplicationServerInitRequest extends WSRequest {
                 case "privport":
                     asir.setAsPrivPort(parser.getIntValue());
                     break;
+                case "httpport":
+                    asir.setAsHttpPort(parser.getIntValue());
+                    break;
+                case "scriptsdir":
+                    asir.setScriptsDir(parser.getText());
+                    break;
+                case "phantomjsbin":
+                    asir.setPhantomJsBin(parser.getText());
+                    break;
+                case "rootdir":
+                    asir.setRootDir(parser.getText());
+                    break;
+                case "nogateway":
+                    asir.setIsNoGateway(parser.getBooleanValue());
+                    break;
             }
         }
+
         return asir;
     }
 }

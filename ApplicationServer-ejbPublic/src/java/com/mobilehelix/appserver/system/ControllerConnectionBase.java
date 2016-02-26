@@ -16,9 +16,16 @@
 package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.appserver.session.GlobalPropertiesManager;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
+import com.mobilehelix.services.objects.GenericBsonResponse;
+import com.mobilehelix.services.objects.WSExtra;
+import com.mobilehelix.services.objects.WSUserPreference;
+import java.io.IOException;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * When no Controller is available (e.g., in the open source edition of an app used
@@ -46,15 +53,65 @@ public class ControllerConnectionBase {
         // Do nothing. We have no Controller.
     }
     
-    public void processInitRequest(ApplicationServerInitRequest asir, String privIP) 
+    public void refreshUserPrefs(String client,
+            String userID,
+            Date lastMod,
+            Session sess) throws AppserverSystemException {
+        // Do nothing. We have no controller.
+    }
+    
+    public Map<Long, List<WSExtra> > downloadAppPolicies(Session s) throws IOException {
+        // Do nothing. We have no Controller.
+        return null;
+    }
+    
+    public Map<Long, List<WSExtra> > downloadAppPolicies(String client,
+        String controllerUser,
+        String deviceType,
+        Long[] appIDs,
+        Integer[] appGenIDs) throws IOException {
+        // Do nothing. We have no Controller.
+        return null;
+    }
+
+    public void refreshApplications(String client,
+            String user,
+            List<Long> appIDs,
+            List<Integer> appGenIDs) throws AppserverSystemException {
+        // Do nothing. We have no controller.
+    }
+    
+    public GenericBsonResponse updateUserPref(String client,
+            String controllerUser,
+            WSUserPreference pref) throws IOException {
+        // Do nothing. We have no controller.
+        return null;
+    }
+    
+    public String processInitRequest(ApplicationServerInitRequest asir, String version, int nRetries) 
             throws AppserverSystemException {
         /* Store the client name in the global properties. */
         this.globalProperties.setClientName(asir.getClientName());
+
+        /* Store the pub/priv IP and port. */
+        this.globalProperties.setAsPubIP(asir.getAsPubIP());
+        this.globalProperties.setAsPubPort(asir.getAsPubPort());
+        this.globalProperties.setAsPrivIP(asir.getAsPrivIP());
+        this.globalProperties.setAsPrivPort(asir.getAsPrivPort());
+        this.globalProperties.setAsHttpPort(asir.getAsHttpPort());
         
+        this.globalProperties.setScriptsDir(asir.getScriptsDir());
+        this.globalProperties.setPhantomJsBin(asir.getPhantomJsBin());
+        this.globalProperties.setRootDir(asir.getRootDir());
+        
+        this.globalProperties.setIsNoGateway(asir.isIsNoGateway());
+        this.globalProperties.setRegion(asir.getRegionName());
+
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
          */
         this.sessionMgr.sweepAllSessions();
+        return "";
     }
     
     /**
@@ -75,12 +132,22 @@ public class ControllerConnectionBase {
      * In a multi server system, each should have a unique ID. The main purpose of these
      * IDs is to allow the Mobile Helix Controller to track the status of each server.
      * Again, not relevant in a test environment without the rest of the Mobile Helix
-     * infrastructure.
+     * infrastructure. The push server is another Mobile Helix server that is co-hosted
+     * with the application server and is responsible for receiving push notifications
+     * from Exchange.
      * 
      * @return Unique ID of this server, when a Controller is present.
      */
     public Long getServerID() {
         return (long)1;
+    }
+
+    public Long getPushServerID() {
+        return (long)2;
+    }
+    
+    public String getPushServerName() {
+        return "";
     }
     
     public void setApplicationRegistry(ApplicationServerRegistry appRegistry) {
@@ -94,4 +161,11 @@ public class ControllerConnectionBase {
     public void setSessionMgr(SessionManager sessionMgr) {
         this.sessionMgr = sessionMgr;
     }
+    
+    public void getProperties(Map<String, Object> props) {
+        if (this.globalProperties == null)
+            return;
+        
+        this.globalProperties.asProperties(props);
+    }     
 }

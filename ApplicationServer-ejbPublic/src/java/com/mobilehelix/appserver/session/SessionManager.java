@@ -15,12 +15,21 @@
  */
 package com.mobilehelix.appserver.session;
 
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
-import java.util.HashMap;
+import com.mobilehelix.appserver.push.PushManager;
+import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.services.objects.CreateSessionRequest;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
@@ -41,48 +50,79 @@ import org.apache.commons.codec.binary.Base64;
 @Singleton
 @EJB(name="java:global/SessionManager", beanInterface=SessionManager.class)
 public class SessionManager {
-
-    private HashMap<String, Session> globalSessionMap;
+    private static final Logger LOG = Logger.getLogger(SessionManager.class.getName());
+    
+    private ConcurrentHashMap<String, Session> globalSessionMap;
     private Session debugSession;
-
-    /* EJB to perform async init on application settings. */
-    @EJB
-    private ApplicationInitializer appInit;
     
     /* Global properties. */
     @EJB
     private GlobalPropertiesManager globalProperties;
     
+    /* App server init object. */
+    @EJB
+    private InitApplicationServer initAS;
+    
+    /* Used when creating debug sessions ... */
+    @EJB
+    private PushManager pushMgr;
+    
     @PostConstruct
     public void init() {
-        globalSessionMap = new HashMap<>();
+        globalSessionMap = new ConcurrentHashMap<>();
         
         // Determine what type of app registry we have ...
     }
 
-    public void addSession(ApplicationServerCreateSessionRequest sess)
+    private static String hashSessionID(byte[] sessionKey) throws AppserverSystemException {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(sessionKey);
+            return Base64.encodeBase64String(md.digest());
+        } catch(NoSuchAlgorithmException ex) {
+            LOG.log(Level.SEVERE, "Failed to hash session key.", ex);
+            throw new AppserverSystemException("Failed to generate session ID hash.",
+                    "SessionIDHashingFailed");
+        }
+    }    
+    
+    public Session addSession(CreateSessionRequest sess)
             throws AppserverSystemException {
-        String sessIDB64 = new String(Base64.encodeBase64(sess.getSessionKey()));
-        Session appServerSession = new Session(sess, appInit);
+        String sessIDB64 = hashSessionID(sess.getSessionKey());
+        Session appServerSession = new Session(sess);
         globalSessionMap.put(sessIDB64, appServerSession);
+        return appServerSession;
     }
 
-    public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
+    /*public void doSessionInit(Session sess, Long[] appIDs, Integer[] appGenIDs)
             throws AppserverSystemException {
         sess.doAppInit(appIDs, appGenIDs, appInit);
-    }
+    }*/
 
-    public void deleteSession(byte[] sessionKey) {
-        String sessIDB64 = new String(Base64.encodeBase64(sessionKey));
-        
-        Session s = globalSessionMap.get(sessIDB64);
+    public boolean deleteSession(byte[] sessionHash) {
+        boolean res = true;
+        String sessIDB64 = Base64.encodeBase64String(sessionHash);        
+        Session s = this.globalSessionMap.get(sessIDB64);
+
         if (s != null) {
+            // If this session created child sessions, sweep the children as well
+            List<byte[]> childrenIds = new ArrayList<>();
+            s.getChildren(childrenIds);
+            
+            for (byte[] id : childrenIds)
+                this.deleteSession(id);
+            
             s.close();
-            globalSessionMap.remove(sessIDB64);
+            this.globalSessionMap.remove(sessIDB64);
+        } else {
+            LOG.log(Level.WARNING, "Session with id [{0}] not found", sessIDB64);
+            res = false;
         }
+        
+        return res;
     }
 
-    private String getSessIDFromRequest(HttpServletRequest req) {
+    private String getSessIDFromRequest(HttpServletRequest req) throws AppserverSystemException {
         String sessIDB64 = req.getHeader(HTTPHeaderConstants.MH_SESSION_ID_HEADER);
         if ((sessIDB64 == null)  && (req.getCookies() != null)) {
             for (Cookie c : req.getCookies()) {
@@ -92,24 +132,52 @@ public class SessionManager {
                 }
             }
         }
-        return sessIDB64;
+        // Decode the B64-encoded key.
+        if (sessIDB64 != null) {
+            return hashSessionID(Base64.decodeBase64(sessIDB64));
+        }
+        return null;
     }
 
-    public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
-        String sessIDB64 = this.getSessIDFromRequest(req);
+    public void createDebugSession() throws AppserverSystemException {
+        List<Long> appIDs = new LinkedList<>();
+        List<Integer> appGenIDs = new LinkedList<>();
+        this.debugSession = new Session(globalProperties.getClientName(),
+            this.getDebugUser(),
+            this.getDebugPassword());
+                    
+        initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
+            this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);
+        initAS.getControllerConnection().refreshUserPrefs(globalProperties.getClientName(), 
+                this.debugSession.getCredentials().getUsernameNoDomain(), null, debugSession);
+        
+        Long[] appIDsArr = new Long[appIDs.size()];
+        Integer[] appGenIDsArr = new Integer[appGenIDs.size()];
+        appIDsArr = appIDs.toArray(appIDsArr);
+        appGenIDsArr = appGenIDs.toArray(appGenIDsArr);
+        
+        this.debugSession.doAppInit(appIDsArr, appGenIDsArr, null);
+                    
+        // Also create a push session.
+        this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");
+    }
+    
+    public Session getSessionForRequest(String sessIDB64) throws AppserverSystemException {
         if (sessIDB64 == null) {
             if (this.isDebugOn()) {
                 if (this.debugSession == null) {
-                    this.debugSession = new Session(globalProperties.getClientName(),
-                            this.getDebugUser(),
-                            this.getDebugPassword(),
-                            true);
+                    this.createDebugSession();
                 }
                 return this.debugSession;
             }
             return null;
         }
         return globalSessionMap.get(sessIDB64);
+    }
+    
+    public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
+        String sessIDB64 = this.getSessIDFromRequest(req);
+        return this.getSessionForRequest(sessIDB64);
     }
 
     public Session getSessionForID(String sessIDB64) {

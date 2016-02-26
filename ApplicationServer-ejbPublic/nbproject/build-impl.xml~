@@ -408,7 +408,7 @@ or ant -Dj2ee.platform.classpath=&lt;server_classpath&gt; (where no properties f
                     </fileset>
                 </union>
                 <taskdef classname="org.testng.TestNGAntTask" classpath="${run.test.classpath}" name="testng"/>
-                <testng classfilesetref="test.set" failureProperty="tests.failed" methods="${testng.methods.arg}" mode="${testng.mode}" outputdir="${build.test.results.dir}" suitename="ApplicationServer-ejbPublic" testname="TestNG tests" workingDir="${basedir}">
+                <testng classfilesetref="test.set" failureProperty="tests.failed" listeners="org.testng.reporters.VerboseReporter" methods="${testng.methods.arg}" mode="${testng.mode}" outputdir="${build.test.results.dir}" suitename="ApplicationServer-ejbPublic" testname="TestNG tests" workingDir="${basedir}">
                     <xmlfileset dir="${build.test.classes.dir}" includes="@{testincludes}"/>
                     <propertyset>
                         <propertyref prefix="test-sys-prop."/>
@@ -787,12 +787,18 @@ exists or setup the property manually. For example like this:
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
+        <ant antfile="${project.WebUtils}/build.xml" inheritall="false" target="jar">
+            <property name="deploy.on.save" value="false"/>
+        </ant>
     </target>
     <target depends="init" if="dist.ear.dir" name="-deps-ear-jar" unless="no.deps">
         <ant antfile="${project.ApplicationServerWebServices-1}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="jar">
+            <property name="deploy.on.save" value="false"/>
+        </ant>
+        <ant antfile="${project.WebUtils}/build.xml" inheritall="false" target="jar">
             <property name="deploy.on.save" value="false"/>
         </ant>
     </target>
@@ -807,37 +813,18 @@ exists or setup the property manually. For example like this:
     </target>
     <target depends="compile,-library-inclusion-in-archive-weblogic,-library-inclusion-in-archive-by-user" name="library-inclusion-in-archive"/>
     <target if="is.jars.in.ejbjar" name="-library-inclusion-in-archive-by-user">
-        <copyfiles files="${file.reference.jcifs-1.3.17.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.httpclient-4.2.3.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.httpcore-4.2.3.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.jersey-bundle-1.14.jar}" todir="${build.classes.dir}"/>
         <copyfiles files="${file.reference.commons-httpclient-3.1.jar}" todir="${build.classes.dir}"/>
-        <copyfiles files="${file.reference.commons-codec-1.7.jar}" todir="${build.classes.dir}"/>
     </target>
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
-        <basename file="${file.reference.jcifs-1.3.17.jar}" property="manifest.file.reference.jcifs-1.3.17.jar"/>
-        <basename file="${file.reference.httpclient-4.2.3.jar}" property="manifest.file.reference.httpclient-4.2.3.jar"/>
-        <basename file="${file.reference.httpcore-4.2.3.jar}" property="manifest.file.reference.httpcore-4.2.3.jar"/>
-        <basename file="${file.reference.jersey-bundle-1.14.jar}" property="manifest.file.reference.jersey-bundle-1.14.jar"/>
         <basename file="${file.reference.commons-httpclient-3.1.jar}" property="manifest.file.reference.commons-httpclient-3.1.jar"/>
-        <basename file="${file.reference.commons-codec-1.7.jar}" property="manifest.file.reference.commons-codec-1.7.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 jar-3 jar-4 jar-5 jar-6 "/>
-            <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.jcifs-1.3.17.jar}"/>
-            <attribute name="jar-2-Extension-Name" value="${manifest.file.reference.httpclient-4.2.3.jar}"/>
-            <attribute name="jar-3-Extension-Name" value="${manifest.file.reference.httpcore-4.2.3.jar}"/>
-            <attribute name="jar-4-Extension-Name" value="${manifest.file.reference.jersey-bundle-1.14.jar}"/>
-            <attribute name="jar-5-Extension-Name" value="${manifest.file.reference.commons-httpclient-3.1.jar}"/>
-            <attribute name="jar-6-Extension-Name" value="${manifest.file.reference.commons-codec-1.7.jar}"/>
+            <attribute name="Extension-List" value="jar-1 jar-2 "/>
+            <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.jcifs-1.3.18.jar}"/>
+            <attribute name="jar-2-Extension-Name" value="${manifest.file.reference.commons-httpclient-3.1.jar}"/>
         </manifest>
     </target>
     <target depends="compile" name="library-inclusion-in-manifest">
-        <copyfiles files="${file.reference.jcifs-1.3.17.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.httpclient-4.2.3.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.httpcore-4.2.3.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.jersey-bundle-1.14.jar}" todir="${dist.ear.dir}/lib"/>
         <copyfiles files="${file.reference.commons-httpclient-3.1.jar}" todir="${dist.ear.dir}/lib"/>
-        <copyfiles files="${file.reference.commons-codec-1.7.jar}" todir="${dist.ear.dir}/lib"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update"/>
     </target>
     <target name="-copy-meta-inf">
@@ -1168,7 +1155,7 @@ exists or setup the property manually. For example like this:
         <mkdir dir="${build.test.results.dir}"/>
     </target>
     <target depends="init,compile-test,-pre-test-run" if="have.tests" name="-do-test-run">
-        <ejbjarproject2:test testincludes="**/*Test.java"/>
+        <ejbjarproject2:test includes="${includes}" testincludes="**/*Test.java"/>
     </target>
     <target depends="init,compile-test,-pre-test-run,-do-test-run" if="have.tests" name="-post-test-run">
         <fail if="tests.failed" unless="ignore.failing.tests">Some tests failed; see details above.</fail>
@@ -1223,6 +1210,7 @@ exists or setup the property manually. For example like this:
     <target depends="init" name="deps-clean" unless="no.deps">
         <ant antfile="${project.ApplicationServerWebServices-1}/build.xml" inheritall="false" target="clean"/>
         <ant antfile="${project.WebServicesCore}/build.xml" inheritall="false" target="clean"/>
+        <ant antfile="${project.WebUtils}/build.xml" inheritall="false" target="clean"/>
     </target>
     <target depends="init" name="-do-clean">
         <delete dir="${build.dir}"/>

@@ -17,20 +17,27 @@ package com.mobilehelix.appserver.ejb;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
-import java.util.concurrent.Future;
-import javax.ejb.AsyncResult;
-import javax.ejb.Asynchronous;
-import javax.ejb.Stateless;
+import com.mobilehelix.appserver.session.Session;
+import java.util.concurrent.Callable;
 
 /**
  *
  * @author shallem
  */
-@Stateless
-@Asynchronous
-public class ApplicationInitializer {
-    public Future<Integer> doInit(ApplicationFacade af, CredentialsManager credentials) 
+public class ApplicationInitializer implements Callable<Integer> {
+    private final ApplicationFacade af;
+    private final Session session;
+    private final CredentialsManager credentials;
+    
+    public ApplicationInitializer(ApplicationFacade af, Session session, CredentialsManager credentials) {
+        this.af = af;
+        this.session = session;
+        this.credentials = credentials;
+    }
+    
+    @Override
+    public Integer call() 
             throws AppserverSystemException {
-        return new AsyncResult<>(af.doInitOnSessionCreate(credentials));
+        return af.doInitOnSessionCreate(session, credentials);
     }
 }

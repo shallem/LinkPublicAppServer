@@ -17,11 +17,9 @@ package com.mobilehelix.appserver.ejb;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
+import com.mobilehelix.appserver.session.Session;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.servlet.http.HttpServletRequest;
 
 /**
  * Abstract base class that defines an interface to application-specific initialization.
@@ -42,17 +40,14 @@ public abstract class ApplicationFacade {
      * blocks waiting for the init to finish.
      * 
      * @return 
+     * @throws java.lang.InterruptedException 
+     * @throws java.util.concurrent.ExecutionException 
      */
-    public Integer getInitStatus() {
+    public Integer getInitStatus() throws InterruptedException, ExecutionException {
         if (initStatus == null) {
-            return null;
+            return 0;
         }
-        try {
-            return initStatus.get();
-        } catch (InterruptedException | ExecutionException ex) {
-            Logger.getLogger(ApplicationFacade.class.getName()).log(Level.SEVERE, "Asynchronous init failed.", ex);
-            return null;
-        }
+        return initStatus.get();
     }
 
     public void setInitStatus(Future<Integer> initStatus) {
@@ -76,7 +71,7 @@ public abstract class ApplicationFacade {
      * @return
      * @throws AppserverSystemException 
      */
-    public abstract Integer doInitOnSessionCreate(CredentialsManager credentials) 
+    public abstract Integer doInitOnSessionCreate(Session session, CredentialsManager credentials) 
             throws AppserverSystemException;
     
     /**
@@ -85,7 +80,7 @@ public abstract class ApplicationFacade {
      * @return
      * @throws AppserverSystemException 
      */
-    public abstract Integer doInitOnLoad(HttpServletRequest req,
+    public abstract Integer doInitOnLoad(Session session,
             CredentialsManager credentials) throws AppserverSystemException;
 
     /**

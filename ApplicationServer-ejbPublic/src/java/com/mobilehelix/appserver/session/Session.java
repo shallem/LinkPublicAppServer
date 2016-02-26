@@ -15,16 +15,34 @@
  */
 package com.mobilehelix.appserver.session;
 
+import com.mobilehelix.appserver.conn.ConnectionContainer;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationFacade;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
-import com.mobilehelix.services.objects.ApplicationServerCreateSessionRequest;
+import com.mobilehelix.appserver.system.ControllerConnectionBase;
+import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.services.objects.CreateSessionRequest;
+import com.mobilehelix.services.objects.WSExtra;
+import com.mobilehelix.services.objects.WSExtraGroup;
+import com.mobilehelix.services.objects.WSUserPreference;
+import java.io.IOException;
 import java.text.MessageFormat;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.naming.InitialContext;
@@ -40,22 +58,23 @@ public class Session {
 
     private static final Logger LOG = Logger.getLogger(Session.class.getName());
     
-    /**
-     * The lock is used to ensure that only one thread has access to this session
-     * at a time. Many of the client applications will use multiple threads to access
-     * different application server services. Unfortunately, it is common for these
-     * services to use NTLM, and NTLM triggers a call to active directory each time
-     * an authentication occurs. If >2 threads contact A-D simultaneously then a user
-     * is locked out of A-D. Hence, this lock can be used to protect operations that
-     * might trigger a call to A-D via an NTLM authentication.
-     */
-    private final ReentrantLock lock = new ReentrantLock();
+    /* Global prefs tags. */
+    public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
+    public static final String COPY_ON_CHECKOUT_TAG = "checkout_copy";
+    
+    private static final long MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;
+    
     
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
     
+    /* Global object that tracks app server properties and establishes the connection to the
+     * Controller, if available.
+     */
+    private InitApplicationServer initAS;
+    
     /* Map from appID to the app-specific facade for that app ID. */
-    private TreeMap<Long, ApplicationFacade> appFacades;    
+    private final TreeMap<Long, ApplicationFacade> appFacades;    
 
     /* Full settings object for the current application. */
     private ApplicationSettings currentApplication;
@@ -72,30 +91,79 @@ public class Session {
     /* What type of device is this? */
     private String deviceType;
     
+    /* ID of this device. */
+    private long deviceID;
+    
     /* Base URL of the server servicing this request. */
     private String serverBaseURL;
     
     /* Client of this user. */
     private String client;
+    
+    /* List of app IDs in the session. */
+    private final List<Long> appIDs;
+    
+    /* List of app gen IDs in the session. */
+    private final List<Integer> appGenIDs;
         
-    public Session(ApplicationServerCreateSessionRequest sess, 
-            ApplicationInitializer appInit) throws AppserverSystemException {
-        this.init(sess.getClient(), sess.getUserID(), sess.getPassword(), sess.getDeviceType(), false);
+    /* Map from app IDs to policies. */
+    private final Map<Long, Collection<WSExtra> > policyMap;
+    
+    /* Map of connection objects stored in this session. */
+    private final ConcurrentHashMap<String, ConnectionContainer> connMap;
+
+    /* Map used to extend properties of session with app specific data */
+    private final Map<String, Object> contextMap;
+
+    /* Map from resource IDs to a list of user prefs. The special resource ID -1 is used
+       for global prefs.
+    */
+    private final Map<Long, Set<WSUserPreference>> prefsMap;
+    
+    
+    public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
+        this.appIDs = new LinkedList<>();
+        this.appGenIDs = new LinkedList<>();
+        this.contextMap = new HashMap<>();
+        this.connMap = new ConcurrentHashMap<>();
+        this.policyMap = new HashMap<>();
+        this.appFacades = new TreeMap<>();
+        this.prefsMap = new ConcurrentHashMap<>();
+        this.deviceID = createRequest.getDeviceID();
+        
+        this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
-        if (sess.getAppIDs() == null) {
+        if (createRequest.getAppIDs() == null) {
             return;
         }
         
-        this.doAppInit(sess.getAppIDs(), sess.getAppGenIDs(), appInit);
+        // Capture prefs.
+        if (createRequest.getUserSettings() != null) {
+            for (WSUserPreference wuas : createRequest.getUserSettings()) {
+                this.addPref(wuas.getResourceID(), wuas);
+            }
+        }
+        
+        // Initialize apps.
+        this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles());
     }
     
-    public Session(String client, String username, String password, boolean debugOn) throws AppserverSystemException {
-        this.init(client, username, password, "iPhone", debugOn);
+    public Session(String client, String username, String password) throws AppserverSystemException {
+        // ONLY used for debugging.
+        this.appIDs = new LinkedList<>();
+        this.appGenIDs = new LinkedList<>();
+        this.contextMap = new HashMap<>();
+        this.connMap = new ConcurrentHashMap<>();
+        this.policyMap = new HashMap<>();
+        this.appFacades = new TreeMap<>();
+        this.prefsMap = new ConcurrentHashMap<>();
+        this.init(client, username, password, "iPhone", true);
     }
     
     public final void doAppInit(Long[] appIDs, 
             Integer[] appGenIDs, 
-            ApplicationInitializer appInit) throws AppserverSystemException {
+            List<WSExtraGroup> appProfiles) throws AppserverSystemException {        
+        List<ApplicationSettings> sessApps = new LinkedList<>();
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
@@ -108,11 +176,49 @@ public class Session {
                 continue;
             }
             
-            ApplicationFacade af = as.createFacade(appRegistry, false);
-            af.setInitStatus(appInit.doInit(af, this.credentials));
-            af.setAppID(appID);
-            this.appFacades.put(as.getAppID(), af);
-        }        
+            sessApps.add(as);
+            this.appIDs.add(appID);
+            this.appGenIDs.add(appGenID);
+        }
+        
+        if (appProfiles == null) {
+            // Debug session
+            try {
+                // Now download all app policies for this session.
+                this.policyMap.putAll(this.initAS.getControllerConnection().downloadAppPolicies(this));
+            } catch (IOException ex) {
+                throw new AppserverSystemException("Failed to load app policies.",
+                        "SessionCannotLoadAppPolicies",
+                        new String[] { ex.getMessage() });
+            }
+        } else {
+            // Device session
+            for (WSExtraGroup wseg : appProfiles) {
+                this.policyMap.put(wseg.getId(), wseg.getExtras());
+            }
+        }
+        
+        // Now, with policies in hand, initialize all apps.
+        if (!sessApps.isEmpty()) {
+            this.executeAppInitTasks(sessApps);
+        }
+    }
+    
+    private void executeAppInitTasks(List<ApplicationSettings> sessApps) {
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(8, sessApps.size()));
+        for (ApplicationSettings as : sessApps) {
+            ApplicationFacade af = as.createFacade(this, this.appRegistry, false);
+            if (af != null) {
+                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
+                af.setAppID(as.getAppID());
+                this.appFacades.put(as.getAppID(), af);
+            }
+        }
+    }
+    
+    public long getMaxDownloadSize() {
+        // TODO:  make dynamic
+        return MAX_DOWNLOAD_SIZE;
     }
     
     private void init(String client,
@@ -125,7 +231,6 @@ public class Session {
             credentials = new CredentialsManager(client, username, password);
             this.debugOn = debugOn;
             this.deviceType = deviceType;
-            this.appFacades = new TreeMap<>();
             this.client = client;
             
             // Do a JNDI lookup of the app registry.
@@ -133,6 +238,10 @@ public class Session {
             java.lang.Object appRegObj =
                     ictx.lookup("java:global/ApplicationServerRegistry");
             appRegistry = (ApplicationServerRegistry)appRegObj;
+            
+            java.lang.Object initASObj =
+                    ictx.lookup("java:global/InitApplicationServer");
+            initAS = (InitApplicationServer)initASObj;
         } catch (NamingException ex) {
             LOG.log(Level.SEVERE, "Failed to initialize session.", ex);
             throw new AppserverSystemException(ex, "SessionInitializationFailed",
@@ -140,21 +249,53 @@ public class Session {
         }
     }
 
+    public ApplicationSettings getCurrentApplication() {
+        return currentApplication;
+    }
+    
     public ApplicationFacade getCurrentFacade() {
         return currentFacade;
+    }
+    
+    public ApplicationFacade getCurrentFacade(int apptype) {
+        if (this.currentFacade != null) {
+            return this.currentFacade;
+        }
+        
+        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
+        if (allFs.isEmpty()) {
+            return null;
+        }
+        return allFs.get(0);
+    }
+    
+    public ApplicationFacade getCurrentFacade(HttpServletRequest req, int apptype) {
+        String appid = this.getAppIDFromRequest(req);
+        if (appid != null) {
+            ApplicationFacade af = this.getAppFacade(Long.parseLong(appid));
+            if (af.getAppType() == apptype) {
+                return af;
+            }
+        } 
+        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
+        if (allFs.isEmpty()) {
+            return null;
+        }
+        return allFs.get(0);
     }
     
     public ApplicationFacade getAppFacade(long appid) {
         return this.appFacades.get(appid);
     }
-    
-    public ApplicationFacade getFacadeForType(int apptype) {
+        
+    public List<ApplicationFacade> getAllFacadesForType(int apptype) {
+        List<ApplicationFacade> ret = new LinkedList<>();
         for (ApplicationFacade af : this.appFacades.values()) {
             if (af.getAppType() == apptype) {
-                return af;
+                ret.add(af);
             }
         }
-        return null;
+        return ret;
     }
     
     private String getValueFromCookieName(HttpServletRequest req,
@@ -180,73 +321,65 @@ public class Session {
         return this.getValueFromCookieName(req, HTTPHeaderConstants.MH_APP_GEN_HEADER);
     }
     
-    /**
-     * Find the record for the application this request is attempting to access. Return
-     * true if the record is found, false if not. If not, the caller should redirect the
-     * request to an error landing page.
-     * 
-     * @param req
-     * @param apptype
-     * @return 
-     */
-    private void findApplication(HttpServletRequest req,
+     // Find the record for the application this request is attempting to access. Return
+     // true if the record is found, false if not. If not, the caller should redirect the
+     //request to an error landing page.
+    public ApplicationFacade initCurrentApplication(String appID, String appGenID,
             int apptype) throws AppserverSystemException {
-        
-        String appID = this.getAppIDFromRequest(req);
-        String appGenID = this.getAppGenFromRequest(req);
-
-        if (this.currentApplication != null) {
-            /* Make sure the app didn't change ... */
-            if (appID != null &&
-                    this.currentApplication.getAppID() == Long.parseLong(appID)) {
-                /* Make sure the currentFacade is for the current app. */
-                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
-                
-                /* Have already found the application and facade. */
-                return;
-            }
-            
-            /* If we are debugging, match by type. */
-            if (debugOn &&
-                    this.currentApplication.getAppType() == apptype) {
-                /* Make sure the currentFacade is for the current app. */
-                this.currentFacade = this.appFacades.get(this.currentApplication.getAppID()); 
-                
-                /* Have already found the application and facade. */
-                return;
-            }
-            
-            /* If we fall through then we have changed applications. */
+        ApplicationFacade af = null;
+        ApplicationSettings app = null;
+        if (appID != null) {
+            app = this.appRegistry.getSettingsForAppID(client, Long.parseLong(appID), Integer.parseInt(appGenID));
+        } else if (debugOn) {
+            app = this.appRegistry.getSettingsForApplicationType(client, apptype, this);
+        } else {
+            LOG.log(Level.SEVERE, "Received a null app ID in a non-debug session.");
         }
         
-        if (appID != null && appGenID != null) {
-            // Get the per-app configuration.
-            this.currentApplication =
-                appRegistry.getSettingsForAppID(this.getClient(), Long.parseLong(appID), Integer.parseInt(appGenID));
-        } else if (this.debugOn && 
-                (appID == null || appGenID == null)) {
-            // Install defaults. For now (while debugging), look up config by type.
-            this.currentApplication =
-                    appRegistry.getSettingsForApplicationType(this.getClient(), apptype);
+        if (app == null) {
+            /* Could not lookup the application. Fail. */
+            throw new AppserverSystemException("Failed to lookup current application in process request.",
+                            "SessionCannotFindApp",
+                            new Object[] {
+                                appID != null ? appID : "null"
+                            });
+        }
+        this.currentApplication = app;
+        af = this.appFacades.get(app.getAppID());
+        if (af == null) {
+            /* Could not lookup the application. Fail. */
+            throw new AppserverSystemException("Failed to lookup current facade in process request.",
+                            "SessionCannotFindFacade");
+        }
+        this.currentFacade = af;
+        return af;
+    }
+    
+    public ApplicationFacade processRequest(Long appID, int appType) throws AppserverSystemException {
+        if (appID == null) {
+            throw new AppserverSystemException("Invalid app ID.", "InvalidAppID", new Object[]{ "null" });
         }
         
-        if (this.currentApplication != null) {
-            // Whenever we change apps, we reset the current facade.
-            this.currentFacade = this.appFacades.get(this.currentApplication.getAppID());
-        }
+        /* Setup the application and facade. */
+        ApplicationFacade af = this.initCurrentApplication(appID.toString(), Integer.toString(ApplicationServerRegistry.FORCE_NO_REFRESH), appType);        
+        this.initCurrentFacade(false, af);
+        return af;
     }
     
     /**
      * Should be called when a GET page request arrives.
+     * @param req
+     * @param appType
+     * @return 
+     * @throws com.mobilehelix.appserver.errorhandling.AppserverSystemException
      */
-    public void processRequest(HttpServletRequest req, int apptype) 
+    public ApplicationFacade processRequest(HttpServletRequest req, int appType) 
             throws AppserverSystemException {        
         String reqUsername = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_USERNAME_HEADER);
         String reqPassword = req.getHeader(HTTPHeaderConstants.MH_FORMLOGIN_PASSWORD_HEADER);
 
         boolean didChangeUser = false;
         boolean didChangePassword = false;
-        boolean didCreate = false;
         
         /* Handle operations that are fully encapsulated in the request first. */
         if (reqUsername != null) {
@@ -266,42 +399,66 @@ public class Session {
             });   
         
         /* Setup the application and facade. */
-        this.findApplication(req, apptype);
-        
-        if (this.currentApplication == null) {
-            /* Could not lookup the application. Fail. */
-            throw new AppserverSystemException("Failed to lookup current application in process request.",
-                            "SessionCannotFindApp");
-        }
-        
-        if (this.currentFacade == null) {
-            /* First time we have been here ... */
-            didCreate = true;
-                
-            /* This will generally only happen in debug sessions. */
-            this.currentFacade = this.currentApplication.createFacade(appRegistry, debugOn);
-            
-            /* Store the mapping from app ID to facade. */
-            this.appFacades.put(this.currentApplication.getAppID(), this.currentFacade);
-        } 
-        
-        if (!didCreate) {
-            /* Block until the app facade init is done. This init is started when the session
-             * is created.
-             */
-            Integer status = this.currentFacade.getInitStatus();
-        }
-        
-        /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
-        if (!this.currentFacade.getInitOnLoadDone() || didChangeUser || didChangePassword) {
-            /* Need to re-init the facade because credentials have changed. */
-            this.currentFacade.doInitOnLoad(req, credentials);
-            
-            /* Inidicate the first load is one. */
-            this.currentFacade.setInitOnLoadDone();
-        }   
+        String appID = this.getAppIDFromRequest(req);
+        String appGenID = this.getAppGenFromRequest(req);
+        ApplicationFacade af = this.initCurrentApplication(appID, appGenID, appType);        
+        this.initCurrentFacade(didChangeUser || didChangePassword, af);
+        return af;
     }
 
+    
+    public int initCurrentFacade(boolean reinit, ApplicationFacade af) throws AppserverSystemException {
+        int status = 0;
+        
+        /* Block until the app facade init is done. This init is started when the session
+         * is created.
+         */
+        try {
+            status = af.getInitStatus();
+        } catch (ExecutionException ee) {
+            LOG.log(Level.SEVERE, "Exception collecting init status from the application facade.", ee);
+            
+            // Just re-throw so that the underlying error message is preserved.
+            if (ee.getCause() instanceof AppserverSystemException) {
+                throw (AppserverSystemException)ee.getCause();
+            } else {
+                throw new AppserverSystemException(ee,
+                    "Asynchronous init failed.",
+                    "SessionInitializationFailed",
+                    new Object[] {
+                        ee.getCause().getMessage()
+                    });
+            }
+        } catch (Exception e) {
+            LOG.log(Level.SEVERE, "Exception collecting init status from the application facade.", e);
+            throw new AppserverSystemException(e,
+                "Asynchronous init failed.",
+                "SessionInitializationFailed",
+                new Object[] {
+                    e.getMessage()
+                });
+        }
+        
+       /* If something substantial changed OR if this is the first load of the app., we re-init the facade. */
+        if (!af.getInitOnLoadDone() || reinit) {
+            /* Need to re-init the facade because credentials have changed. */
+            af.doInitOnLoad(this, credentials);
+
+            /* Indicate the first load is one. */
+            af.setInitOnLoadDone();
+        }
+        
+        return status;
+    }
+
+    public Object getProperty(String key) {
+        return this.contextMap.get(key);
+    }
+    
+    public void setProperty(String key, Object value) {
+        this.contextMap.put(key, value);
+    }
+    
     public String getServerBaseURL() {
         return serverBaseURL;
     }
@@ -314,13 +471,137 @@ public class Session {
         return deviceType;
     }
 
+    public long getDeviceID() {
+        return deviceID;
+    }
+
     public String getClient() {
         return client;
+    }
+    
+    public Long[] getAppIDs() {
+        if (this.appIDs == null) {
+            return new Long[0];
+        }
+        
+        Long[] ret = new Long[this.appIDs.size()];
+        return this.appIDs.toArray(ret);
+    }
+    
+    public Integer[] getAppGenIDs() {
+        if (this.appGenIDs == null) {
+            return new Integer[0];
+        }
+        Integer[] ret = new Integer[this.appGenIDs.size()];
+        return this.appGenIDs.toArray(ret);
+    }
+    
+    public WSExtra getPolicy(Long appID, String tag) {
+        if (this.policyMap != null) {
+            Collection<WSExtra> policyList = this.policyMap.get(appID);
+            if (policyList == null) {
+                return null;
+            }
+            
+            for (WSExtra wse : policyList) {
+                if (wse.getTag().equals(tag)) {
+                    return wse;
+                }
+            }
+        }
+        return null;
+    }
+    
+    // Return the session IDs of the child sessions created by this instance
+    public void getChildren(List<byte[]> sessionIds) {
+       byte[] szSessionId = (byte[]) this.getProperty("szSessionId");
+       
+       if (szSessionId != null)
+           sessionIds.add(szSessionId);
     }
     
     public void close() {
         for (ApplicationFacade af : this.appFacades.values()) {
             af.close();
         }
+        this.appFacades.clear();
+        for (ConnectionContainer cc : this.connMap.values()) {
+            cc.close();
+        }
+        this.connMap.clear();
+    }
+    
+    public void getProperties(Map<String, Object> props) {
+        this.initAS.getControllerConnection().getProperties(props);
+    } 
+    
+    public ControllerConnectionBase getControllerConnection() {
+        return this.initAS.getControllerConnection();
+    }    
+    
+    public ConnectionContainer getConnectionForType(Class c) {
+        return connMap.get(c.getName());
+    }    
+    
+    public void saveConnectionForType(Class c,
+            ConnectionContainer cc) {
+        this.connMap.put(c.getName(), cc);
+    }
+    
+    public final void addPref(Long resourceID, WSUserPreference pref) {
+        if (pref == null) {
+            return;
+        }        
+        if (resourceID == null) {
+            resourceID = -1L;
+        }
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs == null) {
+            prefs = new HashSet<>();
+            this.prefsMap.put(resourceID, prefs);
+        } else {
+            prefs.remove(pref);
+        }
+        
+        prefs.add(pref);
+    }
+    
+    public void removePref(Long resourceID, WSUserPreference pref) {
+        if (pref == null) {
+            return;
+        }        
+        if (resourceID == null) {
+            resourceID = -1L;
+        }
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs == null) {
+           return;
+        }
+        prefs.remove(pref);
+    }
+        
+    public WSUserPreference getPref(Long resourceID, String tag) {
+        if (tag == null) {
+            return null;
+        }        
+        if (resourceID == null) {
+            resourceID = -1L;
+        }
+        WSUserPreference ret = null;
+        Set<WSUserPreference> prefs = this.prefsMap.get(resourceID);
+        if (prefs != null) {
+            for (WSUserPreference pref : prefs) {        
+                if (pref.getTag().equals(tag)) {
+                    ret = pref;
+                    break;
+                }
+            }
+        }
+        
+        return ret;
+    }
+    
+    public Set<WSUserPreference> getAllPrefs(Long resourceID) {
+        return this.prefsMap.get(resourceID);
     }
 }

@@ -12,6 +12,8 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.faces.FacesException;
 import javax.faces.application.ResourceHandler;
 import javax.naming.InitialContext;
@@ -26,10 +28,12 @@ import javax.servlet.http.HttpServletResponse;
  * @author shallem
  */
 public class InitFilter {
+    private static final Logger LOG = Logger.getLogger(InitFilter.class.getName()); 
 
     private static final String NOINIT = "The application server has not been initialized. Please run the init-application-server ant target from the command line.";
     private static final String NOAUTH = "Authentication is denied.";
     private static final String ERROR = "The app server failed to respond to this request: {0}";
+    private static final String META_VIEWPORT = "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,user-scalable=no\">";
     private InitialContext ictx;
     protected InitApplicationServer appServerSettings;
     protected SessionManager sessionManager;
@@ -88,6 +92,7 @@ public class InitFilter {
             try {
                 currentSession = sessionManager.getSessionForRequest(req);
             } catch (AppserverSystemException ex) {
+                LOG.log(Level.SEVERE, "Session init failed with exception.", ex);
                 this.sendError(req, resp, ERROR, ex.getLocalizedMessage());
                 return false;
             }
@@ -101,6 +106,7 @@ public class InitFilter {
             // Finally, ask the session to process this request.
             currentSession.processRequest(req, apptype);
         } catch (AppserverSystemException ex) {
+            LOG.log(Level.SEVERE, "Fatal error in session init.", ex);
             this.sendError(req, resp, ERROR, ex.getLocalizedMessage());
             return false;
         }
@@ -125,9 +131,11 @@ public class InitFilter {
             HttpServletResponse resp,
             String msg) {
         try {
+            resp.setContentType("text/html; charset=UTF-8");
             resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
             resp.getWriter()
-                    .append("<html><body>")
+                    .append("<html><head>").append(META_VIEWPORT).append("</head>")
+                    .append("<body>")
                     .append(msg)
                     .append("</body></html>");
         } catch (IOException ex) {
