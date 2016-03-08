@@ -287,7 +287,7 @@ public class PushManager {
     @Schedule(minute="*/10",hour="*")
     public void doCheck() {
         for (PushReceiver pr : this.idMap.values()) {
-            if (pr.check() == false) {
+            if (pr.check(pr.getUserid()) == false) {
                 // Delete the push session ...
                 this.removeSession(pr.getUniqueID(), pr.getCombinedUser());
             }
