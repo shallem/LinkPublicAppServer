@@ -152,8 +152,11 @@ public class PushManager {
         }
         try {
             if (!found) {
-                LOG.log(Level.INFO, "Creating push session for {0}", combinedUser);
                 String uniqueID = this.getUniqueID(client, userID, appID);
+                LOG.log(Level.INFO, "Creating push session for {0}, {1}", new Object[] {
+                    combinedUser,
+                    uniqueID
+                });
                 PushReceiver newReceiver = as.getPushReceiver();
                 PushCompletion pushAccepted = new PushCompletion(this.userPushMap, this.idMap, uniqueID, combinedUser, newReceiver);
                 pushInit.doInit(newReceiver, 
@@ -289,6 +292,10 @@ public class PushManager {
         for (PushReceiver pr : this.idMap.values()) {
             if (pr.check(pr.getUserid()) == false) {
                 // Delete the push session ...
+                LOG.log(Level.INFO, "Deleting push session for user {0}, ID {1} due to check failure.", new Object[] {
+                    pr.getCombinedUser(),
+                    pr.getUniqueID()
+                });
                 this.removeSession(pr.getUniqueID(), pr.getCombinedUser());
             }
         }
