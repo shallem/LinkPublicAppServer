@@ -18,6 +18,8 @@ package com.mobilehelix.appserver.ejb;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
 import com.mobilehelix.appserver.session.Session;
+import com.mobilehelix.services.objects.WSUserPreference;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -77,6 +79,8 @@ public abstract class ApplicationFacade {
     /**
      * Abstract per-application init to be executed when an application is first loaded.
      * 
+     * @param session
+     * @param credentials
      * @return
      * @throws AppserverSystemException 
      */
@@ -92,13 +96,26 @@ public abstract class ApplicationFacade {
     
     /**
      * Return if doInitOnLoad has been called.
+     * @return 
      */
     public boolean getInitOnLoadDone() {
         return this.loadInitDone;
     }
 
     /**
-     * Overridable close method, which is invoked when the session is deleted from
+     * Get a default preference value. If no default is available, return null.
+     * 
+     * @param tag Prefs tag.
+     * @param sess Current session.
+     * @return 
+     * @throws java.io.IOException 
+     */
+    public WSUserPreference getDefaultPreference(String tag, Session sess) throws IOException {
+        return null;
+    }
+    
+    /**
+     * Override-able close method, which is invoked when the session is deleted from
      * the session manager. This is the place to ensure that any open sockets,
      * files, etc. are cleaned up. By default, nothing happens here.
      */
