@@ -60,6 +60,11 @@ public class ControllerConnectionBase {
         // Do nothing. We have no controller.
     }
     
+    public Map<Long, List<WSExtra> > getAppPolicies(String client, Long[] appIDs) {
+        // Do nothing. We have no controller.
+        return null;
+    }
+    
     public Map<Long, List<WSExtra> > downloadAppPolicies(Session s) throws IOException {
         // Do nothing. We have no Controller.
         return null;
