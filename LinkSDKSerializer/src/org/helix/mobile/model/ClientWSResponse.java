@@ -134,7 +134,7 @@ public class ClientWSResponse {
     }
 
     public void setMsg(String msg) {
-        this.setStatusMessage(statusMessage);
+        this.setStatusMessage(msg);
     }
     
     public void setStatusMessage(String statusMessage) {
