@@ -47,6 +47,7 @@ public class ApplicationServerRegistry {
     public static final int FORCE_REFRESH = -2;
     
     // Indexed by client, then app ID.
+    private TreeMap<String, TreeMap<Long, WSApplication> > appResponseMap;
     private TreeMap<String, TreeMap<Long, ApplicationSettings> > appMap;
     private TreeMap<Integer, ApplicationSettingsFactory> factoryMap;
     private TreeMap<String, TreeSet<Long>> ignoreMap; 
@@ -58,6 +59,7 @@ public class ApplicationServerRegistry {
         this.appMap = new TreeMap<>();
         this.factoryMap = new TreeMap<>();
         this.ignoreMap = new TreeMap<>();
+        this.appResponseMap = new TreeMap<>();
     }
     
     public void setControllerConnection(ControllerConnectionBase b) {
@@ -75,8 +77,14 @@ public class ApplicationServerRegistry {
             cliMap = new TreeMap<>();
             appMap.put(client, cliMap);
         }
+        TreeMap<Long, WSApplication> respMap = appResponseMap.get(client);
+        if (respMap == null) {
+            respMap = new TreeMap<>();
+            appResponseMap.put(client, respMap);
+        }
         
         for (WSApplication wsa : appList) {
+            respMap.put(wsa.getUniqueID(), wsa);
             ApplicationSettingsFactory sf = factoryMap.get(wsa.getAppType());
             if (sf == null) {
                 // No factory; we cannot handle settings for this application in
@@ -104,7 +112,15 @@ public class ApplicationServerRegistry {
         }
     }
     
-    public ApplicationSettings getSettingsForAppID(String client, Long appID) throws AppserverSystemException {
+    public WSApplication getResponseForAppID(String client, Long appID) {
+        TreeMap<Long, WSApplication> respMap = appResponseMap.get(client);
+        if (respMap == null) {
+            return null;
+        }
+        return respMap.get(appID);
+    }
+    
+    public ApplicationSettings getSettingsForAppID(String client, Long appID) {
         TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
         if (cliMap == null) {
             return null;

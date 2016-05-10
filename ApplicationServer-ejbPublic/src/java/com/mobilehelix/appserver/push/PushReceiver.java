@@ -122,7 +122,7 @@ public abstract class PushReceiver {
      * is still valid and false if not. On false, the push manager will delete the push session.
      * @return 
      */
-    public abstract boolean check();
+    public abstract boolean check(String userid);
     
     /**
      * Called when a POST request to the push servlet using the unique ID of this object (specified
