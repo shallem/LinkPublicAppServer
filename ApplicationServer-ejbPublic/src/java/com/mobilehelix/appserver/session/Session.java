@@ -100,6 +100,12 @@ public class Session {
     /* Client of this user. */
     private String client;
     
+    /* Email address of this user. */
+    private String userEmail;
+    
+    /* Legacy user ID of this user. */
+    private String legacyUserID;
+    
     /* List of app IDs in the session. */
     private final List<Long> appIDs;
     
@@ -130,6 +136,8 @@ public class Session {
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
         this.deviceID = createRequest.getDeviceID();
+        this.legacyUserID = createRequest.getLegacyUserID();
+        this.userEmail = createRequest.getUserEmail();
         
         this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
@@ -219,6 +227,14 @@ public class Session {
     public long getMaxDownloadSize() {
         // TODO:  make dynamic
         return MAX_DOWNLOAD_SIZE;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public String getLegacyUserID() {
+        return legacyUserID;
     }
     
     private void init(String client,
