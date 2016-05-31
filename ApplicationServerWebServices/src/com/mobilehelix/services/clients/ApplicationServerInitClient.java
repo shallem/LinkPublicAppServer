@@ -3,8 +3,8 @@ package com.mobilehelix.services.clients;
 import com.mobilehelix.services.interfaces.RestClient;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  *
@@ -42,7 +42,7 @@ public class ApplicationServerInitClient extends RestClient {
             String storePass,
             byte[] clientKeystore,
             String debugPassword,
-            HTTPSProperties props,
+            Properties props,
             String scriptsDir,
             String phantomjsBin,
             String rootDir,

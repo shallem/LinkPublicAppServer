@@ -17,7 +17,6 @@ package com.mobilehelix.appserver.session;
 
 import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
-import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;

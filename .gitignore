@@ -10,3 +10,7 @@ build/
 /WebServicesObjects/build
 /LinkSDKSerialuzer/nbproject/private/
 /LinkSDKSerializer/nbproject/private/
+<<<<<<< HEAD
+=======
+/LinkSDKSerializer/build
+>>>>>>> jersey2
