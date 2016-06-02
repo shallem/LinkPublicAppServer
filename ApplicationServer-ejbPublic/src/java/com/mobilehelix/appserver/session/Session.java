@@ -23,6 +23,7 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
@@ -45,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
@@ -125,6 +127,7 @@ public class Session {
        for global prefs.
     */
     private final Map<Long, Set<WSUserPreference>> prefsMap;
+    
     
     
     public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
@@ -596,6 +599,11 @@ public class Session {
         prefs.remove(pref);
     }
         
+    public void refreshPrefs() throws AppserverSystemException {
+        initAS.getControllerConnection().refreshUserPrefs(this.client, 
+                this.getCredentials().getUsernameNoDomain(), null, this);
+    }
+    
     public WSUserPreference getPref(Long resourceID, String tag) {
         if (tag == null) {
             return null;
