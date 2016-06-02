@@ -4,7 +4,6 @@ import com.mobilehelix.services.interfaces.RestClient;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.TreeMap;
-import org.apache.commons.codec.EncoderException;
 
 /**
  *
@@ -18,7 +17,7 @@ public class ApplicationServerFilesClient extends RestClient {
         super(host, "/clientws/files/" + op, props);
     }
     
-    public String getRoots(String sessID, Long appID) throws IOException, EncoderException {
+    public String getRoots(String sessID, Long appID) throws IOException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -31,7 +30,7 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     }
     
-    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws IOException, EncoderException {
+    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws IOException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -55,7 +54,7 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     } 
     
-    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) throws IOException, EncoderException {
+    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) throws IOException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -74,7 +73,7 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     }  
     
-    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws IOException, EncoderException {
+    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws IOException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
