@@ -69,7 +69,7 @@ public class InitApplicationServer {
             Constructor cc = c.getDeclaredConstructor();
             this.controllerConnection = (ControllerConnectionBase)cc.newInstance(new Object[]{});
         } catch(ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            
+             throw new RuntimeException(e);
         }
         
         if (controllerConnection == null) {
