@@ -60,9 +60,7 @@ public class Session {
     /* Global prefs tags. */
     public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
     public static final String COPY_ON_CHECKOUT_TAG = "checkout_copy";
-    
-    private static final long MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;
-    
+        
     
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
@@ -206,22 +204,15 @@ public class Session {
         for (ApplicationSettings as : sessApps) {
             ApplicationFacade af = as.createFacade(this, this.appRegistry, false);
             if (af != null) {
-                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
                 af.setAppID(as.getAppID());
+                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
                 this.appFacades.put(as.getAppID(), af);
             }
         }
+        
+        executor.shutdown();
     }
     
-    public long getMaxDownloadSize() {
-        // TODO:  make dynamic
-        return MAX_DOWNLOAD_SIZE;
-    }
-    
-    public boolean canDelete(String digest, String id) {
-        // TODO:  make dynamic
-        return false;
-    }
     
     private void init(String client,
             String username, 
