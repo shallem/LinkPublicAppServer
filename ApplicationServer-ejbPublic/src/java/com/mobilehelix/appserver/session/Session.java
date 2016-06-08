@@ -23,6 +23,7 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
@@ -44,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
@@ -60,8 +62,10 @@ public class Session {
     /* Global prefs tags. */
     public static final String PASSWORD_VAULT_PREFS_TAG = "password_vault";
     public static final String COPY_ON_CHECKOUT_TAG = "checkout_copy";
+    public static final String MAX_FILE_SIZE_TAG = "file_max_size";
+    public static final String WARN_FILE_SIZE_TAG = "file_warn_size";
     
-    private static final long MAX_DOWNLOAD_SIZE = 500 * 1024 * 1024;
+    private static final long MAX_DOWNLOAD_SIZE = 50 * 1024 * 1024;
     
     
     /* Global registry of application config downloaded from the Controller. */
@@ -124,6 +128,7 @@ public class Session {
        for global prefs.
     */
     private final Map<Long, Set<WSUserPreference>> prefsMap;
+    
     
     
     public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
@@ -223,9 +228,22 @@ public class Session {
         }
     }
     
-    public long getMaxDownloadSize() {
-        // TODO:  make dynamic
-        return MAX_DOWNLOAD_SIZE;
+    public long getMaxDownloadSize(long appID) {
+        WSExtra fileMaxSizePolicy = this.getPolicy(appID, MAX_FILE_SIZE_TAG);
+
+        if ((fileMaxSizePolicy == null) || (fileMaxSizePolicy.getValueInteger() == null))
+            return MAX_DOWNLOAD_SIZE;
+        
+        return 1024 * 1024 * fileMaxSizePolicy.getValueInteger();
+    }
+        
+    public long getWarningDownloadSize(long appID) {
+        WSExtra fileWarningSizePolicy = this.getPolicy(appID, WARN_FILE_SIZE_TAG);
+
+        if ((fileWarningSizePolicy == null) || (fileWarningSizePolicy.getValueInteger() == null))
+            return (MAX_DOWNLOAD_SIZE * 2) / 5;
+        
+        return 1024 * 1024 * fileWarningSizePolicy.getValueInteger();
     }
 
     public String getUserEmail() {
@@ -341,7 +359,7 @@ public class Session {
      //request to an error landing page.
     public ApplicationFacade initCurrentApplication(String appID, String appGenID,
             int apptype) throws AppserverSystemException {
-        ApplicationFacade af = null;
+        ApplicationFacade af;
         ApplicationSettings app = null;
         if (appID != null) {
             app = this.appRegistry.getSettingsForAppID(client, Long.parseLong(appID), Integer.parseInt(appGenID));
@@ -595,6 +613,11 @@ public class Session {
         prefs.remove(pref);
     }
         
+    public void refreshPrefs() throws AppserverSystemException {
+        initAS.getControllerConnection().refreshUserPrefs(this.client, 
+                this.getCredentials().getUsernameNoDomain(), null, this);
+    }
+    
     public WSUserPreference getPref(Long resourceID, String tag) {
         if (tag == null) {
             return null;
