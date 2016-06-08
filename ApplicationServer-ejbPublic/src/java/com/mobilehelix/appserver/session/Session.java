@@ -23,6 +23,7 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
+import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
@@ -44,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.ejb.EJB;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
@@ -101,6 +103,12 @@ public class Session {
     /* Client of this user. */
     private String client;
     
+    /* Email address of this user. */
+    private String userEmail;
+    
+    /* Legacy user ID of this user. */
+    private String legacyUserID;
+    
     /* List of app IDs in the session. */
     private final List<Long> appIDs;
     
@@ -122,6 +130,7 @@ public class Session {
     private final Map<Long, Set<WSUserPreference>> prefsMap;
     
     
+    
     public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
@@ -131,6 +140,8 @@ public class Session {
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
         this.deviceID = createRequest.getDeviceID();
+        this.legacyUserID = createRequest.getLegacyUserID();
+        this.userEmail = createRequest.getUserEmail();
         
         this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
@@ -233,6 +244,14 @@ public class Session {
             return (MAX_DOWNLOAD_SIZE * 2) / 5;
         
         return 1024 * 1024 * fileWarningSizePolicy.getValueInteger();
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public String getLegacyUserID() {
+        return legacyUserID;
     }
     
     private void init(String client,
@@ -594,6 +613,11 @@ public class Session {
         prefs.remove(pref);
     }
         
+    public void refreshPrefs() throws AppserverSystemException {
+        initAS.getControllerConnection().refreshUserPrefs(this.client, 
+                this.getCredentials().getUsernameNoDomain(), null, this);
+    }
+    
     public WSUserPreference getPref(Long resourceID, String tag) {
         if (tag == null) {
             return null;

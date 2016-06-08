@@ -60,6 +60,11 @@ public class ControllerConnectionBase {
         // Do nothing. We have no controller.
     }
     
+    public Map<Long, List<WSExtra> > getAppPolicies(String client, Long[] appIDs) {
+        // Do nothing. We have no controller.
+        return null;
+    }
+    
     public Map<Long, List<WSExtra> > downloadAppPolicies(Session s) throws IOException {
         // Do nothing. We have no Controller.
         return null;
@@ -105,6 +110,7 @@ public class ControllerConnectionBase {
         this.globalProperties.setRootDir(asir.getRootDir());
         
         this.globalProperties.setIsNoGateway(asir.isIsNoGateway());
+        this.globalProperties.setRegion(asir.getRegionName());
 
         /* Reset the session manager. When we re-initialize the app server it is
          * no different than restarting the app server.
