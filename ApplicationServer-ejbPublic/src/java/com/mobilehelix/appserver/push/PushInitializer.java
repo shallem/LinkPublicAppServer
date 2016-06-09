@@ -43,4 +43,14 @@ public class PushInitializer {
             throws AppserverSystemException {
         return new AsyncResult<>(pr.doCreate(appServerHostName, uniqueID, combinedUser, clientid, userid, password, deviceType, appID, appSettings, onComplete));
     }
+    
+    public Future<Boolean> doRefresh(PushReceiver pr,
+            String userid,
+            String password,
+            ApplicationSettings appSettings,
+            String passwordVaultUserID,
+            String passwordVaultPassword) throws AppserverSystemException {
+        pr.refresh(userid, password, appSettings, false, passwordVaultUserID, passwordVaultPassword);
+        return new AsyncResult<>(true);
+    }
 }
