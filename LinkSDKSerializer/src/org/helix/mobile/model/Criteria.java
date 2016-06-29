@@ -29,7 +29,8 @@ public class Criteria {
         LEQ,
         GT,
         GEQ,
-        LIKE
+        LIKE,
+        CLEAR
     };
     
     private final String field;
@@ -74,6 +75,8 @@ public class Criteria {
                 return ">=";
             case LIKE:
                 return "LIKE";
+            case CLEAR:
+                return "CLEAR";
             default:
                 return "=";
         }

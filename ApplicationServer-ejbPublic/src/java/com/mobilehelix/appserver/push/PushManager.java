@@ -146,7 +146,7 @@ public class PushManager {
                 if (receiver.matches(client, userID, appID)) {
                     found = true;
                     LOG.log(Level.INFO, "Refreshing push session for {0}", combinedUser);
-                    receiver.refresh(userID, password, as, false, passwordVaultUserID, passwordVaultPassword);
+                    pushInit.doRefresh(receiver, userID, password, as, passwordVaultUserID, passwordVaultPassword);
                 }
             }
         }
