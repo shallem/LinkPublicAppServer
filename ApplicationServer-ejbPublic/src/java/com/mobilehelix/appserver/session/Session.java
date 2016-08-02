@@ -221,11 +221,13 @@ public class Session {
         for (ApplicationSettings as : sessApps) {
             ApplicationFacade af = as.createFacade(this, this.appRegistry, false);
             if (af != null) {
-                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
                 af.setAppID(as.getAppID());
+                af.setInitStatus(executor.submit(new ApplicationInitializer(af, this, this.credentials)));
                 this.appFacades.put(as.getAppID(), af);
             }
         }
+        
+        executor.shutdown();
     }
     
     public long getMaxDownloadSize(long appID) {

@@ -31,16 +31,17 @@ public class VersionManager {
     private String versionString = "1.0.0";
     
     private void readVersion() throws Exception {
-        InputStream verStream = 
-                getClass().getClassLoader().getResourceAsStream(versionProperties);
-        Properties verProps = new Properties();
-        verProps.load(verStream);
-            
-        majorVer = verProps.getProperty("Major");
-        minorVer = verProps.getProperty("Minor");
-        revisionVer = verProps.getProperty("Revision");
-    
-        versionString = majorVer + "." + minorVer + "." + revisionVer;
+        try (InputStream verStream = 
+                getClass().getClassLoader().getResourceAsStream(versionProperties)) {
+            Properties verProps = new Properties();
+            verProps.load(verStream);
+
+            majorVer = verProps.getProperty("Major");
+            minorVer = verProps.getProperty("Minor");
+            revisionVer = verProps.getProperty("Revision");
+
+            versionString = majorVer + "." + minorVer + "." + revisionVer;
+        }
     }
     
     public String getVersion() {
