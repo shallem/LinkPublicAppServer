@@ -292,11 +292,7 @@ public class Session {
         return currentFacade;
     }
     
-    public ApplicationFacade getCurrentFacade(int apptype) {
-        if (this.currentFacade != null) {
-            return this.currentFacade;
-        }
-        
+    public ApplicationFacade getFacade(int apptype) {
         List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
         if (allFs.isEmpty()) {
             return null;
@@ -304,7 +300,7 @@ public class Session {
         return allFs.get(0);
     }
     
-    public ApplicationFacade getCurrentFacade(HttpServletRequest req, int apptype) {
+    public ApplicationFacade getFacade(HttpServletRequest req, int apptype) {
         String appid = this.getAppIDFromRequest(req);
         if (appid != null) {
             ApplicationFacade af = this.getAppFacade(Long.parseLong(appid));
