@@ -17,6 +17,8 @@ package com.mobilehelix.appserver.push;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
+import com.mobilehelix.services.objects.WSUserPreference;
+import java.util.Collection;
 
 /**
  * Abstract interface for a client object that can handle push notification events.
@@ -43,6 +45,20 @@ public abstract class PushReceiver {
     /**
      * Invoked in the async init from the push manager. This method is responsible
      * for calling the override-able create method.
+     * @param appServerHostName
+     * @param uniqueID
+     * @param combinedUser
+     * @param clientid
+     * @param userid
+     * @param password
+     * @param deviceType
+     * @param appID
+     * @param appSettings
+     * @param pushAccepted
+     * @param userSettings
+     * @param pushMgr
+     * @return 
+     * @throws com.mobilehelix.appserver.errorhandling.AppserverSystemException 
      */
     public final boolean doCreate(String appServerHostName,
             String uniqueID, 
@@ -53,7 +69,9 @@ public abstract class PushReceiver {
             String deviceType,
             Long appID,
             ApplicationSettings appSettings,
-            PushCompletion pushAccepted) throws AppserverSystemException {
+            PushCompletion pushAccepted,
+            Collection<WSUserPreference> userSettings,
+            PushManager pushMgr) throws AppserverSystemException {
         this.uniqueID = uniqueID;
         this.combinedUser = combinedUser;
         this.clientid = clientid;
@@ -62,7 +80,7 @@ public abstract class PushReceiver {
         this.deviceType = deviceType;
         this.appID = appID;
         
-        return this.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, pushAccepted);
+        return this.create(appServerHostName, uniqueID, clientid, userid, password, deviceType, appSettings, pushAccepted, userSettings, pushMgr);
     }
     
     /**
@@ -72,10 +90,14 @@ public abstract class PushReceiver {
      * 
      * @param appServerHostName
      * @param uniqueID A unique ID that is by the push servlet (hosted at /push on this server) to find this receiver.
+     * @param clientid
      * @param userid User ID.
      * @param password User password.
      * @param deviceType String identifying the type of this device.
      * @param appSettings Settings for the app requesting push support.
+     * @param pushAccepted
+     * @param userSettings
+     * @param pushMgr
      * @return True if this app is now waiting for push notifications; false if not.
      * @throws AppserverSystemException 
      */
@@ -86,7 +108,9 @@ public abstract class PushReceiver {
             String password,
             String deviceType,
             ApplicationSettings appSettings,
-            PushCompletion pushAccepted) throws AppserverSystemException;
+            PushCompletion pushAccepted,
+            Collection<WSUserPreference> userSettings,
+            PushManager pushMgr) throws AppserverSystemException;
     
     /**
      * Called each time the user creates a new session on this server. On each session
@@ -97,15 +121,13 @@ public abstract class PushReceiver {
      * @param password 
      * @param appSettings 
      * @param isSessionCreate 
-     * @param passwordVaultUserID 
-     * @param passwordVaultPassword 
+     * @param userSettings 
      */
     public abstract void refresh(String userid,
             String password,
             ApplicationSettings appSettings,
             boolean isSessionCreate,
-            String passwordVaultUserID,
-            String passwordVaultPassword);
+            Collection<WSUserPreference> userSettings);
     
     /**
      * Called by other components of the app server to let the push session know that the
@@ -120,6 +142,7 @@ public abstract class PushReceiver {
      * Called every 10 minutes. Gives the push session the opportunity to check to see if it is
      * still alive, if such a mechanism exists. This method should return true if the push session
      * is still valid and false if not. On false, the push manager will delete the push session.
+     * @param userid
      * @return 
      */
     public abstract boolean check(String userid);
@@ -136,6 +159,10 @@ public abstract class PushReceiver {
     /**
      * Called to determine if a receiver matches the unique combination of client, user, and app ID.
      * Should return true if it does.
+     * @param client
+     * @param userid
+     * @param appID
+     * @return 
      */
     public abstract boolean matches(String client,
             String userid,
@@ -148,6 +175,7 @@ public abstract class PushReceiver {
     
     /**
      * Return the unique ID stored in this push receiver.
+     * @return 
      */
     public final String getUniqueID() {
         return this.uniqueID;

@@ -17,11 +17,11 @@ package com.mobilehelix.appserver.session;
 
 import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
-import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
+import com.mobilehelix.services.objects.WSUserPreference;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -159,7 +159,13 @@ public class SessionManager {
         this.debugSession.doAppInit(appIDsArr, appGenIDsArr, null);
                     
         // Also create a push session.
-        this.pushMgr.addSession(appIDsArr, appGenIDsArr, globalProperties.getClientName(), this.getDebugUser(), this.getDebugPassword(), "iPad Air");
+        this.pushMgr.addSession(appIDsArr, 
+                appGenIDsArr, 
+                globalProperties.getClientName(), 
+                this.getDebugUser(), 
+                this.getDebugPassword(), 
+                "iPad Air",
+                new LinkedList<WSUserPreference>());
     }
     
     public Session getSessionForRequest(String sessIDB64) throws AppserverSystemException {
