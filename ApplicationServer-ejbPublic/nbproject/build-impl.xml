@@ -818,7 +818,7 @@ exists or setup the property manually. For example like this:
     <target if="is.server.weblogic" name="-library-inclusion-in-archive-weblogic">
         <basename file="${file.reference.commons-httpclient-3.1.jar}" property="manifest.file.reference.commons-httpclient-3.1.jar"/>
         <manifest file="${build.ear.classes.dir}/META-INF/MANIFEST.MF" mode="update">
-            <attribute name="Extension-List" value="jar-1 jar-2 "/>
+            <attribute name="Extension-List" value="jar-1 "/>
             <attribute name="jar-1-Extension-Name" value="${manifest.file.reference.commons-httpclient-3.1.jar}"/>
         </manifest>
     </target>

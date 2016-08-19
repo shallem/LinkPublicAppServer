@@ -308,11 +308,7 @@ public class Session {
                 return af;
             }
         } 
-        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
-        if (allFs.isEmpty()) {
-            return null;
-        }
-        return allFs.get(0);
+        return this.getFacade(apptype);
     }
     
     public ApplicationFacade getAppFacade(long appid) {
