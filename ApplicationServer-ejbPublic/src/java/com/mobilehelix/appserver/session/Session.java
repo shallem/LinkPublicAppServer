@@ -304,10 +304,13 @@ public class Session {
         String appid = this.getAppIDFromRequest(req);
         if (appid != null) {
             ApplicationFacade af = this.getAppFacade(Long.parseLong(appid));
-            if (af.getAppType() == apptype) {
+            if (apptype == -1 || af.getAppType() == apptype) {
                 return af;
             }
         } 
+        if (apptype < 0) {
+            return null;
+        }
         return this.getFacade(apptype);
     }
     
