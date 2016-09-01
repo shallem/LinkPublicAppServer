@@ -6,11 +6,13 @@ package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.session.SessionManager;
+import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.PingRequest;
 import com.mobilehelix.services.objects.PingResponse;
 import java.io.IOException;
+import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
@@ -18,6 +20,7 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  *
@@ -38,6 +41,9 @@ public class PingWS {
     @EJB
     private PushManager pushMgr;
     
+    @EJB
+    private ApplicationServerRegistry appsRegistry;
+    
     @POST
     public byte[] handlePing(byte [] b) {
         int statusCode = WSResponse.FAILURE;
@@ -55,9 +61,20 @@ public class PingWS {
                 /* The server is starting up and has not yet registered. */
                 statusCode = WSResponse.FAILURE;
                 msg = "The app server has not been registered.";
+            } else if (preq.getClient() == null) {
+                statusCode = WSResponse.FAILURE;
+                msg = "Must supply a client name to do a ping.";
             } else {
-                statusCode = WSResponse.SUCCESS;
-                msg = "Success";
+                // Ping all apps.
+                LinkedList<String> warningMsgs = new LinkedList<>();
+                boolean didSucceed = this.appsRegistry.pingAllApplications(warningMsgs, preq.getClient());
+                if (!didSucceed) {
+                    statusCode = WSResponse.NON_FATAL_ERROR_CODE;
+                    msg = StringUtils.join(warningMsgs, ", ");
+                } else {
+                    statusCode = WSResponse.SUCCESS;
+                    msg = "Success";
+                }
             }
         } catch(Exception e) {
             LOG.log(Level.SEVERE, "Ping request failed with exception.", e);

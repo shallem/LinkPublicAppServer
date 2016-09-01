@@ -230,4 +230,25 @@ public class ApplicationServerRegistry {
         }
         return ret;
     }
+    
+    public boolean pingAllApplications(List<String> warningMsgs,
+            String client) {
+        TreeMap<Long, ApplicationSettings> cliMap = appMap.get(client);
+        boolean didFail = false;
+        if (cliMap == null) {
+            return true;
+        }
+        // Meant to hold a free form tag that resources within an appsettings object can
+        // use to decide if the ping operation has already been completed in this cycle. We need
+        // this mechanism because ping targets (e.g., agent servers) are generally associated with
+        // a resource, but many apps can have the same resource. We don't want to ping once per appearance
+        // of a resource on each ping cycle.
+        Set<String> completedPings = new TreeSet<>();
+        for (ApplicationSettings as : cliMap.values()) {
+            if (!as.doPing(warningMsgs, completedPings)) {
+                didFail = true;
+            }
+        }
+        return !didFail;
+    }
 }

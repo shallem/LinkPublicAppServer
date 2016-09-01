@@ -24,6 +24,7 @@ import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -106,6 +107,9 @@ public abstract class ApplicationSettings<T> {
     /**
      * Creates an application-specific facade using the values in this settings 
      * object.
+     * @param sess
+     * @param appRegistry
+     * @param debugOn
      * @return 
      */
     public abstract ApplicationFacade createFacade(Session sess,
@@ -115,8 +119,22 @@ public abstract class ApplicationSettings<T> {
     /**
      * Returns a push receiver object, if relevant for this app type. By default apps
      * have no push support so we return null.
+     * @return 
      */
     public PushReceiver getPushReceiver() {
         return null;
+    }
+    
+    /**
+     * Ping the server's handling of this application. If there are dependent servers (e.g.,
+     * the WorkSite agent ...), make sure we can still reach them.
+     * 
+     * @param warningMsgs
+     * @param completedPings
+     * @return 
+     */
+    public boolean doPing(List<String> warningMsgs, Set<String> completedPings) {
+        // By default, return true (this app is still working), and do not add any warning messages
+        return true;
     }
 }
