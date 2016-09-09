@@ -35,12 +35,12 @@ import java.util.Collection;
  */
 public abstract class PushReceiver {
     private String uniqueID;
-    private String clientid;
-    private String userid;
-    private String password;
+    protected String clientid;
+    protected String userid;
+    protected String password;
     private String deviceType;
     private String combinedUser;
-    private Long appID;
+    protected Long appID;
     
     /**
      * Invoked in the async init from the push manager. This method is responsible
