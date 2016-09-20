@@ -39,7 +39,6 @@ public class PushRefreshWS {
     
     @GET
     @Path("/refresh")
-    @Consumes("application/x-www-form-urlencoded")
     @Produces("application/octet-stream")
     public Response doPushRefresh(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> form = uriInfo.getQueryParameters();
