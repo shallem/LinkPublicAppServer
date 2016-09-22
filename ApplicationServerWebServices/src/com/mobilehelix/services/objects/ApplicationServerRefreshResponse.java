@@ -42,10 +42,12 @@ public class ApplicationServerRefreshResponse extends WSResponse {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
        
         try (JsonGenerator gen = factory.createJsonGenerator(baos)) {
+            gen.writeStartObject();
             super.toBson(gen);
             if (this.payload != null) {
                 gen.writeBinaryField("payload", this.payload);
             }
+            gen.writeEndObject();
         }
         return baos.toByteArray();
     }
