@@ -17,6 +17,8 @@ package com.mobilehelix.appserver.push;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
+import com.mobilehelix.services.objects.WSUserPreference;
+import java.util.Collection;
 import java.util.concurrent.Future;
 import javax.ejb.AsyncResult;
 import javax.ejb.Asynchronous;
@@ -39,18 +41,19 @@ public class PushInitializer {
             String deviceType,
             Long appID,
             ApplicationSettings appSettings,
-            PushCompletion onComplete) 
+            PushCompletion onComplete,
+            Collection<WSUserPreference> settings,
+            PushManager pushMgr) 
             throws AppserverSystemException {
-        return new AsyncResult<>(pr.doCreate(appServerHostName, uniqueID, combinedUser, clientid, userid, password, deviceType, appID, appSettings, onComplete));
+        return new AsyncResult<>(pr.doCreate(appServerHostName, uniqueID, combinedUser, clientid, userid, password, deviceType, appID, appSettings, onComplete, settings, pushMgr));
     }
     
     public Future<Boolean> doRefresh(PushReceiver pr,
             String userid,
             String password,
             ApplicationSettings appSettings,
-            String passwordVaultUserID,
-            String passwordVaultPassword) throws AppserverSystemException {
-        pr.refresh(userid, password, appSettings, false, passwordVaultUserID, passwordVaultPassword);
+            Collection<WSUserPreference> settings) throws AppserverSystemException {
+        pr.refresh(userid, password, appSettings, false, settings);
         return new AsyncResult<>(true);
     }
 }

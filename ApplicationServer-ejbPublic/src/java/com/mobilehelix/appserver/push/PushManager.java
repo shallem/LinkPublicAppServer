@@ -20,7 +20,9 @@ import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.GlobalPropertiesManager;
+import com.mobilehelix.security.TokenGenerator;
 import com.mobilehelix.services.objects.CreateSessionRequest;
+import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -28,6 +30,8 @@ import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
@@ -38,6 +42,7 @@ import javax.ejb.EJB;
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
+import javax.ws.rs.core.MultivaluedMap;
 import org.apache.commons.codec.binary.Hex;
 
 /**
@@ -55,6 +60,7 @@ public class PushManager {
     public static byte[] notFoundResponse;
     private ConcurrentHashMap<String, ConcurrentLinkedQueue<PushReceiver> > userPushMap;
     private ConcurrentHashMap<String, PushReceiver> idMap;
+    private ConcurrentHashMap<String, PushRefresh> refreshMap;
     
     /* EJB to perform async init on application settings. */
     @EJB
@@ -73,6 +79,7 @@ public class PushManager {
     public void init() {
         userPushMap = new ConcurrentHashMap<>();
         idMap = new ConcurrentHashMap<>();
+        refreshMap = new ConcurrentHashMap<>();
         srandom = new SecureRandom();
     }
     
@@ -119,8 +126,7 @@ public class PushManager {
             String deviceType,
             Long appID, 
             Integer appGenID,
-            String passwordVaultUserID,
-            String passwordVaultPassword) throws AppserverSystemException {
+            Collection<WSUserPreference> userSettings) throws AppserverSystemException {
         ApplicationSettings as = 
                     appRegistry.getSettingsForAppID(client, appID, appGenID);
         if (as == null) {
@@ -146,7 +152,7 @@ public class PushManager {
                 if (receiver.matches(client, userID, appID)) {
                     found = true;
                     LOG.log(Level.INFO, "Refreshing push session for {0}", combinedUser);
-                    pushInit.doRefresh(receiver, userID, password, as, passwordVaultUserID, passwordVaultPassword);
+                    pushInit.doRefresh(receiver, userID, password, as, userSettings);
                 }
             }
         }
@@ -169,7 +175,9 @@ public class PushManager {
                         deviceType,
                         appID,
                         as,
-                        pushAccepted);
+                        pushAccepted,
+                        userSettings,
+                        this);
                 /*
                 if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
                     LOG.log(Level.FINE, "Created push session for {0}, ID {1}", new Object[] {
@@ -190,12 +198,22 @@ public class PushManager {
         Long[] appIDs = newSess.getAppIDs();
         Integer[] appGenIDs = newSess.getAppGenIDs();
         
-        this.addSession(appIDs, appGenIDs, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), 
-                        newSess.getDeviceType());
+        this.addSession(appIDs, 
+                appGenIDs, 
+                newSess.getClient(), 
+                newSess.getUserID(), 
+                newSess.getPassword(), 
+                newSess.getDeviceType(),
+                newSess.getUserSettings());
     }
     
-    public void addSession(Long[] appIDs, Integer[] appGenIDs,
-            String client, String userID, String password, String deviceType) throws AppserverSystemException {
+    public void addSession(Long[] appIDs, 
+            Integer[] appGenIDs,
+            String client, 
+            String userID, 
+            String password, 
+            String deviceType,
+            Collection<WSUserPreference> userSettings) throws AppserverSystemException {
         if (this.asHostPlusPort == null) {
             this.asHostPlusPort = globalProperties.getAsPubIP() + ":" + globalProperties.getAsHttpPort().toString();
         }
@@ -203,7 +221,7 @@ public class PushManager {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
-            this.addSession(client, userID, password, deviceType, appID, appGenID, null, null);
+            this.addSession(client, userID, password, deviceType, appID, appGenID, userSettings);
         } 
     }
     
@@ -279,6 +297,30 @@ public class PushManager {
     
     public Collection<PushReceiver> allSessions() {
         return this.idMap.values();
+    }
+    
+    public String addRefresh(String client,
+            String userID,
+            Long appID,
+            PushRefresh refreshAction) throws AppserverSystemException, NoSuchAlgorithmException {
+        String refreshToken = TokenGenerator.generateToken(client + userID + appID);
+        refreshMap.put(refreshToken, refreshAction);
+        return refreshToken;
+    }
+    
+    public byte[] executeRefreshAction(MultivaluedMap<String, String> params) throws AppserverSystemException {
+        String refreshToken = params.getFirst("token");
+        if (refreshToken != null &&
+                this.refreshMap.containsKey(refreshToken)) {
+            PushRefresh action = this.refreshMap.get(refreshToken);
+            return action.doRefresh(params);
+        } else {
+            throw new AppserverSystemException("Refresh token not found",
+                "RefreshTokenNotFound",
+                new Object[] {
+                    refreshToken
+                });
+        }
     }
     
     /**
