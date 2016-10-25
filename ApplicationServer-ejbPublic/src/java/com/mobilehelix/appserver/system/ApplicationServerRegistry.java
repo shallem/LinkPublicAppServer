@@ -20,6 +20,8 @@ import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.settings.ApplicationSettingsFactory;
 import com.mobilehelix.services.objects.WSApplication;
+import com.mobilehelix.services.objects.WSExtra;
+import com.mobilehelix.services.objects.WSExtraGroup;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;

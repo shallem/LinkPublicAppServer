@@ -18,6 +18,7 @@ package com.mobilehelix.appserver.ejb;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.CredentialsManager;
 import com.mobilehelix.appserver.session.Session;
+import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -35,6 +36,19 @@ public abstract class ApplicationFacade {
     private Future<Integer> initStatus;
     private Long appID;
     private boolean loadInitDone = false;
+    
+    /**
+     * Is this resource inside of an application that is visible on the device?
+     */
+    private final boolean isVisibleOnDevice;
+    
+    public ApplicationFacade(ApplicationSettings settings) {
+        this.isVisibleOnDevice = settings.isIsVisibleOnDevice();
+    }
+    
+    public ApplicationFacade(boolean isVisibleOnDevice) {
+        this.isVisibleOnDevice = isVisibleOnDevice;
+    }
 
     /**
      * Get the result of the asynchronous initialization. Returns null if no async
@@ -102,6 +116,10 @@ public abstract class ApplicationFacade {
         return this.loadInitDone;
     }
 
+    public boolean isIsVisibleOnDevice() {
+        return isVisibleOnDevice;
+    }
+    
     /**
      * Get a default preference value. If no default is available, return null.
      * 
