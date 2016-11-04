@@ -22,6 +22,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +70,9 @@ public class JSONSerializer {
     private static final String GLOBAL_FILTERS_FIELD_NAME = "__hx_global_filters";
     private static final String TEXT_INDEX_FIELD_NAME = "__hx_text_index";
     
+    private HashMap<String, Boolean> hasClientDataCache;
+    private HashMap<String, Boolean> hasClientMethodDataMap;
+    
     private class GlobalFilterField {
         private final String displayName;
         private final int[] intValues;
@@ -115,6 +119,8 @@ public class JSONSerializer {
     
     
     public JSONSerializer() {
+        this.hasClientDataCache = new HashMap<>();
+        this.hasClientMethodDataMap = new HashMap<>();
     }
 
     public String serializeError(String msg) {
@@ -308,9 +314,15 @@ public class JSONSerializer {
                     jg.writeString(c.getName());
 
                     for (Method m : c.getMethods()) {
+                        if (this.hasClientMethodDataMap.containsKey(this.getFullyQualifiedName(c, m))) {
+                            this.iterateOverObjectField(jg, obj, visitedClasses, m);
+                            continue;
+                        }
+                        
                         Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
                         if (clientDataAnnot != null) {
                             this.iterateOverObjectField(jg, obj, visitedClasses, m);
+                            this.hasClientMethodDataMap.put(this.getFullyQualifiedName(c,m ), Boolean.TRUE);
                         }
                     }
                     jg.writeEndObject();
@@ -324,6 +336,10 @@ public class JSONSerializer {
             LOG.log(Level.SEVERE, "Failed to serialize field {0}", fieldName);
             throw e;
         }
+    }
+    
+    private String getFullyQualifiedName(Class<?> c, Method m) {
+        return c.getName() + "." + m.getName();
     }
 
     public String serializeObjectSchema(Class<?> cls) throws IOException {
@@ -756,12 +772,24 @@ public class JSONSerializer {
     }
 
     private boolean hasClientDataMethods(Class<?> c) {
+        String cName = c.getName();
+        if (cName != null &&
+                this.hasClientDataCache.containsKey(cName)) {
+            return this.hasClientDataCache.get(cName);
+        }
+        
         for (Method m : c.getMethods()) {
             Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
             if (clientDataAnnot
                     != null) {
+                if (cName != null) {
+                    this.hasClientDataCache.put(cName, Boolean.TRUE);
+                }
                 return true;
             }
+        }
+        if (cName != null) {
+            this.hasClientDataCache.put(cName, Boolean.FALSE);
         }
         return false;
     }
