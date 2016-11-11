@@ -70,8 +70,8 @@ public class JSONSerializer {
     private static final String GLOBAL_FILTERS_FIELD_NAME = "__hx_global_filters";
     private static final String TEXT_INDEX_FIELD_NAME = "__hx_text_index";
     
-    private HashMap<String, Boolean> hasClientDataCache;
-    private HashMap<String, Boolean> hasClientMethodDataMap;
+    private final HashMap<String, Boolean> hasClientDataCache;
+    private final HashMap<String, Boolean> hasClientMethodDataMap;
     
     private class GlobalFilterField {
         private final String displayName;
@@ -149,8 +149,7 @@ public class JSONSerializer {
             InvocationTargetException,
             NoSuchMethodException {
         StringWriter outputString = new StringWriter();
-        JsonFactory jsonF = new JsonFactory();
-        
+        JsonFactory jsonF = new JsonFactory();        
         JsonGenerator jg = jsonF.createJsonGenerator(outputString);
         this.serializeObject(obj, jg);
         jg.close();
@@ -166,7 +165,7 @@ public class JSONSerializer {
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
-        TreeSet<String> visitedClasses = new TreeSet<String>();
+        TreeSet<String> visitedClasses = new TreeSet<>();
         serializeObjectFields(jg, obj, visitedClasses, null);
     }
 
@@ -176,7 +175,7 @@ public class JSONSerializer {
             Method getter) throws IllegalAccessException, IllegalArgumentException, 
                                   InvocationTargetException, IOException, NoSuchMethodException {
         /* Extract the field name. */
-        String nxtFieldName = this.extractFieldName(getter.getName());
+        String nxtFieldName = extractFieldName(getter.getName());
         LOG.log(Level.FINEST, "Serializing {0}", nxtFieldName);
 
         /* Finally, handle arbitrary object types. Either these objects
@@ -233,19 +232,19 @@ public class JSONSerializer {
                     jg.writeFieldName(TYPE_FIELD_NAME);
                     jg.writeNumber(1001);
 
-                    Method m = c.getMethod("getAdds", new Class<?>[]{});
+                    Method m = c.getMethod("getAdds", (Class[]) null);
                     Class<?> returnType = m.getReturnType();
                     jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
                     jg.writeString(returnType.getComponentType().getName());
                     this.iterateOverObjectField(jg, obj, visitedClasses, m);
 
-                    m = c.getMethod("getDeletes", new Class<?>[]{});
+                    m = c.getMethod("getDeletes", (Class[]) null);
                     this.iterateOverObjectField(jg, obj, visitedClasses, m);
 
-                    m = c.getMethod("getUpdates", new Class<?>[]{});
+                    m = c.getMethod("getUpdates", (Class[]) null);
                     this.iterateOverObjectField(jg, obj, visitedClasses, m);
 
-                    m = c.getMethod("getDeleteSpec", new Class<?>[]{});
+                    m = c.getMethod("getDeleteSpec", (Class[]) null);
                     Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
                     if (deleteSpec != null) {
                         jg.writeArrayFieldStart("deleteSpec");
@@ -314,7 +313,8 @@ public class JSONSerializer {
                     jg.writeString(c.getName());
 
                     for (Method m : c.getMethods()) {
-                        if (this.hasClientMethodDataMap.containsKey(this.getFullyQualifiedName(c, m))) {
+                        String key = this.getFullyQualifiedName(c, m);
+                        if (this.hasClientMethodDataMap.containsKey(key)) {
                             this.iterateOverObjectField(jg, obj, visitedClasses, m);
                             continue;
                         }
@@ -322,7 +322,7 @@ public class JSONSerializer {
                         Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
                         if (clientDataAnnot != null) {
                             this.iterateOverObjectField(jg, obj, visitedClasses, m);
-                            this.hasClientMethodDataMap.put(this.getFullyQualifiedName(c,m ), Boolean.TRUE);
+                            this.hasClientMethodDataMap.put(key, Boolean.TRUE);
                         }
                     }
                     jg.writeEndObject();
@@ -343,7 +343,7 @@ public class JSONSerializer {
     }
 
     public String serializeObjectSchema(Class<?> cls) throws IOException {
-        TreeSet<String> visitedClasses = new TreeSet<String>();
+        TreeSet<String> visitedClasses = new TreeSet<>();
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
         JsonGenerator jg = jsonF.createJsonGenerator(outputString);
@@ -409,7 +409,7 @@ public class JSONSerializer {
              */
             if (this.isDeltaObject(c)) {
                 try {
-                    Method m = c.getMethod("getAdds", new Class<?>[]{});
+                    Method m = c.getMethod("getAdds", (Class[]) null);
                     Class<?> returnType = m.getReturnType();
                     if (!this.serializeObjectForSchema(jg, returnType, 
                             visitedClasses, fieldName, alternateName)) {
@@ -430,7 +430,7 @@ public class JSONSerializer {
                 }
             } else if (this.isParamObject(c)) {
                 try {
-                    Method m = c.getMethod("getSyncObject", new Class<?>[]{});
+                    Method m = c.getMethod("getSyncObject", (Class[]) null);
                     Class<?> returnType = m.getReturnType();
                     if (!this.serializeObjectForSchema(jg, returnType, 
                             visitedClasses, fieldName, alternateName)) {
@@ -468,10 +468,6 @@ public class JSONSerializer {
                     jg.writeFieldName(fieldName);
                 }
                 
-                Map<String, ClientSort> sortFields = new TreeMap<String, ClientSort>();
-                Map<String, String> filterFields = new TreeMap<String, String>();
-                List<String> indexFields = new LinkedList<String>();
-                Map<String, GlobalFilterField> globalFilterFields = new TreeMap<String, GlobalFilterField>();
                 String keyField = null;
                 
                 jg.writeStartObject();
@@ -497,6 +493,10 @@ public class JSONSerializer {
                     return true;
                 }
                 visitedClasses.add(c.getCanonicalName());
+                Map<String, ClientSort> sortFields = new TreeMap<>();
+                Map<String, String> filterFields = new TreeMap<>();
+                List<String> indexFields = new LinkedList<>();
+                Map<String, GlobalFilterField> globalFilterFields = new TreeMap<>();
                 
                 for (Method m : c.getMethods()) {
                     Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
@@ -506,7 +506,7 @@ public class JSONSerializer {
                         checkMethodName(methodName);
 
                         /* Extract the field name. */
-                        String nxtFieldName = this.extractFieldName(methodName);
+                        String nxtFieldName = extractFieldName(methodName);
 
                         /* Determine if this field is a sort field. */
                         Annotation sortAnnot =
@@ -617,7 +617,7 @@ public class JSONSerializer {
         }
     }
 
-    private void checkMethodName(String methodName) throws IOException {
+    private static void checkMethodName(String methodName) throws IOException {
         /* Check the format of the method name. */
         if (!methodName.startsWith("get")
                 && !methodName.startsWith("is")) {
@@ -794,18 +794,6 @@ public class JSONSerializer {
         return false;
     }
 
-    private boolean hasToString(Class<?> c) {
-        try {
-            Method toStringM = c.getMethod("toString", new Class[]{});
-            if (toStringM != null) {
-                return true;
-            }
-        } catch (Exception e) {
-            /* Ignore  - we are just trying to determine if this method exists. */
-        }
-
-        return false;
-    }
 
     private boolean isDeltaObject(Class<?> c) {
         while (c != null) {
@@ -838,7 +826,7 @@ public class JSONSerializer {
         return c.equals(ClientWSResponse.class);
     }
     
-    private String extractFieldName(String methodName) {
+    private static String extractFieldName(String methodName) {
         int startIdx = 2;
         if (methodName.startsWith("get")) {
             startIdx = 3;
