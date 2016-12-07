@@ -148,8 +148,10 @@ public class JSONSerializer {
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
-        StringWriter outputString = new StringWriter();
-        JsonFactory jsonF = new JsonFactory();        
+        // Make this big initially. The memory cost is low compared to the cost of copying this string when the underlying buffer must be resized.
+        StringWriter outputString = new StringWriter(256 * 1024);
+        JsonFactory jsonF = new JsonFactory();
+        
         JsonGenerator jg = jsonF.createJsonGenerator(outputString);
         this.serializeObject(obj, jg);
         jg.close();
