@@ -60,6 +60,8 @@ import org.codehaus.jackson.JsonGenerator;
  */
 public class JSONSerializer {
     private static final Logger LOG = Logger.getLogger(JSONSerializer.class.getName());
+    
+    private static final int DEFAULT_STRING_SIZE = 4 * 1024 * 1024;
 
     private static final String TYPE_FIELD_NAME = "__hx_type";
     private static final String SCHEMA_TYPE_FIELD_NAME = "__hx_schema_type";
@@ -125,7 +127,7 @@ public class JSONSerializer {
 
     public String serializeError(String msg) {
         try {
-            StringWriter outputString = new StringWriter();
+            StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
             JsonFactory jsonF = new JsonFactory();
             
             try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
@@ -149,7 +151,7 @@ public class JSONSerializer {
             InvocationTargetException,
             NoSuchMethodException {
         // Make this big initially. The memory cost is low compared to the cost of copying this string when the underlying buffer must be resized.
-        StringWriter outputString = new StringWriter(256 * 1024);
+        StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
         JsonFactory jsonF = new JsonFactory();
         
         JsonGenerator jg = jsonF.createJsonGenerator(outputString);
@@ -198,6 +200,9 @@ public class JSONSerializer {
                                      IllegalArgumentException, InvocationTargetException, 
                                      NoSuchMethodException {
         try {
+            if (obj == null) {
+                return true;
+            }
             Class<?> c = obj.getClass();
 
             if (isSimpleType(c)) {
@@ -346,7 +351,7 @@ public class JSONSerializer {
 
     public String serializeObjectSchema(Class<?> cls) throws IOException {
         TreeSet<String> visitedClasses = new TreeSet<>();
-        StringWriter outputString = new StringWriter();
+        StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
         JsonFactory jsonF = new JsonFactory();
         JsonGenerator jg = jsonF.createJsonGenerator(outputString);
         
@@ -760,7 +765,7 @@ public class JSONSerializer {
                 jg.writeNumber((double) 1.0);
                 break;
             case JAVA_LANG_STRING:
-                jg.writeString("empty");
+                jg.writeString("e");
                 break;
             case JAVA_LANG_BIGINTEGER:
                 jg.writeNumber(BigInteger.ONE);
