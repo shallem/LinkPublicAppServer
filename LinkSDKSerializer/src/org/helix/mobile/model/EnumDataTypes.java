@@ -15,6 +15,9 @@
  */
 package org.helix.mobile.model;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public enum EnumDataTypes {
      BOOLEAN("boolean")
     ,JAVA_LANG_BOOLEAN("java.lang.Boolean")
@@ -39,25 +42,36 @@ public enum EnumDataTypes {
     ,UNKNOWN("Unknown")
     ;
 
-    private String text;
+    private final String text;
+    
+    private static final Map<String, EnumDataTypes> MAP = init();
+    
+    private static Map<String, EnumDataTypes> init() {
+        Map<String, EnumDataTypes> res = new HashMap<>();
+        
+        for (EnumDataTypes ve : EnumDataTypes.values()) {
+            res.put(ve.text.toLowerCase(), ve);
+        }
+        
+        return res;
+    }
 
     private EnumDataTypes(String text) {
         this.text = text;
     }
+    
     public String getText() {
         return this.text;
     }
 
     public static EnumDataTypes getEnumFromString(String text) 
             throws IllegalArgumentException {
-        if (text != null) {
-            for (EnumDataTypes ve : EnumDataTypes.values()) {
-                if (text.equalsIgnoreCase(ve.text)) {
-                    return ve;
-                }
-            }
-        }
+        EnumDataTypes res = (text == null) ? null : MAP.get(text.toLowerCase());
+
+        if (res != null)
+            return res;
+        
         //return EnumDataTypes.UNKNOWN; 
-        throw new IllegalArgumentException("No EnumMedia with text '" + text + "' found"); 
+        throw new IllegalArgumentException("No EnumDataType with text '" + String.valueOf(text) + "' found"); 
     }
 }

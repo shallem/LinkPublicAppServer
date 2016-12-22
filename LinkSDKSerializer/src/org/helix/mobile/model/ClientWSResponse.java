@@ -67,7 +67,7 @@ public class ClientWSResponse {
         }
     }
     
-    public void toJSON(JsonGenerator jg, JSONSerializer js)  throws IOException,
+    public void toJSON(JsonGenerator jg)  throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
             InvocationTargetException,
@@ -84,7 +84,7 @@ public class ClientWSResponse {
         jg.writeString(statusMessage);
         jg.writeArrayFieldStart("objects");
         for (Object obj : this.responseObjects) {
-            js.serializeObject(obj, jg);
+            JSONSerializer.serializeObject(obj, jg);
         }
         jg.writeEndArray();
         jg.writeEndObject();
@@ -101,7 +101,7 @@ public class ClientWSResponse {
         JsonFactory jsonF = new JsonFactory();
 
         try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
-            this.toJSON(jg, js);
+            this.toJSON(jg);
         }
 
         outputString.flush();
