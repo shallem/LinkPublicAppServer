@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -83,8 +84,9 @@ public class ClientWSResponse {
         jg.writeFieldName("msg");
         jg.writeString(statusMessage);
         jg.writeArrayFieldStart("objects");
+        JSONGenerator gen = new JSONGenerator(jg, new TreeSet<String>());
         for (Object obj : this.responseObjects) {
-            JSONSerializer.serializeObject(obj, jg);
+            JSONSerializer.serializeObject(obj, gen);
         }
         jg.writeEndArray();
         jg.writeEndObject();

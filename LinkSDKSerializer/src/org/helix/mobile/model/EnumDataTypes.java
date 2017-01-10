@@ -38,7 +38,7 @@ public enum EnumDataTypes {
     ,JAVA_LANG_DOUBLE("java.lang.Double")
     ,JAVA_LANG_STRING("java.lang.String")
     ,JAVA_LANG_BIGINTEGER("java.lang.BigInteger")
-    ,JAVA_LANG_BIGDECMIAL("java.lang.BigDecmial")
+    ,JAVA_LANG_BIGDECIMAL("java.lang.BigDecimal")
     ,UNKNOWN("Unknown")
     ;
 

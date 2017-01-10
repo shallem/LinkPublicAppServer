@@ -16,7 +16,6 @@
 package org.helix.mobile.model;
 
 import java.io.IOException;
-import org.codehaus.jackson.JsonGenerator;
 
 /**
  * Represents a client side filtering criteria used to narrow a query collection. How this
@@ -93,7 +92,7 @@ public class Criteria implements JSONSerializable {
     // Explicit serialization of fields
     // MUST be updated when new client visible fields are added !!!
     @Override
-    public void toJSON(JsonGenerator jg) throws IOException {
+    public void toJSON(JSONGenerator jg) throws IOException {
         jg.writeStartObject();
         jg.writeStringField("field", this.field);
         jg.writeStringField("op", this.op.toString());

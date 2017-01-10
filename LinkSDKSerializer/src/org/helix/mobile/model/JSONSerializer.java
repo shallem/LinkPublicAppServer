@@ -28,13 +28,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+
 
 /**
  * Accept as input a class that represents a JSON schema to be transmitted to
@@ -75,65 +75,19 @@ public class JSONSerializer {
     private static final HashMap<String, Boolean> HAS_CLIENT_METHOD_DATA_CACHE = new HashMap<>();
     
     
-    private static class GlobalFilterField {
-        private final String displayName;
-        private final int[] intValues;
-        private final String[] stringValues;
-        private final String[] valueNames;
-        
-        public GlobalFilterField(String displayName,
-                int[] intValues,
-                String[] stringValues,
-                String[] valueNames) {
-            this.displayName = displayName;
-            this.intValues = intValues;
-            this.stringValues = stringValues;
-            this.valueNames = valueNames;
-        }
-        
-        public void serialize(JsonGenerator gen) throws IOException {
-            gen.writeStartObject();
-            gen.writeStringField("display", displayName);
-            
-            gen.writeArrayFieldStart("values");
-            if (this.intValues != null) {
-                for (int i : intValues) {
-                    gen.writeString(Integer.toString(i));
-                }
-            } else if (this.stringValues != null) {
-                for (String s : this.stringValues) {
-                    gen.writeString(s);
-                }
-            }
-            gen.writeEndArray();
-            
-            if (this.valueNames != null) {
-                gen.writeArrayFieldStart("valueNames");
-                for (String s : this.valueNames) {
-                    gen.writeString(s);
-                }
-                gen.writeEndArray();
-            }
-            
-            gen.writeEndObject();
-        }
-    }
-    
-    
     public JSONSerializer() {
     }
 
-    public String serializeError(String msg) {
+    public static String serializeError(String msg) {
         try {
             StringWriter outputString = new StringWriter();
             JsonFactory jsonF = new JsonFactory();
+            JsonGenerator gen = jsonF.createJsonGenerator(outputString);
+            gen.writeStartObject();
+            gen.writeStringField("error", msg);
+            gen.writeEndObject();
             
-            try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
-                jg.writeStartObject();
-                jg.writeStringField("error", msg);
-                jg.writeEndObject();
-            }
-            
+            JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
             outputString.flush();
             
             return outputString.toString();
@@ -143,7 +97,7 @@ public class JSONSerializer {
         }
     }
     
-    public String serializeObject(Object obj) throws IOException,
+    public static String serializeObject(Object obj) throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
             InvocationTargetException,
@@ -151,28 +105,24 @@ public class JSONSerializer {
         // Make this big initially. The memory cost is low compared to the cost of copying this string when the underlying buffer must be resized.
         StringWriter outputString = new StringWriter(256 * 1024);
         JsonFactory jsonF = new JsonFactory();
-        
-        try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
-            serializeObject(obj, jg);
-        }
-        
+        JsonGenerator gen = jsonF.createJsonGenerator(outputString);
+        JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
+        serializeObject(obj, jg);      
         outputString.flush();        
         return outputString.toString();
     }
     
     public static void serializeObject(Object obj,
-            JsonGenerator jg) throws IOException,
+            JSONGenerator jg) throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
-        TreeSet<String> visitedClasses = new TreeSet<>();
-        serializeObjectFields(jg, obj, visitedClasses, null);
+        serializeObjectFields(jg, obj, null);
     }
 
-    private static void iterateOverObjectField(JsonGenerator jg,
+    private static void iterateOverObjectField(JSONGenerator jg,
             Object obj,
-            Set<String> visitedClasses,
             Method getter) throws IllegalAccessException, IllegalArgumentException, 
                                   InvocationTargetException, IOException, NoSuchMethodException {
         /* Extract the field name. */
@@ -184,16 +134,15 @@ public class JSONSerializer {
          * annotated methods or they have a toString
          */       
         Object subObj = (Object) getter.invoke(obj, new Object[]{});
-        if (subObj != null && !serializeObjectFields(jg, subObj, visitedClasses, nxtFieldName)) {
+        if (subObj != null && !serializeObjectFields(jg, subObj, nxtFieldName)) {
             /* Should never happen. */
             throw new IOException("Serialization unexpectedly encountered a class with no ClientData: " + 
                     subObj.getClass().getName());
         }
     }
     
-    public static boolean serializeObjectFields(JsonGenerator jg,
+    public static boolean serializeObjectFields(JSONGenerator jg,
             Object obj,
-            Set<String> visitedClasses,
             String fieldName) throws IOException, IllegalAccessException, 
                                      IllegalArgumentException, InvocationTargetException, 
                                      NoSuchMethodException {
@@ -216,7 +165,7 @@ public class JSONSerializer {
                     jg.writeStartArray();
                 }
                 for (Object elem : (Object[]) obj) {
-                    serializeObjectFields(jg, elem, visitedClasses, null);
+                    serializeObjectFields(jg, elem, null);
                 }
                 jg.writeEndArray();
                 return true;
@@ -236,12 +185,12 @@ public class JSONSerializer {
             if (obj instanceof JSONSerializable) {
                 ((JSONSerializable) obj).toJSON(jg);
                 return true;
-            }
-
+            }           
+            
             if (isDeltaObject(c)) {
                 jg.writeStartObject();
 
-                /* Mark as a delta object for the client code. */
+                // Mark as a delta object for the client code
                 jg.writeFieldName(TYPE_FIELD_NAME);
                 jg.writeNumber(1001);
 
@@ -249,13 +198,13 @@ public class JSONSerializer {
                 Class<?> returnType = m.getReturnType();
                 jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
                 jg.writeString(returnType.getComponentType().getName());
-                iterateOverObjectField(jg, obj, visitedClasses, m);
+                iterateOverObjectField(jg, obj, m);
 
                 m = c.getMethod("getDeletes", (Class[]) null);
-                iterateOverObjectField(jg, obj, visitedClasses, m);
+                iterateOverObjectField(jg, obj, m);
 
                 m = c.getMethod("getUpdates", (Class[]) null);
-                iterateOverObjectField(jg, obj, visitedClasses, m);
+                iterateOverObjectField(jg, obj, m);
 
                 m = c.getMethod("getDeleteSpec", (Class[]) null);
                 Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
@@ -286,7 +235,7 @@ public class JSONSerializer {
                         LOG.log(Level.WARNING, "Received unexpected null value in aggregate map with key {0}", e.getKey());
                         continue;
                     }
-                    serializeObjectFields(jg, e.getValue(), visitedClasses, e.getKey());
+                    serializeObjectFields(jg, e.getValue(), e.getKey());
                 }
 
                 jg.writeEndObject();
@@ -302,10 +251,10 @@ public class JSONSerializer {
                 /* Write the param. */
                 ParamObject po = (ParamObject)obj;
                 if (po.getParamObject() != null) {
-                    serializeObjectFields(jg, po.getParamObject(), visitedClasses, "param");
+                    serializeObjectFields(jg, po.getParamObject(), "param");
                 }
                 if (po.getSyncObject() != null) {
-                    serializeObjectFields(jg, po.getSyncObject(), visitedClasses, "sync");
+                    serializeObjectFields(jg, po.getSyncObject(), "sync");
                 }
 
                 jg.writeEndObject();
@@ -316,7 +265,7 @@ public class JSONSerializer {
                 ClientWSResponse errObj = (ClientWSResponse)obj;
                 jg.writeStartObject();
                 jg.writeFieldName("error");
-                errObj.toJSON(jg);
+                errObj.toJSON(jg.getDelegate());
                 jg.writeEndObject();
                 return true;
             } 
@@ -331,13 +280,13 @@ public class JSONSerializer {
                 for (Method m : c.getMethods()) {
                     String key = getFullyQualifiedName(c, m);
                     if (HAS_CLIENT_METHOD_DATA_CACHE.containsKey(key)) {
-                        iterateOverObjectField(jg, obj, visitedClasses, m);
+                        iterateOverObjectField(jg, obj, m);
                         continue;
                     }
 
                     Annotation clientDataAnnot = m.getAnnotation(ClientData.class);
                     if (clientDataAnnot != null) {
-                        iterateOverObjectField(jg, obj, visitedClasses, m);
+                        iterateOverObjectField(jg, obj, m);
                         HAS_CLIENT_METHOD_DATA_CACHE.put(key, true);
                     }
                 }
@@ -361,19 +310,20 @@ public class JSONSerializer {
         TreeSet<String> visitedClasses = new TreeSet<>();
         StringWriter outputString = new StringWriter();
 
-        try (JsonGenerator jg = new JsonFactory().createJsonGenerator(outputString)) {
-            if (!serializeObjectForSchema(jg, cls, visitedClasses, null, null)) {
-                throw new IOException("Attempting to generate schema for an object with no client data in "
-                        + cls.getName());
-            }
+        JsonGenerator gen = new JsonFactory().createJsonGenerator(outputString);
+        JSONGenerator jg = new JSONGenerator(gen, visitedClasses);
+
+        if (!serializeObjectForSchema(jg, cls, null, null)) {
+            throw new IOException("Attempting to generate schema for an object with no client data in "
+                    + cls.getName());
         }
+
         outputString.flush();
         return outputString.getBuffer().toString();
     }
 
-    private static boolean serializeObjectForSchema(JsonGenerator jg,
+    private static boolean serializeObjectForSchema(JSONGenerator jg,
             Class<?> c,
-            Set<String> visitedClasses,
             String fieldName,
             String alternateName) throws IOException {
         if ("id".equals(fieldName)) {
@@ -408,7 +358,6 @@ public class JSONSerializer {
             
             if (!serializeObjectForSchema(jg,
                     componentType,
-                    visitedClasses,
                     null,
                     alternateName)) {
                 throw new IOException("Array types returned by ClientData methods " +
@@ -426,7 +375,7 @@ public class JSONSerializer {
             try {
                 Method m = c.getMethod("getAdds", (Class[]) null);
                 if (!serializeObjectForSchema(jg, m.getReturnType(), 
-                        visitedClasses, fieldName, alternateName)) {
+                       fieldName, alternateName)) {
                     /* The object neither has any fields marked as ClientData nor
                      * does it have a toString method - this is not legal.
                     */
@@ -448,7 +397,7 @@ public class JSONSerializer {
             try {
                 Method m = c.getMethod("getSyncObject", (Class[]) null);
                 if (!serializeObjectForSchema(jg, m.getReturnType(), 
-                        visitedClasses, fieldName, alternateName)) {
+                        fieldName, alternateName)) {
                     /* The object neither has any fields marked as ClientData nor
                      * does it have a toString method - this is not legal.
                     */
@@ -483,7 +432,6 @@ public class JSONSerializer {
                 jg.writeFieldName(fieldName);
             }
 
-            String keyField = null;
             jg.writeStartObject();
             jg.writeFieldName(SCHEMA_NAME_FIELD_NAME);
             
@@ -498,165 +446,170 @@ public class JSONSerializer {
              * need to put in a reference to the master schema so that the client
              * knows that there is a schema relationship here.
              */
-            if (visitedClasses.contains(c.getCanonicalName())) {
+            if (jg.getVisitedClasses().contains(c.getCanonicalName())) {
                 // Indicate that this is, essentially, a forward ref.
                 jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
                 jg.writeNumber(1002);
                 jg.writeEndObject();
                 return true;
             }
-            visitedClasses.add(c.getCanonicalName());
-            
-            // Lazy instantiation of collections
-            Map<String, ClientSort> sortFields = null;
-            Map<String, String> filterFields = null;
-            List<String> indexFields = null;
-            Map<String, GlobalFilterField> globalFilterFields = null;
-
-            for (Method m : c.getMethods()) {
-                if (!Modifier.isPublic(m.getModifiers()))
-                    continue;
-                if (Modifier.isNative(m.getModifiers()))
-                    continue;
-                
-                Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
-                if (clientDataAnnot != null) {
-                    /* Check the method name. Throws an IOException if the name is ill-formed. */
-                    String methodName = m.getName();
-                    checkMethodName(methodName);
-
-                    /* Extract the field name. */
-                    String nxtFieldName = extractFieldName(methodName);
-
-                    /* Determine if this field is a sort field. */
-                    Annotation sortAnnot =
-                            m.getAnnotation(org.helix.mobile.model.ClientSort.class);
-                    if (sortAnnot != null) {
-                        if (sortFields == null) {
-                            sortFields = new TreeMap<>();
-                        }
-                        ClientSort cSortAnnot = (ClientSort)sortAnnot;
-                        sortFields.put(nxtFieldName, cSortAnnot);
-                    }
-
-                    /* Determine if this field is a filter field. */
-                    Annotation filterAnnot = m.getAnnotation(ClientFilter.class);
-                    if (filterAnnot != null) {
-                        if (filterFields == null) {
-                            filterFields = new TreeMap<>();
-                        }
-                        ClientFilter cFilterAnnot = (ClientFilter)filterAnnot;
-                        filterFields.put(nxtFieldName, cFilterAnnot.displayName());
-                    }
-
-                    /* Determin if this field is a global filter field. */
-                    Annotation globalFilterAnnot = m.getAnnotation(ClientGlobalFilter.class);
-                    if (globalFilterAnnot != null) {
-                        ClientGlobalFilter cFilterAnnot = (ClientGlobalFilter)globalFilterAnnot;
-                        
-                        if (globalFilterFields == null) {
-                            globalFilterFields = new TreeMap<>();
-                        }
-                        globalFilterFields.put(nxtFieldName, new GlobalFilterField(cFilterAnnot.displayName(),
-                                cFilterAnnot.intValues(),
-                                cFilterAnnot.values(),
-                                cFilterAnnot.valueNames()
-                                ));
-                    }
-
-                    /* Determine if this field is a key field. */
-                    Annotation keyAnnot = m.getAnnotation(ClientDataKey.class);
-                    if (keyAnnot != null) {
-                        if (keyField != null) {
-                            throw new IOException("Client data can only have one field annotated as a ClientDataKey.");
-                        }
-                        keyField = nxtFieldName;
-                    }
-
-                    /* Determine if this field is an indexed field. */
-                    Annotation indexedAnnot = m.getAnnotation(ClientTextIndex.class);
-                    if (indexedAnnot != null) {
-                        if (indexFields == null) {
-                            indexFields = new ArrayList<>();
-                        }
-                        indexFields.add(nxtFieldName);
-                    }
-
-                    /* See if there is an annotation indicating a table name other than the class name. */
-                    Annotation clientTableAnnot = m.getAnnotation(ClientTableName.class);
-                    String altName = null;
-                    if (clientTableAnnot != null) {
-                        altName = ((ClientTableName)clientTableAnnot).tableName();
-                    }
-
-                    /* Recurse over the method. */
-                    if (!serializeObjectForSchema(jg, m.getReturnType(), visitedClasses, nxtFieldName, altName)) {
-                        /* The object neither has any fields marked as ClientData nor
-                         * does it have a toString method - this is not legal.
-                        */
-                        throw new IOException("Object types must either have fields marked ClientData or have a toString method.");
-                    }
-                }
-            }
-
-            /* Store the keys and sort fields in the object schema. */
-            if (keyField == null) {
-                throw new IOException("Client data must have at least one field annotated as a ClientDataKey: " + c.getName());
-            }
-            
-            jg.writeFieldName(KEY_FIELD_NAME);
-            jg.writeString(keyField);
-            jg.writeObjectFieldStart(SORTS_FIELD_NAME);
-            
-            if (sortFields != null) {
-                for (Entry<String, ClientSort> e : sortFields.entrySet()) {
-                    jg.writeFieldName(e.getKey());
-                    jg.writeStartObject();
-                    jg.writeStringField("display", e.getValue().displayName());
-                    jg.writeStringField("direction", e.getValue().defaultOrder());
-                    jg.writeStringField("usecase", e.getValue().caseSensitive());
-                    jg.writeEndObject();
-                }
-            }
-            jg.writeEndObject();
-
-            jg.writeObjectFieldStart(FILTERS_FIELD_NAME);
-            
-            if (filterFields != null) {
-                for(Entry<String, String> e: filterFields.entrySet()) {
-                    jg.writeFieldName(e.getKey());
-                    jg.writeString(e.getValue());
-                }
-            }
-            jg.writeEndObject();
-
-            jg.writeObjectFieldStart(GLOBAL_FILTERS_FIELD_NAME);
-            
-            if (globalFilterFields != null) {
-                for(Entry<String, GlobalFilterField> ge : globalFilterFields.entrySet()) {
-                    jg.writeFieldName(ge.getKey());
-                    ge.getValue().serialize(jg);
-                }
-            }
-            jg.writeEndObject();
-
-            jg.writeArrayFieldStart(TEXT_INDEX_FIELD_NAME);
-            
-            if (indexFields != null) {
-                for (String s : indexFields) {
-                    jg.writeString(s);
-                }
-            }
-            jg.writeEndArray();
-
-            jg.writeEndObject();
+            jg.addVisitedClass(c.getCanonicalName());
+            serializeClass(jg, c);
+            jg.writeEndObject(); 
             return true;
         }  else {
             throw new IOException("Class must have at least one field annotated as a ClientData field: " + c.getName());
         }
     }
+    
+    
+    private static void serializeClass(JSONGenerator jg, Class c) throws IOException {
+        String keyField = null;
+        
+        // Lazy instantiation of collections
+        Map<String, ClientSort> sortFields = null;
+        Map<String, String> filterFields = null;
+        List<String> indexFields = null;
+        Map<String, GlobalFilterField> globalFilterFields = null;
 
-    private static void checkMethodName(String methodName) throws IOException {
+        for (Method m : c.getMethods()) {
+            if (!Modifier.isPublic(m.getModifiers()))
+                continue;
+            if (Modifier.isNative(m.getModifiers()))
+                continue;
+
+            Annotation clientDataAnnot = m.getAnnotation(org.helix.mobile.model.ClientData.class);
+            if (clientDataAnnot != null) {
+                /* Check the method name. Throws an IOException if the name is ill-formed. */
+                String methodName = m.getName();
+                checkMethodName(methodName);
+
+                /* Extract the field name. */
+                String nxtFieldName = extractFieldName(methodName);
+
+                /* Determine if this field is a sort field. */
+                Annotation sortAnnot =
+                        m.getAnnotation(ClientSort.class);
+                if (sortAnnot != null) {
+                    if (sortFields == null) {
+                        sortFields = new TreeMap<>();
+                    }
+                    ClientSort cSortAnnot = (ClientSort)sortAnnot;
+                    sortFields.put(nxtFieldName, cSortAnnot);
+                }
+
+                /* Determine if this field is a filter field. */
+                Annotation filterAnnot = m.getAnnotation(ClientFilter.class);
+                if (filterAnnot != null) {
+                    if (filterFields == null) {
+                        filterFields = new TreeMap<>();
+                    }
+                    ClientFilter cFilterAnnot = (ClientFilter)filterAnnot;
+                    filterFields.put(nxtFieldName, cFilterAnnot.displayName());
+                }
+
+                /* Determin if this field is a global filter field. */
+                Annotation globalFilterAnnot = m.getAnnotation(ClientGlobalFilter.class);
+                if (globalFilterAnnot != null) {
+                    ClientGlobalFilter cFilterAnnot = (ClientGlobalFilter)globalFilterAnnot;
+
+                    if (globalFilterFields == null) {
+                        globalFilterFields = new TreeMap<>();
+                    }
+                    globalFilterFields.put(nxtFieldName, new GlobalFilterField(cFilterAnnot.displayName(),
+                            cFilterAnnot.intValues(),
+                            cFilterAnnot.values(),
+                            cFilterAnnot.valueNames()
+                            ));
+                }
+
+                /* Determine if this field is a key field. */
+                Annotation keyAnnot = m.getAnnotation(ClientDataKey.class);
+                if (keyAnnot != null) {
+                    if (keyField != null) {
+                        throw new IOException("Client data can only have one field annotated as a ClientDataKey.");
+                    }
+                    keyField = nxtFieldName;
+                }
+
+                /* Determine if this field is an indexed field. */
+                Annotation indexedAnnot = m.getAnnotation(ClientTextIndex.class);
+                if (indexedAnnot != null) {
+                    if (indexFields == null) {
+                        indexFields = new ArrayList<>();
+                    }
+                    indexFields.add(nxtFieldName);
+                }
+
+                /* See if there is an annotation indicating a table name other than the class name. */
+                Annotation clientTableAnnot = m.getAnnotation(ClientTableName.class);
+                String altName = null;
+                if (clientTableAnnot != null) {
+                    altName = ((ClientTableName)clientTableAnnot).tableName();
+                }
+
+                /* Recurse over the method. */
+                if (!serializeObjectForSchema(jg, m.getReturnType(), nxtFieldName, altName)) {
+                    /* The object neither has any fields marked as ClientData nor
+                     * does it have a toString method - this is not legal.
+                    */
+                    throw new IOException("Object types must either have fields marked ClientData or have a toString method.");
+                }
+            }
+        }
+
+        /* Store the keys and sort fields in the object schema. */
+        if (keyField == null) {
+            throw new IOException("Client data must have at least one field annotated as a ClientDataKey: " + c.getName());
+        }
+
+        jg.writeFieldName(KEY_FIELD_NAME);
+        jg.writeString(keyField);
+        jg.writeObjectFieldStart(SORTS_FIELD_NAME);
+
+        if (sortFields != null) {
+            for (Entry<String, ClientSort> e : sortFields.entrySet()) {
+                jg.writeFieldName(e.getKey());
+                jg.writeStartObject();
+                jg.writeStringField("display", e.getValue().displayName());
+                jg.writeStringField("direction", e.getValue().defaultOrder());
+                jg.writeStringField("usecase", e.getValue().caseSensitive());
+                jg.writeEndObject();
+            }
+        }
+        jg.writeEndObject();
+
+        jg.writeObjectFieldStart(FILTERS_FIELD_NAME);
+
+        if (filterFields != null) {
+            for(Entry<String, String> e: filterFields.entrySet()) {
+                jg.writeFieldName(e.getKey());
+                jg.writeString(e.getValue());
+            }
+        }
+        jg.writeEndObject();
+
+        jg.writeObjectFieldStart(GLOBAL_FILTERS_FIELD_NAME);
+
+        if (globalFilterFields != null) {
+            for(Entry<String, GlobalFilterField> ge : globalFilterFields.entrySet()) {
+                jg.writeFieldName(ge.getKey());
+                ge.getValue().serialize(jg);
+            }
+        }
+        jg.writeEndObject();
+
+        jg.writeArrayFieldStart(TEXT_INDEX_FIELD_NAME);
+
+        if (indexFields != null) {
+            for (String s : indexFields) {
+                jg.writeString(s);
+            }
+        }
+        jg.writeEndArray();      
+    }
+
+    public static void checkMethodName(String methodName) throws IOException {
         /* Check the format of the method name. */
         if (methodName.startsWith("get")) {
             if (methodName.length() < 4)
@@ -681,14 +634,14 @@ public class JSONSerializer {
         return Boolean.class.equals(returnType);
     }
 
-    private static boolean isSimpleType(Class<?> objType) {
+    public static boolean isSimpleType(Class<?> objType) {
         return objType.isPrimitive()
                 || isNumberType(objType)
                 || isString(objType)
                 || isBoolean(objType);
     }
 
-    private static void addSimpleData(JsonGenerator jg, Object obj)
+    public static void addSimpleData(JSONGenerator jg, Object obj)
             throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         EnumDataTypes dtc;
         try {
@@ -736,13 +689,13 @@ public class JSONSerializer {
             case JAVA_LANG_BIGINTEGER:
                 jg.writeNumber((BigInteger) obj);
                 break;
-            case JAVA_LANG_BIGDECMIAL:
+            case JAVA_LANG_BIGDECIMAL:
                 jg.writeNumber((BigDecimal) obj);
                 break;
         }
     }
 
-    private static void addSimpleType(JsonGenerator jg, Class<?> objType) throws IOException {
+    private static void addSimpleType(JSONGenerator jg, Class<?> objType) throws IOException {
         EnumDataTypes dtc;
         try {
             dtc = EnumDataTypes.getEnumFromString(objType.getName());
@@ -786,13 +739,9 @@ public class JSONSerializer {
                 jg.writeString("empty");
                 break;
             case JAVA_LANG_BIGINTEGER:
+            case JAVA_LANG_BIGDECIMAL:
                 jg.writeNumber(BigInteger.ONE);
                 break;
-            case JAVA_LANG_BIGDECMIAL:
-                jg.writeNumber(BigDecimal.ONE);
-                break;
-
-
         }
     }
 
@@ -802,15 +751,23 @@ public class JSONSerializer {
                 HAS_CLIENT_DATA_CACHE.containsKey(cName)) {
             return HAS_CLIENT_DATA_CACHE.get(cName);
         }
-        
+
+        if (c.getAnnotation(ClientClass.class) != null) {
+            if (cName != null) {
+                HAS_CLIENT_DATA_CACHE.put(cName, true);
+            }
+            return true;
+        }
+            
         for (Method m : c.getMethods()) {
             if (!Modifier.isPublic(m.getModifiers()))
                 continue;
             if (Modifier.isNative(m.getModifiers()))
                 continue;
-            Annotation clientDataAnnot = m.getAnnotation(ClientData.class);
-            if (clientDataAnnot != null) {
+            if (m.getAnnotation(ClientData.class) != null) {
                 if (cName != null) {
+                    LOG.log(Level.WARNING, "Class {0} has a client method [{1}] but "+ 
+                            "lacks the class level annotation", new Object[]{c, m.getName()});
                     HAS_CLIENT_DATA_CACHE.put(cName, true);
                 }
                 return true;
@@ -839,9 +796,10 @@ public class JSONSerializer {
         return c.equals(ClientWSResponse.class);
     }
     
-    private static String extractFieldName(String methodName) {
+    public static String extractFieldName(String methodName) {
         int startIdx = methodName.startsWith("get") ? 3 : 2;
         return Character.toLowerCase(methodName.charAt(startIdx)) +
                  methodName.substring(startIdx+1);
     }
+
 }
