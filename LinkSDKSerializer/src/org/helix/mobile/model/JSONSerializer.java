@@ -108,7 +108,8 @@ public class JSONSerializer {
         JsonGenerator gen = jsonF.createJsonGenerator(outputString);
         JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
         serializeObject(obj, jg);      
-        outputString.flush();        
+        outputString.flush(); 
+        jg.close();
         return outputString.toString();
     }
     
@@ -297,7 +298,7 @@ public class JSONSerializer {
                         obj.getClass().getName());
             }
         } catch(Exception e) {
-            LOG.log(Level.SEVERE, "Failed to serialize field {0}", fieldName);
+            LOG.log(Level.SEVERE, "Failed to serialize object of class "+obj.getClass().getName(), e);
             throw e;
         }
     }
@@ -306,10 +307,9 @@ public class JSONSerializer {
         return c.getName() + "." + m.getName();
     }
 
-    public String serializeObjectSchema(Class<?> cls) throws IOException {
+    public static String serializeObjectSchema(Class<?> cls) throws IOException {
         TreeSet<String> visitedClasses = new TreeSet<>();
         StringWriter outputString = new StringWriter();
-
         JsonGenerator gen = new JsonFactory().createJsonGenerator(outputString);
         JSONGenerator jg = new JSONGenerator(gen, visitedClasses);
 
@@ -318,7 +318,7 @@ public class JSONSerializer {
                     + cls.getName());
         }
 
-        outputString.flush();
+        jg.close();
         return outputString.getBuffer().toString();
     }
 
