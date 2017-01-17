@@ -107,7 +107,6 @@ public class ClientWSResponse {
         }
 
         outputString.flush();
-
         return outputString.toString();
     }
 
