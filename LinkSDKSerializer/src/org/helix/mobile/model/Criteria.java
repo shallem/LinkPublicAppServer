@@ -95,7 +95,7 @@ public class Criteria implements JSONSerializable {
     public void toJSON(JSONGenerator jg) throws IOException {
         jg.writeStartObject();
         jg.writeStringField("field", this.field);
-        jg.writeStringField("op", this.op.toString());
+        jg.writeStringField("op", this.getOpString());
         jg.writeStringField("value", this.value);
         jg.writeEndObject();
     } 
