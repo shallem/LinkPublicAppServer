@@ -97,8 +97,6 @@ public class ClientWSResponse {
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
-        JSONSerializer js = new JSONSerializer();
-
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
 

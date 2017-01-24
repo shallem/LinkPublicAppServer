@@ -198,7 +198,12 @@ public class JSONSerializer {
                 Method m = c.getMethod("getAdds", (Class[]) null);
                 Class<?> returnType = m.getReturnType();
                 jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
-                jg.writeString(returnType.getComponentType().getName());
+                String cName = returnType.getComponentType().getName();
+
+//                if (cName.startsWith("com.mobilehelix."))
+//                    cName = cName.substring("com.mobilehelix.".length());
+//
+                jg.writeString(cName);
                 iterateOverObjectField(jg, obj, m);
 
                 m = c.getMethod("getDeletes", (Class[]) null);
@@ -276,7 +281,12 @@ public class JSONSerializer {
 
                 /* Write the object type so that we can get the Schema back. */
                 jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
-                jg.writeString(c.getName());
+                String cName = c.getName();
+
+//                if (cName.startsWith("com.mobilehelix."))
+//                    cName = cName.substring("com.mobilehelix.".length());
+//
+                jg.writeString(cName);
 
                 for (Method m : c.getMethods()) {
                     String key = getFullyQualifiedName(c, m);
@@ -436,7 +446,12 @@ public class JSONSerializer {
             jg.writeFieldName(SCHEMA_NAME_FIELD_NAME);
             
             if (alternateName == null) {
-                jg.writeString(c.getName());
+                String cName = c.getName();
+//
+//                if (cName.startsWith("com.mobilehelix."))
+//                    cName = cName.substring("com.mobilehelix.".length());
+//
+                jg.writeString(cName);
             } else {
                 jg.writeString(alternateName);
             }
