@@ -20,6 +20,7 @@ import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.ejb.ApplicationFacade;
 import com.mobilehelix.appserver.ejb.ApplicationInitializer;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.permissions.FilePermissions;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
@@ -638,5 +639,16 @@ public class Session {
     
     public Set<WSUserPreference> getAllPrefs(Long resourceID) {
         return this.prefsMap.get(resourceID);
+    }
+    
+    public int computeFilePermissions(long appId, int filePermissions) {
+        return FilePermissions.computePermission(filePermissions,
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_save"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_edit"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_delete"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_import"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_checkin"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_link"), true),
+                WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_copy_from"), true));
     }
 }
