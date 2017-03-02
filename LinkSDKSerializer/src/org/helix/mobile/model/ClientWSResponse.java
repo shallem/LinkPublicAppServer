@@ -20,6 +20,7 @@ import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeSet;
 import javax.xml.bind.annotation.XmlRootElement;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -67,7 +68,7 @@ public class ClientWSResponse {
         }
     }
     
-    public void toJSON(JsonGenerator jg, JSONSerializer js)  throws IOException,
+    public void toJSON(JsonGenerator jg)  throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
             InvocationTargetException,
@@ -83,8 +84,9 @@ public class ClientWSResponse {
         jg.writeFieldName("msg");
         jg.writeString(statusMessage);
         jg.writeArrayFieldStart("objects");
+        JSONGenerator gen = new JSONGenerator(jg, new TreeSet<String>());
         for (Object obj : this.responseObjects) {
-            js.serializeObject(obj, jg);
+            JSONSerializer.serializeObject(obj, gen);
         }
         jg.writeEndArray();
         jg.writeEndObject();
@@ -95,17 +97,14 @@ public class ClientWSResponse {
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
-        JSONSerializer js = new JSONSerializer();
-
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
 
         try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
-            this.toJSON(jg, js);
+            this.toJSON(jg);
         }
 
         outputString.flush();
-
         return outputString.toString();
     }
 
