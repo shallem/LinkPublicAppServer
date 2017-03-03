@@ -38,4 +38,29 @@ public class AggregateObject {
     public void addAggregateResult(String key, Object result) {
         this.aggregateMap.put(key, result);
     }
+    
+    @Override
+    public String toString() {
+        if (this.aggregateMap == null || this.aggregateMap.isEmpty()) {
+            return "empty";
+        }
+        StringBuilder summary = new StringBuilder(1024);
+        for (String k : this.aggregateMap.keySet()) {
+            Object obj = this.aggregateMap.get(k);
+            if (obj.getClass().isArray()) {
+                summary.append(k).append("[");
+                for (Object item : (Object[])obj) {
+                    summary.append(item.toString()).append(",");
+                }
+                summary.append("]");
+            } else {
+                String objSummary = obj.toString();
+                if (summary.length() > 0) {
+                    summary.append(" ");
+                }
+                summary.append(k).append("{").append(objSummary).append("}");
+            }
+        }
+        return summary.toString();
+    }
 }
