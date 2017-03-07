@@ -15,12 +15,8 @@
  */
 package org.helix.mobile.model;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.TreeSet;
-import org.codehaus.jackson.JsonGenerator;
 
 /**
  * Represents an "aggregate" object, which includes a list of component objects from
@@ -61,4 +57,29 @@ public class AggregateObject { //implements JSONSerializable {
 //
 //        jg.writeEndObject();       
 //    }
+
+    @Override
+    public String toString() {
+        if (this.aggregateMap == null || this.aggregateMap.isEmpty()) {
+            return "empty";
+        }
+        StringBuilder summary = new StringBuilder(1024);
+        for (String k : this.aggregateMap.keySet()) {
+            Object obj = this.aggregateMap.get(k);
+            if (obj.getClass().isArray()) {
+                summary.append(k).append("[");
+                for (Object item : (Object[])obj) {
+                    summary.append(item.toString()).append(",");
+                }
+                summary.append("]");
+            } else {
+                String objSummary = obj.toString();
+                if (summary.length() > 0) {
+                    summary.append(" ");
+                }
+                summary.append(k).append("{").append(objSummary).append("}");
+            }
+        }
+        return summary.toString();
+    }
 }
