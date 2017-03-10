@@ -1,9 +1,8 @@
 package com.mobilehelix.services.clients;
 
 import com.mobilehelix.services.interfaces.RestClient;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import java.io.IOException;
+import java.util.Properties;
 import java.util.TreeMap;
 import org.apache.commons.codec.EncoderException;
 
@@ -14,12 +13,12 @@ import org.apache.commons.codec.EncoderException;
 public class ApplicationServerFilesClient extends RestClient {
     
     public ApplicationServerFilesClient(String host,
-            HTTPSProperties props,
+            Properties props,
             String op) {
         super(host, "/clientws/files/" + op, props);
     }
     
-    public String getRoots(String sessID, Long appID) throws UniformInterfaceException, IOException, EncoderException {
+    public String getRoots(String sessID, Long appID) throws IOException, EncoderException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -32,7 +31,8 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     }
     
-    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws UniformInterfaceException, IOException, EncoderException {
+    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) 
+            throws IOException, EncoderException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -56,7 +56,8 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     } 
     
-    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) throws UniformInterfaceException, IOException, EncoderException {
+    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) 
+            throws IOException, EncoderException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
@@ -75,7 +76,8 @@ public class ApplicationServerFilesClient extends RestClient {
         return null;
     }  
     
-    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws UniformInterfaceException, IOException, EncoderException {
+    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName)
+            throws IOException, EncoderException {
         TreeMap<String, String> paramsMap = new TreeMap<>();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
