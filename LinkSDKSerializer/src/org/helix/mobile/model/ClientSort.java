@@ -19,6 +19,6 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.METHOD)
 public @interface ClientSort {
     String displayName() default "[none]";
-    String defaultOrder() default "DESCENDING";
+    String defaultOrder() default "DSC";
     String caseSensitive() default "false";
 }

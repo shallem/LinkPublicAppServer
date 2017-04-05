@@ -24,11 +24,11 @@ import java.util.TreeMap;
  * 
  * @author shallem
  */
-public class AggregateObject {
-    private Map<String, Object> aggregateMap;
+public class AggregateObject { //implements JSONSerializable {
+    private final Map<String, Object> aggregateMap;
     
     public AggregateObject() {
-        this.aggregateMap = new TreeMap<String, Object>();
+        this.aggregateMap = new TreeMap<>();
     }
 
     public Map<String, Object> getAggregateMap() {
@@ -39,6 +39,25 @@ public class AggregateObject {
         this.aggregateMap.put(key, result);
     }
     
+//    @Override
+//    public void toJSON(JsonGenerator jg) throws IOException, IllegalAccessException,
+//            InvocationTargetException, NoSuchMethodException {
+//         jg.writeStartObject();
+//
+//        /* Mark as an aggreate object for the client code. */
+//        jg.writeFieldName(JSONSerializer.TYPE_FIELD_NAME);
+//        jg.writeNumber(1003);
+//
+//        for (Map.Entry<String, Object> e : this.aggregateMap.entrySet()) {
+//            if (e.getValue() == null) {
+//                continue;
+//            }
+//            JSONSerializer.serializeObjectFields(jg, e.getValue(), new TreeSet<String>(), e.getKey());
+//        }
+//
+//        jg.writeEndObject();       
+//    }
+
     @Override
     public String toString() {
         if (this.aggregateMap == null || this.aggregateMap.isEmpty()) {
