@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mobilehelix.appserver.jsf;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
@@ -10,7 +6,6 @@ import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
