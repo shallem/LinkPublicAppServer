@@ -24,13 +24,16 @@ import com.mobilehelix.appserver.permissions.FilePermissions;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
-import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
 import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,19 +41,23 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.ejb.EJB;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.SystemUtils;
 
 /**
  *
@@ -110,6 +117,15 @@ public class Session {
     /* Legacy user ID of this user. */
     private String legacyUserID;
     
+    /* Path to store this user's uploads. This is a temp path, deleted when the session is closed. */
+    private Path uploadPath;
+    
+    /* Random number generator used to avoid upload conflicts. */
+    private Random random;
+    
+    /* Mapping from upload IDs to an upload status object. */
+    private Map<String, UploadStatus> uploadStatusMap;
+    
     /* List of app IDs in the session. */
     private final List<Long> appIDs;
     
@@ -130,7 +146,67 @@ public class Session {
     */
     private final Map<Long, Set<WSUserPreference>> prefsMap;
     
-    
+    private class UploadStatus {
+        private final String fileID;
+        private final Path dstPath;
+        private boolean isDone;
+        private boolean isFailed;
+        private String failedMessage;
+        
+        private final Lock statusLock = new ReentrantLock();
+        private final Condition waitForDone  = statusLock.newCondition(); 
+        
+        public UploadStatus(String fileID, Path dstPath) {
+            this.fileID = fileID;
+            this.dstPath = dstPath;
+            this.isDone = false;
+        }
+        
+        public void markDone() {
+            this.statusLock.lock();
+            try {
+                this.isDone = true;
+                this.waitForDone.signalAll();
+            } finally {
+                this.statusLock.unlock();
+            }
+        }
+        
+        public void markFailed(String msg) {
+            this.statusLock.lock();
+            try {
+                this.isFailed = true;
+                this.failedMessage = msg;
+                this.waitForDone.signalAll();
+            } finally {
+                this.statusLock.unlock();
+            }
+        }
+        
+        public Path getPath() throws InterruptedException {
+            this.statusLock.lock();
+            try {
+                if (this.isFailed == true) {
+                    return null;
+                }
+                if (this.isDone == false) {
+                    // Wait, which releases the lock.
+                    this.waitForDone.await();
+                }
+                return this.dstPath;
+            } finally {
+                this.statusLock.unlock();
+            }
+        }
+
+        public String getFileID() {
+            return fileID;
+        }
+
+        public String getFailedMessage() {
+            return failedMessage;
+        }
+    };
     
     public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
@@ -268,6 +344,15 @@ public class Session {
             this.debugOn = debugOn;
             this.deviceType = deviceType;
             this.client = client;
+            this.random = new Random();
+            this.uploadStatusMap = new ConcurrentHashMap<String, UploadStatus>();
+            
+            if (SystemUtils.IS_OS_WINDOWS) {
+                this.uploadPath = Files.createTempDirectory(this.getCredentials().getUsernameNoDomain());
+            } else {
+                this.uploadPath = Files.createTempDirectory(this.getCredentials().getUsernameNoDomain(), 
+                    PosixFilePermissions.asFileAttribute(PosixFilePermissions.fromString("rwx------")));
+            }
             
             // Do a JNDI lookup of the app registry.
             InitialContext ictx = new InitialContext();
@@ -281,6 +366,10 @@ public class Session {
         } catch (NamingException ex) {
             LOG.log(Level.SEVERE, "Failed to initialize session.", ex);
             throw new AppserverSystemException(ex, "SessionInitializationFailed",
+                    "Fatal error in session initialization.");
+        } catch (IOException ioe) {
+            LOG.log(Level.SEVERE, "Failed to initialize session due to an IO error.", ioe);
+            throw new AppserverSystemException(ioe, "SessionInitializationFailed",
                     "Fatal error in session initialization.");
         }
     }
@@ -560,6 +649,26 @@ public class Session {
             cc.close();
         }
         this.connMap.clear();
+        
+        // Clear out all temp files (when they are done uploading)
+        for (UploadStatus us : this.uploadStatusMap.values()) {
+            try {
+                Path p = us.getPath();
+                if (p != null) {
+                    Files.delete(p);
+                }
+            } catch (InterruptedException ex) {
+                LOG.log(Level.WARNING, "Failed to clear file with ID " + us.getFileID(), ex);
+            } catch (IOException ex) {
+                LOG.log(Level.WARNING, "Failed to delete file with ID " + us.getFileID(), ex);
+            }
+        }
+        try {
+            // Clear out the temp file directory.
+            Files.delete(this.uploadPath);
+        } catch (IOException ex) {
+            LOG.log(Level.SEVERE, "Failed to delete upload temp path at location " + this.uploadPath.toAbsolutePath(), ex);
+        }
     }
     
     public void getProperties(Map<String, Object> props) {
@@ -650,5 +759,42 @@ public class Session {
                 WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_checkin"), true),
                 WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_link"), true),
                 WSExtra.getValueBoolean(this.getPolicy(appId, "file_can_copy_from"), true));
+    }
+    
+    public void acceptUpload(String fileID, InputStream fileUploadStream) throws IOException {
+        String fileName = Long.toString(System.currentTimeMillis()) + Integer.toString(this.random.nextInt(50));
+        Path tgtPath = this.uploadPath.resolve(fileName);
+        UploadStatus ustatus = new UploadStatus(fileID, tgtPath);
+        this.uploadStatusMap.put(fileID, ustatus);
+        try {
+            Files.copy(fileUploadStream, tgtPath);
+            ustatus.markDone();
+        } catch(IOException ioe) {
+            ustatus.markFailed(ioe.getMessage());
+            throw ioe;
+        }
+    }
+    
+    public Path getUpload(String fileID) throws InterruptedException, IOException {
+        // Check for the UploadStatus object. If it does not exist, we have re-ordered operations.
+        UploadStatus ustatus = null;
+        int ct = 0;
+        do {
+            ustatus = this.uploadStatusMap.get(fileID);
+            Thread.sleep(1000);
+            ++ct;
+        } while(ustatus == null && ct < 30);
+        
+        
+        if (ustatus == null) {
+            // We have waited 30 seconds for this upload to start. Assume it is never going to start.
+            throw new IOException("Failed to find upload with ID " + fileID);
+        }
+        
+        Path ret = ustatus.getPath();
+        if (ret == null) {
+            throw new IOException(ustatus.getFailedMessage());
+        }
+        return ret;
     }
 }
