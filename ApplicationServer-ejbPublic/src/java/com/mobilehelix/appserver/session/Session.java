@@ -220,7 +220,7 @@ public class Session {
         this.legacyUserID = createRequest.getLegacyUserID();
         this.userEmail = createRequest.getUserEmail();
         
-        this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getDeviceType(), false);
+        this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getUserEmail(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
         if (createRequest.getAppIDs() == null) {
             return;
@@ -246,7 +246,7 @@ public class Session {
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
-        this.init(client, username, password, "iPhone", true);
+        this.init(client, username, password, username, "iPhone", true);
     }
     
     public final void doAppInit(Long[] appIDs, 
@@ -336,11 +336,12 @@ public class Session {
     private void init(String client,
             String username, 
             String password,
+            String emailAddress,
             String deviceType,
             boolean debugOn) throws AppserverSystemException {
         try {
             // For now hard code values.
-            credentials = new CredentialsManager(client, username, password);
+            credentials = new CredentialsManager(client, username, password, emailAddress);
             this.debugOn = debugOn;
             this.deviceType = deviceType;
             this.client = client;
