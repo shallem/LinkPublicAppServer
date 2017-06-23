@@ -38,6 +38,7 @@ public class GlobalPropertiesManager {
     private boolean debugOn;
     private String debugUser;
     private String debugPassword;
+    private String debugUserEmail;
     
     /* Indicates that there is no gateway required. */
     private boolean isNoGateway;
@@ -70,10 +71,12 @@ public class GlobalPropertiesManager {
             this.debugOn = true;
             this.debugUser = System.getProperty("com.mobilehelix.debuguser");
             this.debugPassword = System.getProperty("com.mobilehelix.debugpassword");
+            this.debugUserEmail = System.getProperty("com.mobilehelix.debugemail");
         } else {
             this.debugOn = false;
             this.debugUser = null;       
             this.debugPassword = null;
+            this.debugUserEmail = "";
         }
     }
 
@@ -95,6 +98,10 @@ public class GlobalPropertiesManager {
     
     public String getDebugPassword() {
         return debugPassword;
+    }
+
+    public String getDebugUserEmail() {
+        return debugUserEmail;
     }
 
     public String getClientName() {

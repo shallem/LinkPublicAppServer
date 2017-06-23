@@ -57,6 +57,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 /**
@@ -237,7 +238,7 @@ public class Session {
         this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles());
     }
     
-    public Session(String client, String username, String password) throws AppserverSystemException {
+    public Session(String client, String username, String password, String emailAddress) throws AppserverSystemException {
         // ONLY used for debugging.
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
@@ -246,7 +247,10 @@ public class Session {
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
-        this.init(client, username, password, username, "iPhone", true);
+        if (StringUtils.isEmpty(emailAddress)) {
+            emailAddress = username;
+        }
+        this.init(client, username, password, emailAddress, "iPhone", true);
     }
     
     public final void doAppInit(Long[] appIDs, 
