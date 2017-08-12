@@ -801,7 +801,7 @@ public class Session {
             throw new IOException(ustatus.getFailedMessage());
         }
         if (!Files.exists(ret)) {
-            throw new IOException("Upload with ID " + fileID + " is not found.");
+            throw new IOException("Upload with ID " + fileID + " is not found");
         }
         return ret;
     }
