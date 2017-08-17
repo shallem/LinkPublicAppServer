@@ -40,8 +40,12 @@ public class NoCacheFilter implements Filter {
         if (reqURI.contains("javax.faces.resource")) {
             res.setHeader("Cache-Control", "public");
         } else if (req.getMethod().equals("GET")) {
+            // Main app page and all AJAX. We set these to public so that we cache aggressively.
+            // The device clients receive a URL from the Controller with a version number embedded.
+            // Hence, we always want the main page to be cached.
             res.setHeader("Cache-Control", "public");
         } else {
+            // All of our AJAX load commands are POST, not GET, so they are all uncacheable
             res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         }
 
