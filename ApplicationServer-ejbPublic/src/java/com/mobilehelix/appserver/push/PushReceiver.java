@@ -41,6 +41,7 @@ public abstract class PushReceiver {
     private String deviceType;
     private String combinedUser;
     protected Long appID;
+    private String subscriptionID;
     
     /**
      * Invoked in the async init from the push manager. This method is responsible
@@ -209,5 +210,13 @@ public abstract class PushReceiver {
 
     public Long getAppID() {
         return appID;
+    }
+
+    public String getSubscriptionID() {
+        return subscriptionID;
+    }
+
+    public void setSubscriptionID(String subscriptionID) {
+        this.subscriptionID = subscriptionID;
     }
 }
