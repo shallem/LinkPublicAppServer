@@ -387,6 +387,33 @@ public class Session {
         return currentFacade;
     }
     
+    public ApplicationFacade getVisibleFacade(int apptype) {
+        List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
+        if (allFs.isEmpty()) {
+            return null;
+        }
+        for (ApplicationFacade af : allFs) {
+            if (af.isIsVisibleOnDevice()) {
+                return af;
+            }
+        }
+        return null;
+    }
+    
+    public ApplicationFacade getVisibleFacade(HttpServletRequest req, int apptype) {
+        String appid = this.getAppIDFromRequest(req);
+        if (appid != null) {
+            ApplicationFacade af = this.getAppFacade(Long.parseLong(appid));
+            if (apptype == -1 || af.getAppType() == apptype) {
+                return af;
+            }
+        } 
+        if (apptype < 0) {
+            return null;
+        }
+        return this.getVisibleFacade(apptype);
+    }
+    
     public ApplicationFacade getFacade(int apptype) {
         List<ApplicationFacade> allFs = this.getAllFacadesForType(apptype);
         if (allFs.isEmpty()) {
