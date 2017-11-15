@@ -15,6 +15,7 @@
  */
 package com.mobilehelix.appserver.jsf;
 
+import com.mobilehelix.appserver.errorhandling.AuthenticationException;
 import java.io.IOException;
 import javax.faces.application.ResourceHandler;
 import javax.servlet.*;
@@ -22,12 +23,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 /**
- * Default filter for setting cache-control headers. Should be installed in web.xml
- * for each application individually.
- * 
+ * Default filter for setting cache-control headers. Should be installed in
+ * web.xml for each application individually.
+ *
  * @author shallem
  */
 public class NoCacheFilter implements Filter {
+
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest req = (HttpServletRequest) request;
@@ -48,18 +50,23 @@ public class NoCacheFilter implements Filter {
             // All of our AJAX load commands are POST, not GET, so they are all uncacheable
             res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
         }
-
-        chain.doFilter(request, response);
+        
+        try {
+            chain.doFilter(request, response);
+        } catch (AuthenticationException ae) {
+            // Force the user to login again.
+            res.setStatus(407);
+        }
     }
-
+    
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         //throw new UnsupportedOperationException("Not supported yet.");
     }
-
+    
     @Override
     public void destroy() {
         //throw new UnsupportedOperationException("Not supported yet.");
     }
-
+    
 }
