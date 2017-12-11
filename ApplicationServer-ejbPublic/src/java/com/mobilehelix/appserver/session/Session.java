@@ -57,6 +57,7 @@ import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
@@ -697,6 +698,7 @@ public class Session {
         }
         try {
             // Clear out the temp file directory.
+            FileUtils.cleanDirectory(this.uploadPath.toFile());
             Files.delete(this.uploadPath);
         } catch (IOException ex) {
             LOG.log(Level.SEVERE, "Failed to delete upload temp path at location " + this.uploadPath.toAbsolutePath(), ex);
