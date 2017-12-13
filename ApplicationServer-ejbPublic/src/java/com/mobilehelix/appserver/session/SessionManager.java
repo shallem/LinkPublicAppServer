@@ -144,7 +144,8 @@ public class SessionManager {
         List<Integer> appGenIDs = new LinkedList<>();
         this.debugSession = new Session(globalProperties.getClientName(),
             this.getDebugUser(),
-            this.getDebugPassword());
+            this.getDebugPassword(),
+            globalProperties.getDebugUserEmail());
                     
         initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
             this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);

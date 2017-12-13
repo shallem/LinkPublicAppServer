@@ -15,13 +15,16 @@
  */
 package org.helix.mobile.model;
 
+import java.io.IOException;
+
 /**
  * Represents a client side filtering criteria used to narrow a query collection. How this
  * criteria is used depends on the context in which the type is used.
  * 
  * @author Seth
  */
-public class Criteria {
+public class Criteria implements JSONSerializable {
+
     public enum Op {
         EQ,
         NEQ,
@@ -85,4 +88,15 @@ public class Criteria {
     public String getValue() {
         return value;
     }
+    
+    // Explicit serialization of fields
+    // MUST be updated when new client visible fields are added !!!
+    @Override
+    public void toJSON(JSONGenerator jg) throws IOException {
+        jg.writeStartObject();
+        jg.writeStringField("field", this.field);
+        jg.writeStringField("op", this.getOpString());
+        jg.writeStringField("value", this.value);
+        jg.writeEndObject();
+    } 
 }

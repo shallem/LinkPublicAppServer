@@ -225,15 +225,25 @@ public class PushManager {
         } 
     }
     
-    public void storeSession(String uniqueID,
-            String combinedUser,
+    public void storeSession(String clientID,
+            String userID,
+            Long appID,
             PushReceiver newReceiver) {
-        idMap.put(uniqueID, newReceiver);
+        idMap.put(newReceiver.getSubscriptionID(), newReceiver);
+        String combinedUser = this.getCombinedUser(clientID, userID);
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers == null) {
             receivers = new ConcurrentLinkedQueue<>();
             this.userPushMap.put(combinedUser, receivers);
-        } 
+        } else {
+            for (PushReceiver r : receivers) {
+                if (r.matches(clientID, userID, appID)) {
+                    // We can only have ONE push subscription at a time in idMap. Otherwise we will push
+                    // the same email over and over again ...
+                    idMap.remove(r.getSubscriptionID());
+                }
+            }
+        }
         receivers.add(newReceiver);
     }
     
