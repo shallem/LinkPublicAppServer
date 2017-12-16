@@ -318,12 +318,11 @@ public class PushManager {
         return refreshToken;
     }
     
-    public byte[] executeRefreshAction(MultivaluedMap<String, String> params) throws AppserverSystemException {
+    public PushRefresh executeRefreshAction(MultivaluedMap<String, String> params) throws AppserverSystemException {
         String refreshToken = params.getFirst("token");
         if (refreshToken != null &&
                 this.refreshMap.containsKey(refreshToken)) {
-            PushRefresh action = this.refreshMap.get(refreshToken);
-            return action.doRefresh(params);
+            return this.refreshMap.get(refreshToken);
         } else {
             throw new AppserverSystemException("Refresh token not found",
                 "RefreshTokenNotFound",

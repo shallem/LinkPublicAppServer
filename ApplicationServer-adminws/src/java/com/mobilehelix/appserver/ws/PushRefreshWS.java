@@ -7,6 +7,7 @@ package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
+import com.mobilehelix.appserver.push.PushRefresh;
 import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.ApplicationServerRefreshResponse;
 import java.io.IOException;
@@ -15,7 +16,6 @@ import java.util.logging.Logger;
 import javax.annotation.security.PermitAll;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -43,7 +43,8 @@ public class PushRefreshWS {
     public Response doPushRefresh(@Context UriInfo uriInfo) {
         MultivaluedMap<String, String> form = uriInfo.getQueryParameters();
         try {
-            byte[] refreshData = pushMgr.executeRefreshAction(form);
+            PushRefresh action = pushMgr.executeRefreshAction(form);
+            byte[] refreshData = action.doRefresh(form);
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.SUCCESS, "Success", refreshData);
             return Response.ok(resp.toBson()).build();
         } catch(AppserverSystemException ex) {
