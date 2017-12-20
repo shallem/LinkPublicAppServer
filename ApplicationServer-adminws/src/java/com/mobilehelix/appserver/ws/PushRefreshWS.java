@@ -48,7 +48,7 @@ public class PushRefreshWS {
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.SUCCESS, "Success", refreshData);
             return Response.ok(resp.toBson()).build();
         } catch(AppserverSystemException ex) {
-            LOG.log(Level.SEVERE, "Background push refresh failed with error", ex);
+            LOG.log(Level.INFO, "Background push refresh failed with error", ex);
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.FAILURE, ex.getLocalizedMessage());
             try {
                 return Response.ok(resp.toBson()).build();
