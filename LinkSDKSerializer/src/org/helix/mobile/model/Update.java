@@ -25,6 +25,7 @@ import java.io.IOException;
 public class Update implements JSONSerializable {
     
     private final String key;
+    private final String field;
     private final String valueString;
     private final Boolean valueBoolean;
     
@@ -35,15 +36,17 @@ public class Update implements JSONSerializable {
      * @param op
      * @param value 
      */
-    public Update(String key, String value) {
+    public Update(String key, String field, String value) {
         this.key = key;
+        this.field = field;
         
         this.valueString = value;
         this.valueBoolean = null;
     }
 
-    public Update(String key, Boolean value) {
+    public Update(String key, String field, Boolean value) {
         this.key = key;
+        this.field = field;
         
         this.valueBoolean = value;
         this.valueString = null;
@@ -55,10 +58,13 @@ public class Update implements JSONSerializable {
     public void toJSON(JSONGenerator jg) throws IOException {
         jg.writeStartObject();
         jg.writeStringField("key", this.key);
+        jg.writeStringField("field", this.field);
         if (this.valueString != null) {
             jg.writeStringField("value", this.valueString);
+            jg.writeStringField("type", "TEXT");
         } else if (this.valueBoolean != null) {
             jg.writeBooleanField("value", this.valueBoolean);
+            jg.writeStringField("type", "BOOL");
         }
         jg.writeEndObject();
     } 

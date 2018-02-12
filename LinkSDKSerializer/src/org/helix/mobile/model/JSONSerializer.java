@@ -231,15 +231,15 @@ public class JSONSerializer {
 
                 m = c.getMethod("getFieldUpdates", (Class[]) null);
                 Update[] fieldUpdates = (Update[])m.invoke(obj, new Object[]{});
+                jg.writeArrayFieldStart("fieldUpdates");
                 if (fieldUpdates != null) {
-                    jg.writeArrayFieldStart("fieldUpdates");
                     for (Update u : fieldUpdates) {
                         if (u != null) {
                             u.toJSON(jg);
                         }
                     }
-                    jg.writeEndArray();
                 }
+                jg.writeEndArray();
                 
                 jg.writeEndObject();
                 return true;
