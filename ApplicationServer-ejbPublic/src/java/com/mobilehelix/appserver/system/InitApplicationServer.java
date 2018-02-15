@@ -17,6 +17,7 @@ package com.mobilehelix.appserver.system;
 
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.SessionManager;
+import com.mobilehelix.security.MHSecurityException;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import java.io.File;
 import java.io.FileInputStream;
@@ -27,6 +28,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.PostConstruct;
+import javax.crypto.SecretKey;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
@@ -61,6 +63,9 @@ public class InitApplicationServer {
     
     private ControllerConnectionBase controllerConnection;
     
+    private SecretKey pushDumpKey;
+    private SecretKey pushRestoreKey;
+    
     @PostConstruct
     public void init() {
         try {
@@ -78,7 +83,7 @@ public class InitApplicationServer {
         this.controllerConnection.setSessionMgr(sessionMgr);
         this.controllerConnection.setGlobalProperties(globalProperties);
         this.controllerConnection.setApplicationRegistry(this.appRegistry);
-
+        
         // See if we can init from helix-init.properties in the instance root.
         // Check for the init properties file in the domain.
         try {
@@ -184,6 +189,13 @@ public class InitApplicationServer {
         LOG.log(Level.INFO, "Application server initialization completed successfully for version {0}.", new Object[] {
             versionMgr.getVersion()
         });
+
+        try {
+            this.pushDumpKey = this.controllerConnection.getPushServerDumpKey();
+            this.pushRestoreKey = this.controllerConnection.getPushServerRestoreKey();
+        } catch (MHSecurityException ex) {
+            LOG.log(Level.SEVERE, "Failed to create push server dump key.", ex);
+        }
         return ret;
     }
     
@@ -209,5 +221,13 @@ public class InitApplicationServer {
            
     public String getPushServerName() {
         return this.controllerConnection.getPushServerName();
+    }
+
+    public SecretKey getPushDumpKey() {
+        return pushDumpKey;
+    }
+
+    public SecretKey getPushRestoreKey() {
+        return pushRestoreKey;
     }
 }

@@ -4,11 +4,15 @@
  */
 package com.mobilehelix.services.objects;
 
+import com.mobilehelix.security.AES.AESUtils;
+import com.mobilehelix.security.MHSecurityException;
 import com.mobilehelix.services.interfaces.WSRequest;
 import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.crypto.SecretKey;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
@@ -75,7 +79,7 @@ public class ApplicationServerPushSession extends WSRequest {
     public void setAppID(Long appID) {
         this.appID = appID;
     }
-
+    
     @Override
     public byte[] toBson() throws IOException {
         //serialize data
@@ -85,7 +89,7 @@ public class ApplicationServerPushSession extends WSRequest {
         JsonGenerator gen = factory.createJsonGenerator(baos);
         this.serializeObject(gen);
         gen.close();
-        return baos.toByteArray();
+        return baos.toByteArray();        
     }
     
     public void serializeObject(JsonGenerator gen) throws IOException {

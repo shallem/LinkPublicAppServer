@@ -18,6 +18,7 @@ package com.mobilehelix.appserver.system;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.session.SessionManager;
+import com.mobilehelix.security.MHSecurityException;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.objects.WSExtra;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import javax.crypto.SecretKey;
 
 /**
  * When no Controller is available (e.g., in the open source edition of an app used
@@ -173,4 +175,12 @@ public class ControllerConnectionBase {
         
         this.globalProperties.asProperties(props);
     }     
+    
+    public SecretKey getPushServerDumpKey() throws MHSecurityException {
+        return null;
+    }
+    
+    public SecretKey getPushServerRestoreKey() throws MHSecurityException {
+        return null;
+    }
 }

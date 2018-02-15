@@ -22,20 +22,17 @@ public class ApplicationServerDumpPushClient extends RestClient {
         super(asIP + ":" + asPort.toString(), "/ws/dumppush/" + op, props);
     }
     
-    public ApplicationServerPushDump getPushSessions(String sessID) throws UniformInterfaceException, IOException {
-        ApplicationServerDumpPushRequest req = new ApplicationServerDumpPushRequest();
-        req.setServerSessId(sessID.getBytes(Charset.defaultCharset()));
-        
-        byte[] output = super.runPost(req.toBson());
+    public byte[] getPushSessions() throws UniformInterfaceException, IOException {
+        byte[] output = super.runGet();
         if (output == null) {
             return null;
         }
         
-        return ApplicationServerPushDump.createFromBson(output);
+        return output;
     }
     
-    public GenericBsonResponse restorePushSessions(ApplicationServerPushDump toRestore) throws IOException {
-        byte[] output = super.runPost(toRestore.toBson());
+    public GenericBsonResponse restorePushSessions(byte[] toRestore) throws IOException {
+        byte[] output = super.runPost(toRestore);
         if (output == null) {
             return null;
         }

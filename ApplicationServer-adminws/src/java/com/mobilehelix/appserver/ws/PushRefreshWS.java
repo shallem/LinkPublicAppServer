@@ -44,7 +44,7 @@ public class PushRefreshWS {
         MultivaluedMap<String, String> form = uriInfo.getQueryParameters();
         try {
             PushRefresh action = pushMgr.executeRefreshAction(form);
-            byte[] refreshData = action.doRefresh(form);
+            byte[] refreshData = action.doRefresh(form, pushMgr);
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.SUCCESS, "Success", refreshData);
             return Response.ok(resp.toBson()).build();
         } catch(AppserverSystemException ex) {

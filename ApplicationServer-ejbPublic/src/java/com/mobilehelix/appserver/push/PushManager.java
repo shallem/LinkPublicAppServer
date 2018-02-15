@@ -61,6 +61,7 @@ public class PushManager {
     private ConcurrentHashMap<String, ConcurrentLinkedQueue<PushReceiver> > userPushMap;
     private ConcurrentHashMap<String, PushReceiver> idMap;
     private ConcurrentHashMap<String, PushRefresh> refreshMap;
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, String> > bgRefreshData;
     
     /* EJB to perform async init on application settings. */
     @EJB
@@ -80,6 +81,7 @@ public class PushManager {
         userPushMap = new ConcurrentHashMap<>();
         idMap = new ConcurrentHashMap<>();
         refreshMap = new ConcurrentHashMap<>();
+        bgRefreshData = new ConcurrentHashMap<>();
         srandom = new SecureRandom();
     }
     
@@ -92,15 +94,48 @@ public class PushManager {
     
     public void refresh(Session sess, Long appID) {
         String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ sess.getClient(), 
-            sess.getCredentials().getUsername() });
+            sess.getCredentials().getAuthUsername() });
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
-                if (receiver.matches(sess.getClient(), sess.getCredentials().getUsername(), appID)) {
+                if (receiver.matches(sess.getClient(), sess.getCredentials().getAuthUsername(), appID)) {
                     receiver.refresh();
                 }
             }
         }
+    }
+    
+    public void storeRefreshData(Session sess, String dataKey, Long deviceID, String dataValue) {
+        String combinedUser = this.getCombinedUser(sess.getClient(), sess.getCredentials().getAuthUsername());
+        this.storeRefreshData(combinedUser, dataKey, deviceID, dataValue);
+    }
+    
+    public void storeRefreshData(String combinedUser, String dataKey, Long deviceID, String dataValue) {
+        ConcurrentHashMap<String, String> userData = this.bgRefreshData.get(combinedUser);
+        if (userData == null) {
+            userData = new ConcurrentHashMap<>();
+            this.bgRefreshData.put(combinedUser, userData);
+        }
+        
+        String key = dataKey + "." + deviceID;
+        userData.put(key, dataValue);
+    }
+    
+    public ConcurrentHashMap<String, ConcurrentHashMap<String, String> > getBGRefreshData() {
+        return this.bgRefreshData;
+    } 
+    
+    public void setBGRefreshData(ConcurrentHashMap<String, ConcurrentHashMap<String, String> > _d) {
+        this.bgRefreshData = _d;
+    }
+    
+    public String lookupRefreshData(String combinedUser, String dataKey, Long deviceID) {
+        ConcurrentHashMap<String, String> userData = this.bgRefreshData.get(combinedUser);
+        if (userData != null) {
+            String key = dataKey + "." + deviceID;
+            return userData.get(key);    
+        }
+        return null;
     }
     
     public String getCombinedUser(String client, String userID) {
