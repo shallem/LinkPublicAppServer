@@ -95,12 +95,14 @@ public class ApplicationServerPushDump extends WSResponse {
             String fieldName = parser.getCurrentName();
             switch(fieldName) {
                 case "sess":
+                    parser.nextToken(); // Move past START_ARRAY
                     while(parser.nextToken() != JsonToken.END_ARRAY) {
                         this.addPushSession(ApplicationServerPushSession.fromBson(parser));
                     }
                     break;
                 case "bg":
                     ConcurrentHashMap<String, ConcurrentHashMap<String, String>> bgData = new ConcurrentHashMap<>();
+                    parser.nextToken(); // Move past START_ARRAY
                     while(parser.nextToken() != JsonToken.END_ARRAY) {
                         String entryKey = null;
                         ConcurrentHashMap<String, String> entryVal = new ConcurrentHashMap<>();
@@ -112,12 +114,13 @@ public class ApplicationServerPushDump extends WSResponse {
                                     entryKey = parser.getText();
                                     break;
                                 case "subVal":
+                                    parser.nextToken(); // Move past start_array
                                     while (parser.nextToken() != JsonToken.END_ARRAY) {
                                         String subKey = null;
                                         String subVal = null;
                                         while (parser.nextToken() != JsonToken.END_OBJECT) {
                                             String subField = parser.getCurrentName();
-                                            parser.nextToken();
+                                            parser.nextToken(); // Move past field name
                                             switch(subField) {
                                                 case "subKey":
                                                     subKey = parser.getText();
@@ -137,6 +140,10 @@ public class ApplicationServerPushDump extends WSResponse {
                             }
                         }
                     }
+                    break;
+                default:
+                    // Advance past the value we are going to ignore (status/msg).
+                    parser.nextToken();
                     break;
             }
             nxtToken = parser.nextToken();

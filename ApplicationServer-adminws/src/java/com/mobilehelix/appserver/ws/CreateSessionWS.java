@@ -62,7 +62,7 @@ public class CreateSessionWS {
                 msg = "Success";
                 switch(creq.getServerType()) {
                     case ServerTypeConstants.SERVER_TYPE_APPLICATION_SERVER:
-                        sessionMgr.addSession(creq);
+                        sessionMgr.addSession(creq, initEJB.getControllerConnection());
                         break;
                     case ServerTypeConstants.SERVER_TYPE_PUSH_SERVER:
                         pushMgr.addSession(creq);

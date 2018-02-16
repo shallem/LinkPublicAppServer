@@ -24,7 +24,6 @@ import com.mobilehelix.appserver.permissions.FilePermissions;
 import com.mobilehelix.appserver.settings.ApplicationSettings;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.ControllerConnectionBase;
-import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSExtra;
 import com.mobilehelix.services.objects.WSExtraGroup;
@@ -81,11 +80,6 @@ public class Session {
     /* Global registry of application config downloaded from the Controller. */
     private ApplicationServerRegistry appRegistry;
     
-    /* Global object that tracks app server properties and establishes the connection to the
-     * Controller, if available.
-     */
-    private InitApplicationServer initAS;
-    
     /* Map from appID to the app-specific facade for that app ID. */
     private final TreeMap<Long, ApplicationFacade> appFacades;    
 
@@ -128,6 +122,9 @@ public class Session {
     /* Mapping from upload IDs to an upload status object. */
     private Map<String, UploadStatus> uploadStatusMap;
     
+    /* Mapping of attributes, generally read from AD, and used in some resource specifications. */
+    private Map<String, String> attributeMap;
+    
     /* List of app IDs in the session. */
     private final List<Long> appIDs;
     
@@ -147,6 +144,9 @@ public class Session {
        for global prefs.
     */
     private final Map<Long, Set<WSUserPreference>> prefsMap;
+    
+    /* Connection to the Link Controller. */
+    private final ControllerConnectionBase controllerConnection;
     
     private class UploadStatus {
         private final String fileID;
@@ -210,7 +210,7 @@ public class Session {
         }
     };
     
-    public Session(CreateSessionRequest createRequest) throws AppserverSystemException {
+    public Session(CreateSessionRequest createRequest, ControllerConnectionBase conn) throws AppserverSystemException {
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
         this.contextMap = new HashMap<>();
@@ -221,6 +221,8 @@ public class Session {
         this.deviceID = createRequest.getDeviceID();
         this.legacyUserID = createRequest.getLegacyUserID();
         this.userEmail = createRequest.getUserEmail();
+        this.attributeMap = createRequest.getAttributeMap();
+        this.controllerConnection = conn;
         
         this.init(createRequest.getClient(), createRequest.getUserID(), createRequest.getPassword(), createRequest.getUserEmail(), createRequest.getDeviceType(), false);
         // Do application-specific init for each application in the session.
@@ -239,7 +241,7 @@ public class Session {
         this.doAppInit(createRequest.getAppIDs(), createRequest.getAppGenIDs(), createRequest.getAppProfiles());
     }
     
-    public Session(String client, String username, String password, String emailAddress) throws AppserverSystemException {
+    public Session(String client, String username, String password, String emailAddress, ControllerConnectionBase conn) throws AppserverSystemException {
         // ONLY used for debugging.
         this.appIDs = new LinkedList<>();
         this.appGenIDs = new LinkedList<>();
@@ -248,6 +250,8 @@ public class Session {
         this.policyMap = new HashMap<>();
         this.appFacades = new TreeMap<>();
         this.prefsMap = new ConcurrentHashMap<>();
+        this.attributeMap = new TreeMap<>();
+        this.controllerConnection = conn;
         if (StringUtils.isEmpty(emailAddress)) {
             emailAddress = username;
         }
@@ -279,7 +283,7 @@ public class Session {
             // Debug session
             try {
                 // Now download all app policies for this session.
-                this.policyMap.putAll(this.initAS.getControllerConnection().downloadAppPolicies(this));
+                this.policyMap.putAll(this.controllerConnection.downloadAppPolicies(this));
             } catch (IOException ex) {
                 throw new AppserverSystemException("Failed to load app policies.",
                         "SessionCannotLoadAppPolicies",
@@ -365,10 +369,6 @@ public class Session {
             java.lang.Object appRegObj =
                     ictx.lookup("java:global/ApplicationServerRegistry");
             appRegistry = (ApplicationServerRegistry)appRegObj;
-            
-            java.lang.Object initASObj =
-                    ictx.lookup("java:global/InitApplicationServer");
-            initAS = (InitApplicationServer)initASObj;
         } catch (NamingException ex) {
             LOG.log(Level.SEVERE, "Failed to initialize session.", ex);
             throw new AppserverSystemException(ex, "SessionInitializationFailed",
@@ -706,11 +706,11 @@ public class Session {
     }
     
     public void getProperties(Map<String, Object> props) {
-        this.initAS.getControllerConnection().getProperties(props);
+        this.controllerConnection.getProperties(props);
     } 
     
     public ControllerConnectionBase getControllerConnection() {
-        return this.initAS.getControllerConnection();
+        return this.controllerConnection;
     }    
     
     public ConnectionContainer getConnectionForType(Class c) {
@@ -755,7 +755,7 @@ public class Session {
     }
         
     public void refreshPrefs() throws AppserverSystemException {
-        initAS.getControllerConnection().refreshUserPrefs(this.client, 
+        this.controllerConnection.refreshUserPrefs(this.client, 
                 this.getCredentials().getUsernameNoDomain(), null, this);
     }
     
@@ -782,6 +782,14 @@ public class Session {
     
     public Set<WSUserPreference> getAllPrefs(Long resourceID) {
         return this.prefsMap.get(resourceID);
+    }
+
+    public Map<String, String> getAttributeMap() {
+        return attributeMap;
+    }
+
+    public void setAttributeMap(Map<String, String> attributeMap) {
+        this.attributeMap = attributeMap;
     }
     
     public int computeFilePermissions(long appId, int filePermissions) {
