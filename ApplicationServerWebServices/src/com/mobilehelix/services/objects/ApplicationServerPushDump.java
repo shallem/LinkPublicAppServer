@@ -113,8 +113,7 @@ public class ApplicationServerPushDump extends WSResponse {
                                 case "key":
                                     entryKey = parser.getText();
                                     break;
-                                case "subVal":
-                                    parser.nextToken(); // Move past start_array
+                                case "val":
                                     while (parser.nextToken() != JsonToken.END_ARRAY) {
                                         String subKey = null;
                                         String subVal = null;
@@ -127,6 +126,7 @@ public class ApplicationServerPushDump extends WSResponse {
                                                     break;
                                                 case "subVal":
                                                     subVal = parser.getText();
+                                                    break;
                                             }
                                         }
                                         if (subKey != null && subVal != null) {
@@ -135,11 +135,12 @@ public class ApplicationServerPushDump extends WSResponse {
                                     }
                                     break;
                             }
-                            if (entryKey != null) {
-                                bgData.put(entryKey, entryVal);
-                            }
+                        }
+                        if (entryKey != null) {
+                            bgData.put(entryKey, entryVal);
                         }
                     }
+                    this.setbGPushData(bgData);
                     break;
                 default:
                     // Advance past the value we are going to ignore (status/msg).

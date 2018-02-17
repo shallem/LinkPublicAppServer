@@ -10,8 +10,11 @@ import com.mobilehelix.services.objects.ApplicationServerDumpPushRequest;
 import com.mobilehelix.services.objects.ApplicationServerPushDump;
 import com.mobilehelix.services.objects.ApplicationServerPushSession;
 import com.mobilehelix.services.objects.GenericBsonResponse;
+import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.text.ParseException;
+import java.util.LinkedList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,26 +58,40 @@ public class DumpPushWS {
             statusCode = WSResponse.FAILURE;
             msg = "Cannot dump push sessions on the app server because it is not initialized.";
         } else {
-            dumpKey = initEJB.getPushDumpKey();
-            if (dumpKey == null) {
-                statusCode = WSResponse.FAILURE;
-                msg = "Cannot dump push sessions on the app server because there is no dump key.";                    
-            } else {
-                statusCode = WSResponse.SUCCESS;
-                msg = "Success";
-
-                for (PushReceiver pr : this.pushMgr.allSessions()) {
-                    ApplicationServerPushSession nxt = new ApplicationServerPushSession();
-                    nxt.setUniqueID(pr.getUniqueID());
-                    nxt.setClientid(pr.getClientid());
-                    nxt.setUserid(pr.getUserid());
-                    nxt.setPassword(pr.getPassword());
-                    nxt.setDeviceType(pr.getDeviceType());
-                    nxt.setAppID(pr.getAppID());
-                    ret.addPushSession(nxt);
+            try {
+                dumpKey = initEJB.getPushDumpKey();
+                if (dumpKey == null) {
+                    statusCode = WSResponse.FAILURE;
+                    msg = "Cannot dump push sessions on the app server because there is no dump key.";
+                } else {
+                    statusCode = WSResponse.SUCCESS;
+                    msg = "Success";
+                    
+                    for (PushReceiver pr : this.pushMgr.allSessions()) {
+                        ApplicationServerPushSession nxt = new ApplicationServerPushSession();
+                        nxt.setUniqueID(pr.getUniqueID());
+                        nxt.setClientid(pr.getClientid());
+                        nxt.setUserid(pr.getUserid());
+                        nxt.setPassword(pr.getPassword());
+                        nxt.setDeviceType(pr.getDeviceType());
+                        nxt.setAppID(pr.getAppID());
+                        ret.addPushSession(nxt);
+                    }
+                    ret.setbGPushData(this.pushMgr.getBGRefreshData());
                 }
-                ret.setbGPushData(this.pushMgr.getBGRefreshData());
-            }                 
+            } catch (IOException ex) {
+               LOG.log(Level.SEVERE, "Failed to get the push dump key", ex);  
+               statusCode = WSResponse.FAILURE;
+               msg = "Failed to get the push dump key. Please check the server logs.";
+            } catch (ParseException ex) {
+               LOG.log(Level.SEVERE, "Failed to get the push dump key", ex);  
+               statusCode = WSResponse.FAILURE;
+               msg = "Failed to get the push dump key. Please check the server logs.";
+            } catch (MHSecurityException ex) {
+               LOG.log(Level.SEVERE, "Failed to get the push dump key: " + ex.getLocalizedMessage(), ex);  
+               statusCode = WSResponse.FAILURE;
+               msg = "Failed to get the push dump key. Please check the server logs.";
+            }
         }
 
         ret.setStatusCode(statusCode);
@@ -99,7 +116,7 @@ public class DumpPushWS {
         GenericBsonResponse ret = null;
         
         try {
-            SecretKey restoreKey = initEJB.getPushRestoreKey();
+            SecretKey restoreKey = initEJB.getPushDumpKey();
             ApplicationServerPushDump req = ApplicationServerPushDump.createFromBson(input, restoreKey);
 
             // WE do not validate with the session ID here. Generally it is not necessary - b/c
@@ -116,7 +133,7 @@ public class DumpPushWS {
                 for (ApplicationServerPushSession aps : req.getPushSessions()) {
                     try {
                         this.pushMgr.addSession(aps.getClientid(), aps.getUserid(), aps.getPassword(),
-                                aps.getDeviceType(), aps.getAppID(), 0, null);
+                                aps.getDeviceType(), aps.getAppID(), 0, new LinkedList<WSUserPreference>());
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()
@@ -126,6 +143,7 @@ public class DumpPushWS {
                 }
                 this.pushMgr.setBGRefreshData(req.getBGPushData());
             }
+            initEJB.updatePushDumpKey();
         } catch(IOException ioe) {
             statusCode = WSResponse.FAILURE;
             msg = ioe.getMessage();
@@ -133,13 +151,17 @@ public class DumpPushWS {
             LOG.log(Level.SEVERE, "Decryption error when restoring push data.", secEx);
             statusCode = WSResponse.FAILURE;
             msg = secEx.getLocalizedMessage();
+        } catch (ParseException ex) {
+            LOG.log(Level.SEVERE, "Failed to read or update push dump key", ex);
+            statusCode = WSResponse.FAILURE;
+            msg = ex.getMessage();
         }
         
         ret = new GenericBsonResponse(statusCode, msg);
         try {
             return ret.toBson();
         } catch (IOException ex) {
-            LOG.log(Level.SEVERE, "Failed to serialize push dump response.", ex);
+            LOG.log(Level.SEVERE, "Failed to serialize push restore response.", ex);
         }
         return null;
     }
