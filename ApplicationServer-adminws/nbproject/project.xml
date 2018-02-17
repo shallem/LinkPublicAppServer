@@ -32,6 +32,9 @@
                 <library dirs="200">
                     <file>${reference.MobileHelixSecurity.jar}</file>
                 </library>
+                <library dirs="200">
+                    <file>${file.reference.jackson-core-asl-1.9.10.jar}</file>
+                </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
             <source-roots>

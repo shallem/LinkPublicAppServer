@@ -3,6 +3,7 @@ package com.mobilehelix.appserver.ws;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.push.PushReceiver;
+import com.mobilehelix.appserver.session.Session;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.security.MHSecurityException;
 import com.mobilehelix.services.interfaces.WSResponse;
@@ -12,6 +13,7 @@ import com.mobilehelix.services.objects.ApplicationServerPushSession;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.objects.WSUserPreference;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.LinkedList;
@@ -27,6 +29,9 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonNode;
 
 /**
  * Dumps all active push sessions. We validate the session ID prior to accepting this call.
@@ -132,8 +137,29 @@ public class DumpPushWS {
                 
                 for (ApplicationServerPushSession aps : req.getPushSessions()) {
                     try {
+                        LinkedList<WSUserPreference> prefs = new LinkedList<>();
+                        WSUserPreference pref = new WSUserPreference();
+                        pref.setTag(Session.PASSWORD_VAULT_PREFS_TAG);
+                        pref.setResourceID(-1l);
+                        StringWriter outputString = new StringWriter();
+                        JsonFactory jsonF = new JsonFactory();
+
+                        try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+                            jg.writeStartObject();
+                            jg.writeStringField("username", aps.getUserid());
+                            jg.writeStringField("password", aps.getPassword());
+                            jg.writeEndObject();
+                        } catch (IOException ex) {
+                            LOG.log(Level.SEVERE, "Failed to create password vault preference", ex);
+                            pref = null;
+                        }
+                        if (pref != null) {
+                            outputString.flush();
+                            pref.setVal(outputString.toString().getBytes());
+                            prefs.add(pref);
+                        }
                         this.pushMgr.addSession(aps.getClientid(), aps.getUserid(), aps.getPassword(),
-                                aps.getDeviceType(), aps.getAppID(), 0, new LinkedList<WSUserPreference>());
+                                aps.getDeviceType(), aps.getAppID(), 0, prefs);
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()
