@@ -80,6 +80,7 @@ public class DumpPushWS {
                         nxt.setPassword(pr.getPassword());
                         nxt.setDeviceType(pr.getDeviceType());
                         nxt.setAppID(pr.getAppID());
+                        nxt.setCombinedUser(pr.getCombinedUser());
                         ret.addPushSession(nxt);
                     }
                     ret.setbGPushData(this.pushMgr.getBGRefreshData());
@@ -158,8 +159,14 @@ public class DumpPushWS {
                             pref.setVal(outputString.toString().getBytes());
                             prefs.add(pref);
                         }
-                        this.pushMgr.addSession(aps.getClientid(), aps.getUserid(), aps.getPassword(),
-                                aps.getDeviceType(), aps.getAppID(), 0, prefs);
+                        this.pushMgr.addSession(aps.getClientid(), 
+                                aps.getUserid(), 
+                                aps.getPassword(),
+                                aps.getCombinedUser(),
+                                aps.getDeviceType(), 
+                                aps.getAppID(), 
+                                0, 
+                                prefs);
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()
