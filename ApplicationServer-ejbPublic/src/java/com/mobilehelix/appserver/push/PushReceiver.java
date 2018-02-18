@@ -39,7 +39,7 @@ public abstract class PushReceiver {
     protected String userid;
     protected String password;
     private String deviceType;
-    private String combinedUser;
+    protected String combinedUser;
     protected Long appID;
     private String subscriptionID;
     

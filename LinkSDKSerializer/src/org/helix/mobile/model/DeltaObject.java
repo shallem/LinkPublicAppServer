@@ -42,9 +42,15 @@ public interface DeltaObject {
     public Object[] getUpdates();
 
     /**
-     * Retrun a query criteria to be used on the client to select a set of items to delete. Functions
+     * Return a query criteria to be used on the client to select a set of items to delete. Functions
      * as either an alternative or in addition to an explicit delete list.
      */
     @ClientData
     public Criteria[] getDeleteSpec();
+    
+    /**
+     * Update a single field.
+     */
+    @ClientData
+    public Update[] getFieldUpdates();
 }

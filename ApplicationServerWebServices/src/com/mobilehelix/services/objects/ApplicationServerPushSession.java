@@ -23,6 +23,7 @@ public class ApplicationServerPushSession extends WSRequest {
     private String userid;
     private String password;
     private String deviceType;
+    private String combinedUser;
     private Long appID;
     
     public ApplicationServerPushSession() {
@@ -76,6 +77,14 @@ public class ApplicationServerPushSession extends WSRequest {
         this.appID = appID;
     }
 
+    public String getCombinedUser() {
+        return combinedUser;
+    }
+
+    public void setCombinedUser(String combinedUser) {
+        this.combinedUser = combinedUser;
+    }
+    
     @Override
     public byte[] toBson() throws IOException {
         //serialize data
@@ -85,7 +94,7 @@ public class ApplicationServerPushSession extends WSRequest {
         JsonGenerator gen = factory.createJsonGenerator(baos);
         this.serializeObject(gen);
         gen.close();
-        return baos.toByteArray();
+        return baos.toByteArray();        
     }
     
     public void serializeObject(JsonGenerator gen) throws IOException {
@@ -97,6 +106,7 @@ public class ApplicationServerPushSession extends WSRequest {
         gen.writeStringField("password", this.password);
         gen.writeStringField("device", this.deviceType);
         gen.writeNumberField("appid", appID);
+        gen.writeStringField("combined", this.combinedUser);
         gen.writeEndObject();
     }
     
@@ -107,6 +117,7 @@ public class ApplicationServerPushSession extends WSRequest {
 
     public static ApplicationServerPushSession fromBson(JsonParser parser) throws IOException {
         ApplicationServerPushSession asps = new ApplicationServerPushSession();
+        // When we start here, the parser should be on a START_OBJECT token.
         JsonToken nxtTok = parser.nextToken();
         while (nxtTok != JsonToken.END_OBJECT) {
             String fieldName = parser.getCurrentName();
@@ -131,7 +142,11 @@ public class ApplicationServerPushSession extends WSRequest {
                 case "appid":
                     asps.setAppID(parser.getLongValue());
                     break;
+                case "combined":
+                    asps.setCombinedUser(parser.getText());
+                    break;
             }
+            // Move past the field value to hte next field name.
             nxtTok = parser.nextToken();
         }
 

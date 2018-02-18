@@ -19,7 +19,7 @@ import com.mobilehelix.appserver.system.GlobalPropertiesManager;
 import com.mobilehelix.appserver.constants.HTTPHeaderConstants;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
-import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.appserver.system.ControllerConnectionBase;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.WSUserPreference;
 import java.security.MessageDigest;
@@ -59,10 +59,6 @@ public class SessionManager {
     @EJB
     private GlobalPropertiesManager globalProperties;
     
-    /* App server init object. */
-    @EJB
-    private InitApplicationServer initAS;
-    
     /* Used when creating debug sessions ... */
     @EJB
     private PushManager pushMgr;
@@ -86,10 +82,10 @@ public class SessionManager {
         }
     }    
     
-    public Session addSession(CreateSessionRequest sess)
+    public Session addSession(CreateSessionRequest sess, ControllerConnectionBase conn)
             throws AppserverSystemException {
         String sessIDB64 = hashSessionID(sess.getSessionKey());
-        Session appServerSession = new Session(sess);
+        Session appServerSession = new Session(sess, conn);
         globalSessionMap.put(sessIDB64, appServerSession);
         return appServerSession;
     }
@@ -139,17 +135,18 @@ public class SessionManager {
         return null;
     }
 
-    public void createDebugSession() throws AppserverSystemException {
+    public void createDebugSession(ControllerConnectionBase conn) throws AppserverSystemException {
         List<Long> appIDs = new LinkedList<>();
         List<Integer> appGenIDs = new LinkedList<>();
         this.debugSession = new Session(globalProperties.getClientName(),
             this.getDebugUser(),
             this.getDebugPassword(),
-            globalProperties.getDebugUserEmail());
+            globalProperties.getDebugUserEmail(),
+                conn);
                     
-        initAS.getControllerConnection().refreshApplications(globalProperties.getClientName(), 
+        conn.refreshApplications(globalProperties.getClientName(), 
             this.debugSession.getCredentials().getUsernameNoDomain(), appIDs, appGenIDs);
-        initAS.getControllerConnection().refreshUserPrefs(globalProperties.getClientName(), 
+        conn.refreshUserPrefs(globalProperties.getClientName(), 
                 this.debugSession.getCredentials().getUsernameNoDomain(), null, debugSession);
         
         Long[] appIDsArr = new Long[appIDs.size()];
@@ -169,11 +166,12 @@ public class SessionManager {
                 new LinkedList<WSUserPreference>());
     }
     
-    public Session getSessionForRequest(String sessIDB64) throws AppserverSystemException {
+    public Session getSessionForRequest(String sessIDB64,
+            ControllerConnectionBase conn) throws AppserverSystemException {
         if (sessIDB64 == null) {
             if (this.isDebugOn()) {
                 if (this.debugSession == null) {
-                    this.createDebugSession();
+                    this.createDebugSession(conn);
                 }
                 return this.debugSession;
             }
@@ -182,9 +180,10 @@ public class SessionManager {
         return globalSessionMap.get(sessIDB64);
     }
     
-    public Session getSessionForRequest(HttpServletRequest req) throws AppserverSystemException {
+    public Session getSessionForRequest(HttpServletRequest req,
+            ControllerConnectionBase conn) throws AppserverSystemException {
         String sessIDB64 = this.getSessIDFromRequest(req);
-        return this.getSessionForRequest(sessIDB64);
+        return this.getSessionForRequest(sessIDB64, conn);
     }
 
     public Session getSessionForID(String sessIDB64) {

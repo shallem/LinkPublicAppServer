@@ -1,21 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." default="all" name="LinkPublicAppServer">
 
-  <target name="increment-version">
-    <propertyfile file="ApplicationServer-ejbPublic/src/java/com/mobilehelix/version/version.properties">
-      <entry key="Revision" operation="+" value="1" type="int"/>
-    </propertyfile>
-  </target>
-
   <target name="ApplicationServerServices">
     <ant dir="ApplicationServerWebServices" target="jar" useNativeBaseDir="true">
-      <property file="${UserPropertiesFile}"/>
-    </ant>
-  </target>
-
-
-  <target name="ApplicationServer-ejbPublic">
-    <ant dir="ApplicationServer-ejbPublic" target="dist" useNativeBaseDir="true">
       <property file="${UserPropertiesFile}"/>
     </ant>
   </target>
@@ -32,13 +19,10 @@
     </ant>
   </target>
 
-  <target name="all" depends="ApplicationServerServices,ApplicationServer-ejbPublic,ApplicationServer-adminws,LinkSDKSerializer"/>
+  <target name="all" depends="ApplicationServerServices,ApplicationServer-adminws,LinkSDKSerializer"/>
 
   <target name="clean">
     <ant dir="ApplicationServerWebServices" target="clean" useNativeBaseDir="true">
-      <property file="${UserPropertiesFile}"/>
-    </ant>
-    <ant dir="ApplicationServer-ejbPublic" target="clean" useNativeBaseDir="true">
       <property file="${UserPropertiesFile}"/>
     </ant>
     <ant dir="ApplicationServer-adminws" target="clean" useNativeBasedir="true">

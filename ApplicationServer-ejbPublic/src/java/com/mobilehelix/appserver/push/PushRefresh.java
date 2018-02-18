@@ -13,5 +13,5 @@ import javax.ws.rs.core.MultivaluedMap;
  * @author v3devel
  */
 public interface PushRefresh {
-    public byte[] doRefresh(MultivaluedMap<String, String> params) throws AppserverSystemException;
+    public byte[] doRefresh(MultivaluedMap<String, String> params, PushManager mgr) throws AppserverSystemException;
 }

@@ -229,6 +229,18 @@ public class JSONSerializer {
                     jg.writeEndArray();
                 }
 
+                m = c.getMethod("getFieldUpdates", (Class[]) null);
+                Update[] fieldUpdates = (Update[])m.invoke(obj, new Object[]{});
+                jg.writeArrayFieldStart("fieldUpdates");
+                if (fieldUpdates != null) {
+                    for (Update u : fieldUpdates) {
+                        if (u != null) {
+                            u.toJSON(jg);
+                        }
+                    }
+                }
+                jg.writeEndArray();
+                
                 jg.writeEndObject();
                 return true;
             } 
