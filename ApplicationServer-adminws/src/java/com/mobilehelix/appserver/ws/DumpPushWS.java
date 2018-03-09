@@ -73,6 +73,10 @@ public class DumpPushWS {
                     msg = "Success";
                     
                     for (PushReceiver pr : this.pushMgr.allSessions()) {
+                        if (pr.getUserid() == null) {
+                            // For a password vault connection that never was "activated"
+                            continue;
+                        }
                         ApplicationServerPushSession nxt = new ApplicationServerPushSession();
                         nxt.setUniqueID(pr.getUniqueID());
                         nxt.setClientid(pr.getClientid());
