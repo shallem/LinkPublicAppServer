@@ -102,8 +102,12 @@ public class ApplicationServerPushSession extends WSRequest {
         // write out fields.
         gen.writeStringField("id", this.uniqueID);
         gen.writeStringField("client", this.clientid);
-        gen.writeStringField("user", this.userid);
-        gen.writeStringField("password", this.password);
+        if (this.userid != null) {
+            gen.writeStringField("user", this.userid);
+        }
+        if (this.password != null) {
+            gen.writeStringField("password", this.password);
+        }
         gen.writeStringField("device", this.deviceType);
         gen.writeNumberField("appid", appID);
         gen.writeStringField("combined", this.combinedUser);
