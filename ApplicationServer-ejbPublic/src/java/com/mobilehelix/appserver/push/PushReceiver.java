@@ -121,13 +121,11 @@ public abstract class PushReceiver {
      * @param userid
      * @param password 
      * @param appSettings 
-     * @param isSessionCreate 
      * @param userSettings 
      */
     public abstract void refresh(String userid,
             String password,
             ApplicationSettings appSettings,
-            boolean isSessionCreate,
             Collection<WSUserPreference> userSettings);
     
     /**
@@ -161,12 +159,10 @@ public abstract class PushReceiver {
      * Called to determine if a receiver matches the unique combination of client, user, and app ID.
      * Should return true if it does.
      * @param client
-     * @param userid
-     * @param appID
+     * @param combinedUser
      * @return 
      */
-    public abstract boolean matches(String client,
-            String userid,
+    public abstract boolean matches(String combinedUser,
             Long appID);
     
     /**

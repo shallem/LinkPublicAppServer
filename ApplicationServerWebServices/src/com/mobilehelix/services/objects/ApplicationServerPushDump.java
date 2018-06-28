@@ -85,6 +85,7 @@ public class ApplicationServerPushDump extends WSResponse {
         gen.writeEndObject();
         gen.close();
         return AESUtils.EncryptSensitiveData(baos.toByteArray(), dumpKey);
+        //return baos.toByteArray();
     }
     
     @Override
@@ -153,6 +154,7 @@ public class ApplicationServerPushDump extends WSResponse {
     
     public static ApplicationServerPushDump createFromBson(byte[] encryptedData, SecretKey restoreKey) throws IOException, MHSecurityException {
         byte[] b = AESUtils.DecryptSensitiveData(encryptedData, restoreKey);
+        //byte[] b = encryptedData;
         ApplicationServerPushDump pdump = new ApplicationServerPushDump();
         pdump.fromBson(b);
         return pdump;

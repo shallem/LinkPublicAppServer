@@ -53,7 +53,7 @@ public class PushInitializer {
             String password,
             ApplicationSettings appSettings,
             Collection<WSUserPreference> settings) throws AppserverSystemException {
-        pr.refresh(userid, password, appSettings, false, settings);
+        pr.refresh(userid, password, appSettings, settings);
         return new AsyncResult<>(true);
     }
 }

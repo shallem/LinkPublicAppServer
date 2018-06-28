@@ -93,12 +93,11 @@ public class PushManager {
     }
     
     public void refresh(Session sess, Long appID) {
-        String combinedUser = MessageFormat.format("{0}|{1}", new Object[]{ sess.getClient(), 
-            sess.getCredentials().getAuthUsername() });
+        String combinedUser = this.getCombinedUser(sess.getClient(), sess.getCredentials().getAuthUsername());
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
-                if (receiver.matches(sess.getClient(), sess.getCredentials().getAuthUsername(), appID)) {
+                if (receiver.matches(combinedUser, appID)) {
                     receiver.refresh();
                 }
             }
@@ -141,13 +140,12 @@ public class PushManager {
     public String getCombinedUser(String client, String userID) {
         return MessageFormat.format("{0}|{1}", new Object[]{ client, userID });
     }
-
-    public PushReceiver getReceiver(String client, String userID, Long appID) {
-        String combinedUser = this.getCombinedUser(client, userID);
+    
+    private PushReceiver findPushReceiver(String combinedUser, Long appID) {
         ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
         if (receivers != null && !receivers.isEmpty()) {
             for (PushReceiver receiver : receivers) {
-                if (receiver.matches(client, userID, appID)) {
+                if (receiver.matches(combinedUser, appID)) {
                     return receiver;
                 }
             }
@@ -155,7 +153,8 @@ public class PushManager {
         return null;
     }
     
-    public void addSession(String client, 
+    public void addSession(String combinedUser,
+            String client, 
             String userID, 
             String password, 
             String deviceType,
@@ -179,21 +178,15 @@ public class PushManager {
         LOG.log(Level.FINE, "Create or refresh push session for app {0}", as.getAppName());
 
         // See if we have a push receiver for client/user/app
-        boolean found = false;
-        String combinedUser = this.getCombinedUser(client, userID);
-        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
-        if (receivers != null && !receivers.isEmpty()) {
-            for (PushReceiver receiver : receivers) {
-                if (receiver.matches(client, userID, appID)) {
-                    found = true;
-                    LOG.log(Level.INFO, "Refreshing push session for {0}", combinedUser);
-                    pushInit.doRefresh(receiver, userID, password, as, userSettings);
-                }
-            }
-        }
-        try {
-            if (!found) {
-                String uniqueID = this.getUniqueID(client, userID, appID);
+        PushReceiver receiver = this.findPushReceiver(combinedUser, appID);
+        if (receiver != null) {
+            LOG.log(Level.INFO, "Refreshing push session for {0}, app {1}", new Object[] {
+                userID, appID
+            });
+            receiver.refresh(userID, password, as, userSettings);
+        } else {
+            try {
+                String uniqueID = this.getUniqueID(combinedUser, appID);
                 LOG.log(Level.INFO, "Creating push session for {0}, {1}", new Object[] {
                     combinedUser,
                     uniqueID
@@ -213,19 +206,12 @@ public class PushManager {
                         pushAccepted,
                         userSettings,
                         this);
-                /*
-                if (newReceiver.create(asHostPlusPort, uniqueID, newSess.getClient(), newSess.getUserID(), newSess.getPassword(), newSess.getDeviceType(), as)) {
-                    LOG.log(Level.FINE, "Created push session for {0}, ID {1}", new Object[] {
-                        combinedUser,
-                        uniqueID
-                    });   
-                } */
-            }
-        } catch(NoSuchAlgorithmException | UnsupportedEncodingException ex) {
-            LOG.log(Level.SEVERE, "Failed to create push session.", ex);
-            throw new AppserverSystemException("Failed to create push session.", 
-                    "FailedToCreatePushSession",
-                    new String[] { ex.getMessage() });
+            } catch(NoSuchAlgorithmException | UnsupportedEncodingException ex) {
+                LOG.log(Level.SEVERE, "Failed to create push session.", ex);
+                throw new AppserverSystemException("Failed to create push session.", 
+                        "FailedToCreatePushSession",
+                        new String[] { ex.getMessage() });
+            }            
         }
     }
     
@@ -236,7 +222,7 @@ public class PushManager {
         this.addSession(appIDs, 
                 appGenIDs, 
                 newSess.getClient(), 
-                newSess.getUserID(), 
+                newSess.getUserID(),
                 newSess.getPassword(), 
                 newSess.getDeviceType(),
                 newSess.getUserSettings());
@@ -256,8 +242,23 @@ public class PushManager {
         for (int i = 0; i < appIDs.length; ++i) {
             Long appID = appIDs[i];
             Integer appGenID = appGenIDs[i];
-            this.addSession(client, userID, password, deviceType, appID, appGenID, userSettings);
+            
+            String combinedUser = this.getCombinedUser(client, userID);
+            this.removeSession(combinedUser, appID);
+            this.addSession(combinedUser, client, userID, password, deviceType, appID, appGenID, userSettings);
         } 
+    }
+    
+    public void addOrRefreshSession(Session sess, Long appID, Long resourceID) throws AppserverSystemException {
+        String combinedUser = this.getCombinedUser(sess.getClient(), sess.getCredentials().getAuthUsername());
+        this.addSession(combinedUser,
+                sess.getClient(),
+                sess.getCredentials().getAuthUsername(),
+                sess.getCredentials().getPassword(),
+                sess.getDeviceType(),
+                appID,
+                ApplicationServerRegistry.FORCE_NO_REFRESH,
+                sess.getAllPrefs(resourceID));
     }
     
     public void storeSession(String clientID,
@@ -272,7 +273,7 @@ public class PushManager {
             this.userPushMap.put(combinedUser, receivers);
         } else {
             for (PushReceiver r : receivers) {
-                if (r.matches(clientID, userID, appID)) {
+                if (r.matches(combinedUser, appID)) {
                     // We can only have ONE push subscription at a time in idMap. Otherwise we will push
                     // the same email over and over again ...
                     idMap.remove(r.getSubscriptionID());
@@ -282,37 +283,43 @@ public class PushManager {
         receivers.add(newReceiver);
     }
     
-    public void removeSession(String uniqueID,
-            String combinedUser) {
-        idMap.remove(uniqueID);
-        ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
-        if (receivers != null) {
-            Integer idx = 0;
-            Integer nsessions = receivers.size();
-            Iterator<PushReceiver> it = receivers.iterator();
-            while (it.hasNext()) {
-                PushReceiver pr = it.next();
-                if (pr.getUniqueID().equals(uniqueID)) {
-                    LOG.log(Level.WARNING, "Removing push session {0} or {1} for combined user {3}", new Object[] {
-                        idx,
-                        nsessions,
-                        combinedUser
-                    });
-                    receivers.iterator().remove();
-                    break;
+    public void removeSession(String combinedUser, Long appID) throws AppserverSystemException {
+        try {
+            String uniqueID = this.getUniqueID(combinedUser, appID);
+
+            idMap.remove(uniqueID);
+            ConcurrentLinkedQueue<PushReceiver> receivers = this.userPushMap.get(combinedUser);
+            if (receivers != null) {
+                Integer idx = 0;
+                Integer nsessions = receivers.size();
+                Iterator<PushReceiver> it = receivers.iterator();
+                while (it.hasNext()) {
+                    PushReceiver pr = it.next();
+                    if (pr.getUniqueID().equals(uniqueID)) {
+                        LOG.log(Level.WARNING, "Removing push session {0} or {1} for combined user {3}", new Object[] {
+                            idx,
+                            nsessions,
+                            combinedUser
+                        });
+                        receivers.iterator().remove();
+                        break;
+                    }
+                    ++idx;
                 }
-                ++idx;
             }
+        } catch(NoSuchAlgorithmException | UnsupportedEncodingException ex) {
+            LOG.log(Level.SEVERE, "Failed to create push session.", ex);
+            throw new AppserverSystemException("Failed to remove push session.", 
+                        "FailedToCreatePushSession",
+                        new String[] { ex.getMessage() });
         }
     }
     
-    private String getUniqueID(String clientid,
-            String userid,
+    private String getUniqueID(String combinedUser,
             Long appID) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest digest = MessageDigest.getInstance("SHA-1");
         digest.reset();
-        digest.update(clientid.getBytes("utf8"));
-        digest.update(userid.getBytes("utf8"));
+        digest.update(combinedUser.getBytes("utf8"));
         digest.update(appID.toString().getBytes("utf8"));
         
         // Add in a random 8 bytes salt.
@@ -381,7 +388,11 @@ public class PushManager {
                     pr.getCombinedUser(),
                     pr.getUniqueID()
                 });
-                this.removeSession(pr.getUniqueID(), pr.getCombinedUser());
+                try {
+                    this.removeSession(pr.getCombinedUser(), pr.getAppID());
+                } catch (AppserverSystemException ex) {
+                    LOG.log(Level.SEVERE, "Failed to remove push session for: " + pr.getCombinedUser(), ex);
+                }
             }
         }
     }
