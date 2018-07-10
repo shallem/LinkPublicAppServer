@@ -168,7 +168,8 @@ public class DumpPushWS {
                                 aps.getDeviceType(), 
                                 aps.getAppID(), 
                                 0, 
-                                prefs);
+                                prefs,
+                                aps.getUserEmail());
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()

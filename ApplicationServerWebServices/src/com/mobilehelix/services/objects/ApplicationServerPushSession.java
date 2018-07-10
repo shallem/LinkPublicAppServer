@@ -24,6 +24,7 @@ public class ApplicationServerPushSession extends WSRequest {
     private String password;
     private String deviceType;
     private String combinedUser;
+    private String userEmail;
     private Long appID;
     
     public ApplicationServerPushSession() {
@@ -84,6 +85,17 @@ public class ApplicationServerPushSession extends WSRequest {
     public void setCombinedUser(String combinedUser) {
         this.combinedUser = combinedUser;
     }
+
+    public String getUserEmail() {
+        if (this.userEmail == null || this.userEmail.isEmpty()) {
+            return this.userid;
+        }
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -107,6 +119,9 @@ public class ApplicationServerPushSession extends WSRequest {
         }
         if (this.password != null) {
             gen.writeStringField("password", this.password);
+        }
+        if (this.userEmail != null) {
+            gen.writeStringField("email", this.userEmail);
         }
         gen.writeStringField("device", this.deviceType);
         gen.writeNumberField("appid", appID);
@@ -148,6 +163,9 @@ public class ApplicationServerPushSession extends WSRequest {
                     break;
                 case "combined":
                     asps.setCombinedUser(parser.getText());
+                    break;
+                case "email":
+                    asps.setUserEmail(parser.getText());
                     break;
             }
             // Move past the field value to hte next field name.
