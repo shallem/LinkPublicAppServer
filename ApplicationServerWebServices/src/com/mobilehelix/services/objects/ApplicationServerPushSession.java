@@ -136,7 +136,8 @@ public class ApplicationServerPushSession extends WSRequest {
 
     public static ApplicationServerPushSession fromBson(JsonParser parser) throws IOException {
         ApplicationServerPushSession asps = new ApplicationServerPushSession();
-        // When we start here, the parser should be on a START_OBJECT token.
+        // When we start here, the parser should be on a START_OBJECT token. Move forward to END_OBJECT or
+        // KEY_NAME
         JsonToken nxtTok = parser.nextToken();
         while (nxtTok != JsonToken.END_OBJECT) {
             String fieldName = parser.getCurrentName();
@@ -168,7 +169,7 @@ public class ApplicationServerPushSession extends WSRequest {
                     asps.setUserEmail(parser.getText());
                     break;
             }
-            // Move past the field value to hte next field name.
+            // Move past the field value to the next field name or END_OBJECT
             nxtTok = parser.nextToken();
         }
 

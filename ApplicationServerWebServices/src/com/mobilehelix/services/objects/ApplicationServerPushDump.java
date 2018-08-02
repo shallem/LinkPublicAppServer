@@ -14,6 +14,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.crypto.SecretKey;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
@@ -24,6 +26,9 @@ import org.codehaus.jackson.JsonToken;
  * @author shallem
  */
 public class ApplicationServerPushDump extends WSResponse {
+
+    private static final Logger LOG = Logger.getLogger(ApplicationServerPushDump.class.getName());
+    
     private List<ApplicationServerPushSession> pushSessions;
     private ConcurrentHashMap<String, ConcurrentHashMap<String, String> > BGPushData;
     
@@ -91,63 +96,83 @@ public class ApplicationServerPushDump extends WSResponse {
     @Override
     protected void fromBson(byte[] b) throws IOException {
         JsonParser parser = WSResponse.InitFromBSON(b);
+        // Pointing at START_OBJECT after InitFromBSON. Move forward to either kEY_NAME or END_OBJECT
         JsonToken nxtToken = parser.nextToken();
         while (nxtToken != JsonToken.END_OBJECT) {
+            // Pointing at field name.
             String fieldName = parser.getCurrentName();
+            // Move past field name.
+            parser.nextToken();
             switch(fieldName) {
                 case "sess":
-                    parser.nextToken(); // Move past START_ARRAY
+                    // Pointing at START_ARRAY. Next is either (a) END_ARRAY (empty), or (b) START_OBJECT
                     while(parser.nextToken() != JsonToken.END_ARRAY) {
+                        // Parse starting at START_OBJECT
                         this.addPushSession(ApplicationServerPushSession.fromBson(parser));
+                        // Pointint at END_OBJECT
                     }
+                    // Pointing at END_ARRAY
                     break;
                 case "bg":
                     ConcurrentHashMap<String, ConcurrentHashMap<String, String>> bgData = new ConcurrentHashMap<>();
-                    parser.nextToken(); // Move past START_ARRAY
-                    while(parser.nextToken() != JsonToken.END_ARRAY) {
-                        String entryKey = null;
-                        ConcurrentHashMap<String, String> entryVal = new ConcurrentHashMap<>();
-                        while (parser.nextToken() != JsonToken.END_OBJECT) {
-                            String entryField = parser.getCurrentName();
-                            parser.nextToken(); // Move past field name.
-                            switch(entryField) {
-                                case "key":
-                                    entryKey = parser.getText();
-                                    break;
-                                case "val":
-                                    while (parser.nextToken() != JsonToken.END_ARRAY) {
-                                        String subKey = null;
-                                        String subVal = null;
-                                        while (parser.nextToken() != JsonToken.END_OBJECT) {
-                                            String subField = parser.getCurrentName();
-                                            parser.nextToken(); // Move past field name
-                                            switch(subField) {
-                                                case "subKey":
-                                                    subKey = parser.getText();
-                                                    break;
-                                                case "subVal":
-                                                    subVal = parser.getText();
-                                                    break;
+                    try {
+                        // Pointing at START_ARRAY. Next is either (a) END_ARRAY (empty), or (b) START_OBJECT
+                        while(parser.nextToken() != JsonToken.END_ARRAY) {
+                            String entryKey = null;
+                            ConcurrentHashMap<String, String> entryVal = new ConcurrentHashMap<>();
+                            // Pointing at START_OBJECT or last value (on iterations >1). Next is either a field name or END_OBJECT
+                            while (parser.nextToken() != JsonToken.END_OBJECT) {
+                                String entryField = parser.getCurrentName();
+                                parser.nextToken(); // Move past field name.
+                                switch(entryField) {
+                                    case "key":
+                                        // Pointing at VALUE
+                                        entryKey = parser.getText();
+                                        break;
+                                    case "val":
+                                        // Pointing at START_ARRAY. Next is either START_OBJECT or END_ARRAY.
+                                        while (parser.nextToken() != JsonToken.END_ARRAY) {
+                                            String subKey = null;
+                                            String subVal = null;
+                                            // Pointing at START_OBJECT/last value (on iterations >1). Next is either KEY_NAME or END_OBJECT
+                                            while (parser.nextToken() != JsonToken.END_OBJECT) {
+                                                String subField = parser.getCurrentName();
+                                                parser.nextToken(); // Move past field name
+                                                switch(subField) {
+                                                    case "subKey":
+                                                        subKey = parser.getText();
+                                                        break;
+                                                    case "subVal":
+                                                        subVal = parser.getText();
+                                                        break;
+                                                }
+                                            }
+                                            // Pointing at END_OBJECT
+                                            if (subKey != null && subVal != null) {
+                                                entryVal.put(subKey, subVal);
                                             }
                                         }
-                                        if (subKey != null && subVal != null) {
-                                            entryVal.put(subKey, subVal);
-                                        }
-                                    }
-                                    break;
+                                        // Pointing at END_ARRAY
+                                        break;
+                                }
+                            }
+                            // Pointing at END_OBJECT
+                            if (entryKey != null) {
+                                bgData.put(entryKey, entryVal);
                             }
                         }
-                        if (entryKey != null) {
-                            bgData.put(entryKey, entryVal);
-                        }
+                        // Pointing at END_ARRAY
+                        this.setbGPushData(bgData);
+                    } catch(Exception ex) {
+                        LOG.log(Level.INFO, "Failed to restore push session BG refresh data. Push sessions will be restored, but background refresh will not work.", ex);
                     }
-                    this.setbGPushData(bgData);
                     break;
                 default:
                     // Advance past the value we are going to ignore (status/msg).
                     parser.nextToken();
                     break;
             }
+            // Pointing at last token in the value of the outer field. Move forward to next KEY_NAME or END_OBJECT
             nxtToken = parser.nextToken();
         }
     }
