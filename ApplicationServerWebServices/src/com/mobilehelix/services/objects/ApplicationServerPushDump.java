@@ -102,14 +102,18 @@ public class ApplicationServerPushDump extends WSResponse {
             // Pointing at field name.
             String fieldName = parser.getCurrentName();
             // Move past field name.
+            LOG.log(Level.INFO, "1: {0}", parser.getCurrentToken().toString());
             parser.nextToken();
             switch(fieldName) {
                 case "sess":
                     // Pointing at START_ARRAY. Next is either (a) END_ARRAY (empty), or (b) START_OBJECT
+                    LOG.log(Level.INFO, "2: {0}", parser.getCurrentToken().toString());
                     while(parser.nextToken() != JsonToken.END_ARRAY) {
+                        LOG.log(Level.INFO, "3: {0}", parser.getCurrentToken().toString());
                         // Parse starting at START_OBJECT
                         this.addPushSession(ApplicationServerPushSession.fromBson(parser));
                         // Pointint at END_OBJECT
+                        LOG.log(Level.INFO, "4: {0}", parser.getCurrentToken().toString());
                     }
                     // Pointing at END_ARRAY
                     break;
@@ -117,11 +121,14 @@ public class ApplicationServerPushDump extends WSResponse {
                     ConcurrentHashMap<String, ConcurrentHashMap<String, String>> bgData = new ConcurrentHashMap<>();
                     try {
                         // Pointing at START_ARRAY. Next is either (a) END_ARRAY (empty), or (b) START_OBJECT
+                        LOG.log(Level.INFO, "5: {0}", parser.getCurrentToken().toString());
                         while(parser.nextToken() != JsonToken.END_ARRAY) {
+                            LOG.log(Level.INFO, "6: {0}", parser.getCurrentToken().toString());
                             String entryKey = null;
                             ConcurrentHashMap<String, String> entryVal = new ConcurrentHashMap<>();
                             // Pointing at START_OBJECT or last value (on iterations >1). Next is either a field name or END_OBJECT
                             while (parser.nextToken() != JsonToken.END_OBJECT) {
+                                LOG.log(Level.INFO, "7: {0}", parser.getCurrentToken().toString());
                                 String entryField = parser.getCurrentName();
                                 parser.nextToken(); // Move past field name.
                                 switch(entryField) {
@@ -131,7 +138,9 @@ public class ApplicationServerPushDump extends WSResponse {
                                         break;
                                     case "val":
                                         // Pointing at START_ARRAY. Next is either START_OBJECT or END_ARRAY.
+                                        LOG.log(Level.INFO, "8: {0}", parser.getCurrentToken().toString());
                                         while (parser.nextToken() != JsonToken.END_ARRAY) {
+                                            LOG.log(Level.INFO, "9: {0}", parser.getCurrentToken().toString());
                                             String subKey = null;
                                             String subVal = null;
                                             // Pointing at START_OBJECT/last value (on iterations >1). Next is either KEY_NAME or END_OBJECT
@@ -151,6 +160,7 @@ public class ApplicationServerPushDump extends WSResponse {
                                             if (subKey != null && subVal != null) {
                                                 entryVal.put(subKey, subVal);
                                             }
+                                            LOG.log(Level.INFO, "10: {0}", parser.getCurrentToken().toString());
                                         }
                                         // Pointing at END_ARRAY
                                         break;
@@ -173,7 +183,9 @@ public class ApplicationServerPushDump extends WSResponse {
                     break;
             }
             // Pointing at last token in the value of the outer field. Move forward to next KEY_NAME or END_OBJECT
+            LOG.log(Level.INFO, "11: {0}", parser.getCurrentToken().toString());
             nxtToken = parser.nextToken();
+            LOG.log(Level.INFO, "12: {0}", parser.getCurrentToken().toString());
         }
     }
     
