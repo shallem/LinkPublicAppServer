@@ -80,6 +80,7 @@ public class DumpPushWS {
                         nxt.setPassword(pr.getPassword());
                         nxt.setDeviceType(pr.getDeviceType());
                         nxt.setAppID(pr.getAppID());
+                        nxt.setUserEmail(pr.getUserEmail());
                         nxt.setCombinedUser(pr.getCombinedUser());
                         ret.addPushSession(nxt);
                     }
