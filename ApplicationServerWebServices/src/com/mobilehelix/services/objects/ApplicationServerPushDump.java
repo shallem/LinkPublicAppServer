@@ -12,7 +12,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +32,7 @@ public class ApplicationServerPushDump extends WSResponse {
     private static final Logger LOG = Logger.getLogger(ApplicationServerPushDump.class.getName());
     
     private List<ApplicationServerPushSession> pushSessions;
-    private ConcurrentHashMap<String, ConcurrentHashMap<String, String> > BGPushData;
+    private Map<String, Map<String, String> > BGPushData;
     
     public ApplicationServerPushDump() {
         this.pushSessions = new LinkedList<>();
@@ -44,12 +46,12 @@ public class ApplicationServerPushDump extends WSResponse {
         return pushSessions;
     }
     
-    public ConcurrentHashMap<String, ConcurrentHashMap<String, String>> getBGPushData() {
+    public Map<String, Map<String, String>> getBGPushData() {
         return BGPushData;
     }
 
-    public void setbGPushData(ConcurrentHashMap<String, ConcurrentHashMap<String, String>> bGPushData) {
-        this.BGPushData = bGPushData;
+    public void setbGPushData(Map<String, Map<String, String>> bGPushData) {
+        this.BGPushData = new TreeMap<>(bGPushData);
     }
     
     public byte[] toBson(SecretKey dumpKey) throws IOException, MHSecurityException {
@@ -71,7 +73,7 @@ public class ApplicationServerPushDump extends WSResponse {
             gen.writeEndArray();
             if (this.BGPushData != null) {
                 gen.writeArrayFieldStart("bg");
-                for (Entry<String, ConcurrentHashMap<String, String>> e : this.BGPushData.entrySet()) {
+                for (Entry<String, Map<String, String>> e : this.BGPushData.entrySet()) {
                     gen.writeStartObject();
                     gen.writeStringField("key", e.getKey());
                     gen.writeArrayFieldStart("val");
@@ -118,14 +120,14 @@ public class ApplicationServerPushDump extends WSResponse {
                     // Pointing at END_ARRAY
                     break;
                 case "bg":
-                    ConcurrentHashMap<String, ConcurrentHashMap<String, String>> bgData = new ConcurrentHashMap<>();
+                    Map<String, Map<String, String>> bgData = new TreeMap<>();
                     try {
                         // Pointing at START_ARRAY. Next is either (a) END_ARRAY (empty), or (b) START_OBJECT
                         LOG.log(Level.FINE, "5: {0}", parser.getCurrentToken().toString());
                         while(parser.nextToken() != JsonToken.END_ARRAY) {
                             LOG.log(Level.FINE, "6: {0}", parser.getCurrentToken().toString());
                             String entryKey = null;
-                            ConcurrentHashMap<String, String> entryVal = new ConcurrentHashMap<>();
+                            TreeMap<String, String> entryVal = new TreeMap<>();
                             // Pointing at START_OBJECT or last value (on iterations >1). Next is either a field name or END_OBJECT
                             while (parser.nextToken() != JsonToken.END_OBJECT) {
                                 LOG.log(Level.FINE, "7: {0}", parser.getCurrentToken().toString());
