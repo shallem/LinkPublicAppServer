@@ -44,7 +44,11 @@ public class PushRefreshWS {
         MultivaluedMap<String, String> form = uriInfo.getQueryParameters();
         try {
             PushRefresh action = pushMgr.executeRefreshAction(form);
-            byte[] refreshData = action.doRefresh(form, pushMgr);
+            byte[] refreshData = action.getRefresh(form);
+            if (refreshData == null) {
+                LOG.log(Level.INFO, "Background push refresh failed with error. Check logs for the exception in runRefresh.");
+                return Response.noContent().build();                
+            }
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.SUCCESS, "Success", refreshData);
             return Response.ok(resp.toBson()).build();
         } catch(AppserverSystemException ex) {
