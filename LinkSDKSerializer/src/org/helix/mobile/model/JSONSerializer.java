@@ -124,7 +124,7 @@ public class JSONSerializer {
         serializeObjectFields(jg, obj, null);
     }
 
-    private static void iterateOverObjectField(JSONGenerator jg,
+    public static void iterateOverObjectField(JSONGenerator jg,
             Object obj,
             Method getter) throws IllegalAccessException, IllegalArgumentException, 
                                   InvocationTargetException, IOException, NoSuchMethodException {
