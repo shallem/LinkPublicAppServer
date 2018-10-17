@@ -44,6 +44,11 @@ public class PushRefreshWS {
         MultivaluedMap<String, String> form = uriInfo.getQueryParameters();
         try {
             PushRefresh action = pushMgr.executeRefreshAction(form);
+            if (action == null) {
+                // Stale request - we only queue up one push action of each type per user account.
+                return Response.noContent().build();                                
+            }
+            
             byte[] refreshData = action.getRefresh(form);
             if (refreshData == null) {
                 LOG.log(Level.INFO, "Background push refresh failed with error. Check logs for the exception in runRefresh.");
