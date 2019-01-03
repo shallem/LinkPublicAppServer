@@ -51,7 +51,7 @@ public class PushRefreshWS {
             
             byte[] refreshData = action.getRefresh(form);
             if (refreshData == null) {
-                LOG.log(Level.INFO, "Background push refresh failed with error. Check logs for the exception in runRefresh.");
+                LOG.log(Level.INFO, "Background push refresh failed with error - the refresh data is null. This can be caused by a bg refresh from a device that has not logged in for a long time. Also, check logs for a possible exception in runRefresh.");
                 return Response.noContent().build();                
             }
             ApplicationServerRefreshResponse resp = new ApplicationServerRefreshResponse(WSResponse.SUCCESS, "Success", refreshData);
