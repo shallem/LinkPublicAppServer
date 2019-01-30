@@ -15,6 +15,8 @@
  */
 package org.helix.mobile.model;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -22,8 +24,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import javax.xml.bind.annotation.XmlRootElement;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
 
 /**
  * JSON-serializable object intended for use as a response to a web services
@@ -100,7 +100,7 @@ public class ClientWSResponse {
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
 
-        try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+        try (JsonGenerator jg = jsonF.createGenerator(outputString)) {
             this.toJSON(jg);
         }
 

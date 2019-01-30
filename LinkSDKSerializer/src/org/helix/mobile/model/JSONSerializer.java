@@ -15,6 +15,8 @@
  */
 package org.helix.mobile.model;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
@@ -32,8 +34,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
 
 
 /**
@@ -80,23 +80,18 @@ public class JSONSerializer {
     public JSONSerializer() {
     }
 
-    public static String serializeError(String msg) {
-        try {
-            StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
-            JsonFactory jsonF = new JsonFactory();
-            JsonGenerator gen = jsonF.createJsonGenerator(outputString);
-            gen.writeStartObject();
-            gen.writeStringField("error", msg);
-            gen.writeEndObject();
-            
-            JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
-            outputString.flush();
-            
-            return outputString.toString();
-        } catch (IOException ex) {
-            Logger.getLogger(JSONSerializer.class.getName()).log(Level.SEVERE, "Failed to serialize JSON error.", ex);
-            return "{ 'error' : 'Serialization of the error message failed. Please review the server logs.' }";
-        }
+    public static String serializeError(String msg) throws IOException {
+        StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
+        JsonFactory jsonF = new JsonFactory();
+        JsonGenerator gen = jsonF.createGenerator(outputString);
+        gen.writeStartObject();
+        gen.writeStringField("error", msg);
+        gen.writeEndObject();
+
+        JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
+        outputString.flush();
+
+        return outputString.toString();
     }
     
     public static String serializeObject(Object obj) throws IOException,

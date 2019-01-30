@@ -1,23 +1,23 @@
 package org.helix.mobile.model;
 
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.FormatSchema;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.PrettyPrinter;
+import com.fasterxml.jackson.core.SerializableString;
+import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.core.io.CharacterEscapes;
+import com.fasterxml.jackson.core.io.SerializedString;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Set;
-import org.codehaus.jackson.Base64Variant;
-import org.codehaus.jackson.FormatSchema;
-import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.JsonStreamContext;
-import org.codehaus.jackson.ObjectCodec;
-import org.codehaus.jackson.PrettyPrinter;
-import org.codehaus.jackson.SerializableString;
-import org.codehaus.jackson.Version;
-import org.codehaus.jackson.io.CharacterEscapes;
-import org.codehaus.jackson.io.SerializedString;
 
 /**
  * Decorator for JsonGenerator with an extra state 'visitedClasses'
