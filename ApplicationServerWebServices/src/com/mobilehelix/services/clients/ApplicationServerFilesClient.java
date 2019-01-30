@@ -1,39 +1,38 @@
 package com.mobilehelix.services.clients;
 
-import com.mobilehelix.services.interfaces.RestClient;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
+import com.mobilehelix.services.interfaces.ApacheClientInterface;
+import com.mobilehelix.services.interfaces.ApacheRestClient;
+import com.mobilehelix.services.utils.RestURLUtils;
 import java.io.IOException;
-import java.util.TreeMap;
-import org.apache.commons.codec.EncoderException;
+import java.util.Properties;
 
 /**
  *
  * @author shallem
  */
-public class ApplicationServerFilesClient extends RestClient {
+public class ApplicationServerFilesClient extends ApacheClientInterface {
     
     public ApplicationServerFilesClient(String host,
-            HTTPSProperties props,
+            ApacheRestClient cli,
             String op) {
-        super(host, "/clientws/files/" + op, props);
+        super(cli, host, "/clientws/files/" + op, 3);
     }
     
-    public String getRoots(String sessID, Long appID) throws UniformInterfaceException, IOException, EncoderException {
-        TreeMap<String, String> paramsMap = new TreeMap<>();
+    public String getRoots(String sessID, Long appID) throws IOException {
+        Properties paramsMap = new Properties();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
-        super.appendQueryParameters(paramsMap);
+        String qry = RestURLUtils.genQueryParams(paramsMap);
         
-        byte[] res = super.runGet();
+        byte[] res = this.getClient().bsonGet(this.getURL(), qry, this.getNtries());
         if (res != null) {
             return new String(res);
         }
         return null;
     }
     
-    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws UniformInterfaceException, IOException, EncoderException {
-        TreeMap<String, String> paramsMap = new TreeMap<>();
+    public String syncDir(String sessID, Long appID, String rootDigest, String syncTarget, String state) throws IOException {
+        Properties paramsMap = new Properties();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
         if (rootDigest != null) {
@@ -47,17 +46,17 @@ public class ApplicationServerFilesClient extends RestClient {
         if (state != null) {
             paramsMap.put("state", state);
         }
-        super.appendQueryParameters(paramsMap);
+        String qry = RestURLUtils.genQueryParams(paramsMap);
         
-        byte[] res = super.runGet();
+        byte[] res = this.getClient().bsonGet(this.getURL(), qry, this.getNtries());
         if (res != null) {
             return new String(res);
         }
         return null;
     } 
     
-    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) throws UniformInterfaceException, IOException, EncoderException {
-        TreeMap<String, String> paramsMap = new TreeMap<>();
+    public String getFileInfo(String sessID, Long appID, String rootDigest, String fileID) throws IOException {
+        Properties paramsMap = new Properties();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
         if (rootDigest != null) {
@@ -66,17 +65,17 @@ public class ApplicationServerFilesClient extends RestClient {
             paramsMap.put("digest", "ROOT");
         }
         paramsMap.put("id", fileID);
-        super.appendQueryParameters(paramsMap);
+        String qry = RestURLUtils.genQueryParams(paramsMap);
         
-        byte[] res = super.runGet();
+        byte[] res = this.getClient().bsonGet(this.getURL(), qry, this.getNtries());
         if (res != null) {
             return new String(res);
         }
         return null;
     }  
     
-    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws UniformInterfaceException, IOException, EncoderException {
-        TreeMap<String, String> paramsMap = new TreeMap<>();
+    public byte[] downloadFile(String sessID, Long appID, String rootDigest, String fileID, String fileName) throws IOException {
+        Properties paramsMap = new Properties();
         paramsMap.put("sessionid", sessID);
         paramsMap.put("appid", appID.toString());
         if (rootDigest != null) {
@@ -88,8 +87,8 @@ public class ApplicationServerFilesClient extends RestClient {
         if (fileName != null) {
             paramsMap.put("filename", fileName);
         }
-        super.appendQueryParameters(paramsMap);
+        String qry = RestURLUtils.genQueryParams(paramsMap);
         
-        return super.runGet();
+        return this.getClient().bsonGet(this.getURL(), qry, this.getNtries());
     } 
 }

@@ -4,11 +4,11 @@
  */
 package com.mobilehelix.services.objects;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.mobilehelix.services.interfaces.WSRequest;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import org.codehaus.jackson.JsonGenerator;
 
 /**
  *
@@ -39,20 +39,20 @@ public class ApplicationServerLoginRequest extends WSRequest {
         BsonFactory factory = new BsonFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         
-        JsonGenerator gen = factory.createJsonGenerator(baos);
-        gen.writeStartObject();
-        gen.writeFieldName("controllersessid");
-        gen.writeBinary(this.sessId);
-        gen.writeFieldName("client");
-        gen.writeString(this.client);
-        gen.writeFieldName("authid");
-        gen.writeString(this.authID);
-        gen.writeFieldName("password");
-        gen.writeString(this.authPassword);
-        gen.writeFieldName("appid");
-        gen.writeNumber(this.delegateAppID);
-        gen.writeEndObject();
-        gen.close();
+        try (JsonGenerator gen = factory.createJsonGenerator(baos)) {
+            gen.writeStartObject();
+            gen.writeFieldName("controllersessid");
+            gen.writeBinary(this.sessId);
+            gen.writeFieldName("client");
+            gen.writeString(this.client);
+            gen.writeFieldName("authid");
+            gen.writeString(this.authID);
+            gen.writeFieldName("password");
+            gen.writeString(this.authPassword);
+            gen.writeFieldName("appid");
+            gen.writeNumber(this.delegateAppID);
+            gen.writeEndObject();
+        }
         return baos.toByteArray();
     }
 }

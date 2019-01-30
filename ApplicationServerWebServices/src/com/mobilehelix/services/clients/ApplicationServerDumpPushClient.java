@@ -1,29 +1,25 @@
 package com.mobilehelix.services.clients;
 
-import com.mobilehelix.services.interfaces.RestClient;
-import com.mobilehelix.services.objects.ApplicationServerDumpPushRequest;
-import com.mobilehelix.services.objects.ApplicationServerPushDump;
+import com.mobilehelix.services.interfaces.ApacheClientInterface;
+import com.mobilehelix.services.interfaces.ApacheRestClient;
 import com.mobilehelix.services.objects.GenericBsonResponse;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import java.io.IOException;
-import java.nio.charset.Charset;
 
 /**
  *
  * @author shallem
  */
-public class ApplicationServerDumpPushClient extends RestClient {
+public class ApplicationServerDumpPushClient extends ApacheClientInterface {
     
     public ApplicationServerDumpPushClient(String asIP,
             Integer asPort,
-            HTTPSProperties props,
+            ApacheRestClient cli,
             String op) {
-        super(asIP + ":" + asPort.toString(), "/ws/dumppush/" + op, props);
+        super(cli, asIP + ":" + asPort.toString(), "/ws/dumppush/" + op, 3);
     }
     
-    public byte[] getPushSessions() throws UniformInterfaceException, IOException {
-        byte[] output = super.runGet();
+    public byte[] getPushSessions() throws IOException {
+        byte[] output = this.getClient().bsonGet(this.getURL(), this.getNtries());
         if (output == null) {
             return null;
         }
@@ -32,7 +28,7 @@ public class ApplicationServerDumpPushClient extends RestClient {
     }
     
     public GenericBsonResponse restorePushSessions(byte[] toRestore) throws IOException {
-        byte[] output = super.runPost(toRestore);
+        byte[] output = this.getClient().bsonPost(this.getURL(), toRestore, this.getNtries());
         if (output == null) {
             return null;
         }

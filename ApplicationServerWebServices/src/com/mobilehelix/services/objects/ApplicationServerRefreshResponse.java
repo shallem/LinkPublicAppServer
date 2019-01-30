@@ -5,13 +5,13 @@
  */
 package com.mobilehelix.services.objects;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
 
 /**
  *

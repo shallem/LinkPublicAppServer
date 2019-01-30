@@ -1,13 +1,13 @@
 package com.mobilehelix.services.objects;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.mobilehelix.services.interfaces.WSRequest;
 import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
 
 /**
  *
@@ -214,40 +214,40 @@ public class ApplicationServerInitRequest extends WSRequest {
         BsonFactory factory = new BsonFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
        
-        JsonGenerator gen = factory.createJsonGenerator(baos);
-        gen.writeStartObject();
-        // write out fields.
-        gen.writeFieldName("cip");
-        gen.writeString(this.controllerIP);
-        gen.writeFieldName("cport");
-        gen.writeNumber(this.controllerPort);
-        gen.writeStringField("privip", this.asPrivIP);
-        gen.writeFieldName("pubip");
-        gen.writeString(this.asPubIP);
-        gen.writeFieldName("pubport");
-        gen.writeNumber(this.asPubPort);
-        gen.writeFieldName("privport");
-        gen.writeNumber(this.asPrivPort);
-        gen.writeNumberField("httpport", this.asHttpPort);
-        gen.writeFieldName("client");
-        gen.writeString(this.clientName);
-        gen.writeFieldName("server");
-        gen.writeString(this.serverName);
-        gen.writeFieldName("push");
-        gen.writeString(this.pushServerName);
-        gen.writeFieldName("storepass");
-        gen.writeString(this.storePass);
-        gen.writeFieldName("keystore");
-        gen.writeBinary(this.keyStore);        
-        gen.writeFieldName("region");
-        gen.writeString(this.regionName);
-        gen.writeFieldName("scriptsdir");
-        gen.writeString(this.scriptsDir);
-        gen.writeFieldName("phantomjsbin");
-        gen.writeString(this.phantomJsBin);
-        gen.writeStringField("rootdir", this.rootDir);
-        gen.writeBooleanField("nogateway", isNoGateway);
-        gen.close();
+        try (JsonGenerator gen = factory.createJsonGenerator(baos)) {
+            gen.writeStartObject();
+            // write out fields.
+            gen.writeFieldName("cip");
+            gen.writeString(this.controllerIP);
+            gen.writeFieldName("cport");
+            gen.writeNumber(this.controllerPort);
+            gen.writeStringField("privip", this.asPrivIP);
+            gen.writeFieldName("pubip");
+            gen.writeString(this.asPubIP);
+            gen.writeFieldName("pubport");
+            gen.writeNumber(this.asPubPort);
+            gen.writeFieldName("privport");
+            gen.writeNumber(this.asPrivPort);
+            gen.writeNumberField("httpport", this.asHttpPort);
+            gen.writeFieldName("client");
+            gen.writeString(this.clientName);
+            gen.writeFieldName("server");
+            gen.writeString(this.serverName);
+            gen.writeFieldName("push");
+            gen.writeString(this.pushServerName);
+            gen.writeFieldName("storepass");
+            gen.writeString(this.storePass);
+            gen.writeFieldName("keystore");
+            gen.writeBinary(this.keyStore);
+            gen.writeFieldName("region");
+            gen.writeString(this.regionName);
+            gen.writeFieldName("scriptsdir");
+            gen.writeString(this.scriptsDir);
+            gen.writeFieldName("phantomjsbin");
+            gen.writeString(this.phantomJsBin);
+            gen.writeStringField("rootdir", this.rootDir);
+            gen.writeBooleanField("nogateway", isNoGateway);
+        }
         return baos.toByteArray();
     }
     

@@ -1,16 +1,16 @@
 package com.mobilehelix.services.clients;
 
-import com.mobilehelix.services.interfaces.RestClient;
+import com.mobilehelix.services.interfaces.ApacheClientInterface;
+import com.mobilehelix.services.interfaces.ApacheRestClient;
 import com.mobilehelix.services.objects.ApplicationServerInitRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
-import com.sun.jersey.client.urlconnection.HTTPSProperties;
 import java.io.IOException;
 
 /**
  *
  * @author shallem
  */
-public class ApplicationServerInitClient extends RestClient {
+public class ApplicationServerInitClient extends ApacheClientInterface {
     
     // Parameters that we send to the app server service.
     private final String controllerIP;
@@ -26,7 +26,6 @@ public class ApplicationServerInitClient extends RestClient {
     private final String debugPassword;
     private final byte[] clientKeystore;
     private final String appScriptsDir;
-    private final String phantomJsBin;
     private final String rootDir;
     private boolean isNoGateway;
     
@@ -42,12 +41,11 @@ public class ApplicationServerInitClient extends RestClient {
             String storePass,
             byte[] clientKeystore,
             String debugPassword,
-            HTTPSProperties props,
+            ApacheRestClient cli,
             String scriptsDir,
-            String phantomjsBin,
             String rootDir,
             boolean isNoGateway) {
-        super(asIP + ":" + asPort.toString(), "/ws/initas", props);
+        super(cli, asIP + ":" + asPort.toString(), "/ws/initas", 3);
         this.asPrivIP = asIP;
         this.asPubIP = asPubIP;
         this.asPubPort = asPubPort;
@@ -61,7 +59,6 @@ public class ApplicationServerInitClient extends RestClient {
         this.clientKeystore = clientKeystore;
         this.debugPassword = debugPassword;
         this.appScriptsDir = scriptsDir;
-        this.phantomJsBin = phantomjsBin;
         this.rootDir = rootDir;
         this.isNoGateway = isNoGateway;
     }
@@ -72,8 +69,8 @@ public class ApplicationServerInitClient extends RestClient {
                     this.asPrivIP, this.asPubIP, this.asPubPort, this.asPrivPort, this.asHttpPort, 
                     this.clientName, this.serverName, this.storePass, 
                     this.clientKeystore, this.debugPassword, this.appScriptsDir, 
-                    this.phantomJsBin, this.rootDir, this.isNoGateway);
-        byte[] output = super.runPost(asir.toBson());
+                    "", this.rootDir, this.isNoGateway);
+        byte[] output = this.getClient().bsonPost(this.getURL(), asir.toBson(), this.getNtries());
         if (output == null) {
             throw new IOException("Failed to execute service");
         }
