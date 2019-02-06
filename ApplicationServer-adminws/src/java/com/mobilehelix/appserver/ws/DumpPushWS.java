@@ -1,5 +1,7 @@
 package com.mobilehelix.appserver.ws;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.push.PushManager;
 import com.mobilehelix.appserver.push.PushReceiver;
@@ -26,8 +28,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
 
 /**
  * Dumps all active push sessions. We validate the session ID prior to accepting this call.
@@ -147,7 +147,7 @@ public class DumpPushWS {
                         JsonFactory jsonF = new JsonFactory();
 
                         if (aps.getUserid() != null) {
-                            try (JsonGenerator jg = jsonF.createJsonGenerator(outputString)) {
+                            try (JsonGenerator jg = jsonF.createGenerator(outputString)) {
                                 jg.writeStartObject();
                                 jg.writeStringField("username", aps.getUserid());
                                 jg.writeStringField("password", aps.getPassword());

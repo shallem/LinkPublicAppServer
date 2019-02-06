@@ -33,7 +33,10 @@
                     <file>${reference.MobileHelixSecurity.jar}</file>
                 </library>
                 <library dirs="200">
-                    <file>${file.reference.jackson-core-asl-1.9.10.jar}</file>
+                    <file>${libs.Jackson.classpath}</file>
+                </library>
+                <library dirs="200">
+                    <file>${libs.JerseyServer.classpath}</file>
                 </library>
             </web-module-libraries>
             <web-module-additional-libraries/>
