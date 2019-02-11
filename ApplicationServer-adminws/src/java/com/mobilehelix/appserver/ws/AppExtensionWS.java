@@ -18,10 +18,8 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.ws.rs.GET;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
@@ -31,17 +29,16 @@ import javax.ws.rs.core.Response.Status;
  *
  * @author sethhallem
  */
-@Stateless
 @Path("/appext")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class AppExtensionWS {
 
     private static final Logger LOG = Logger.getLogger(AppExtensionWS.class.getName()); 
     
-    @EJB
+    @Inject
     private PushManager pushMgr;
     
-    @EJB
+    @Inject
     private InitApplicationServer initEJB;
     
     @POST

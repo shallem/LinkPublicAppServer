@@ -13,9 +13,8 @@ import com.mobilehelix.services.objects.ApplicationServerRefreshResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -28,13 +27,12 @@ import javax.ws.rs.core.UriInfo;
  *
  * @author v3devel
  */
-@Stateless
 @Path("/pushrefresh")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class PushRefreshWS {
     private static final Logger LOG = Logger.getLogger(PushRefreshWS.class.getName());
     
-    @EJB
+    @Inject
     private PushManager pushMgr;
     
     @GET

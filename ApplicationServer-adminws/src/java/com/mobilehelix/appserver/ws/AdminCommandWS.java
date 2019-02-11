@@ -25,9 +25,8 @@ import com.mobilehelix.services.objects.WSAdminCommand;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -35,19 +34,18 @@ import javax.ws.rs.Path;
  *
  * @author shallem
  */
-@Stateless
 @Path("/admin")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class AdminCommandWS {
     private static final Logger LOG = Logger.getLogger(AdminCommandWS.class.getName());
     
-    @EJB
+    @Inject
     private UpgradeCommand upgradeCmd;
     
-    @EJB
+    @Inject
     private ApplicationServerRegistry appRegistry;
     
-    @EJB
+    @Inject
     private InitApplicationServer initEJB;
     
     @POST

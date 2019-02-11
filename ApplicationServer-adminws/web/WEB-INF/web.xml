@@ -8,10 +8,6 @@
              <param-name>jersey.config.server.provider.packages</param-name>
              <param-value>com.mobilehelix.appserver.ws</param-value>
         </init-param>
-        <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
-            <param-value>com.mobilehelix.appserver.ws.CustomResourceConfig</param-value>
-        </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>
     <servlet-mapping>
@@ -30,6 +26,7 @@
     </session-config>
     <login-config>
         <auth-method>CLIENT-CERT</auth-method>
+        <realm-name>LinkRealm</realm-name>
     </login-config>
     <security-constraint>
         <display-name>HttpsConstraint</display-name>
@@ -41,5 +38,18 @@
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
+    </security-constraint>
+    <security-constraint>
+        <display-name>AuthenticatedConstraint</display-name>
+        <web-resource-collection>
+            <web-resource-name>wrcoll</web-resource-name>
+            <description/>
+            <url-pattern>/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <description/>
+            <role-name>ApplicationServerUser</role-name>
+            <role-name>Superuser</role-name>
+        </auth-constraint>
     </security-constraint>
 </web-app>

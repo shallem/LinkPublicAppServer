@@ -13,8 +13,7 @@ import java.io.OutputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterInputStream;
-import javax.annotation.security.PermitAll;
-import javax.ejb.Stateless;
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -27,9 +26,8 @@ import org.apache.commons.io.IOUtils;
  *
  * @author shallem
  */
-@Stateless
 @Path("/getlog")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class GetLogWS {
     private static final Logger LOG = Logger.getLogger(GetLogWS.class.getName());
     

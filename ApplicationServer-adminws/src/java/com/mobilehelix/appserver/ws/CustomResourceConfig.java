@@ -9,6 +9,6 @@ import org.glassfish.jersey.server.ResourceConfig;
 
 public class CustomResourceConfig extends ResourceConfig {
     public CustomResourceConfig() {
-        packages(ResourceConfig.class.getPackage().getName());
+        packages(CustomResourceConfig.class.getPackage().getName());
     }
 }

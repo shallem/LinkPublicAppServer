@@ -15,9 +15,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import org.apache.commons.lang3.StringUtils;
@@ -26,22 +25,21 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author shallem
  */
-@Stateless
 @Path("/ping")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class PingWS {
     private static final Logger LOG = Logger.getLogger(PingWS.class.getName());
     
-    @EJB
+    @Inject
     private InitApplicationServer initEJB;
     
-    @EJB
+    @Inject
     private SessionManager sessMgr;
 
-    @EJB
+    @Inject
     private PushManager pushMgr;
     
-    @EJB
+    @Inject
     private ApplicationServerRegistry appsRegistry;
     
     @POST

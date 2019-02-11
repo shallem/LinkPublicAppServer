@@ -12,9 +12,9 @@ import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
+import javax.annotation.security.RolesAllowed;
 import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -22,17 +22,16 @@ import javax.ws.rs.Path;
  *
  * @author shallem
  */
-@Stateless
 @Path("/sweep")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class SweepSessionWS {
     private static final Logger LOGGER = Logger
         .getLogger(SweepSessionWS.class.getName());
     
-    @EJB
+    @Inject
     private SessionManager sessionMgr;
     
-    @EJB
+    @Inject
     private InitApplicationServer initEJB;
     
     @POST

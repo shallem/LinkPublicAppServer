@@ -14,9 +14,8 @@ import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.annotation.security.PermitAll;
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
+import javax.annotation.security.RolesAllowed;
+import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -24,20 +23,19 @@ import javax.ws.rs.Path;
  *
  * @author shallem
  */
-@Stateless
 @Path("/createsession")
-@PermitAll
+@RolesAllowed({"ApplicationServerUser", "Superuser"})
 public class CreateSessionWS {
     private static final Logger LOGGER = Logger
         .getLogger(CreateSessionWS.class.getName());
     
-    @EJB
+    @Inject
     private SessionManager sessionMgr;
     
-    @EJB
+    @Inject
     private PushManager pushMgr;
     
-    @EJB
+    @Inject
     private InitApplicationServer initEJB;
     
     @POST
