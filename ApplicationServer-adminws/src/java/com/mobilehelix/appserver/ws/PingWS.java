@@ -12,6 +12,7 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.PingRequest;
 import com.mobilehelix.services.objects.PingResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,12 +44,13 @@ public class PingWS {
     private ApplicationServerRegistry appsRegistry;
     
     @POST
-    public byte[] handlePing(byte [] b) {
+    public byte[] handlePing(InputStream is) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
         Long serverID = (long)-1;
         
         try {
+            byte[] b = org.apache.commons.io.IOUtils.toByteArray(is);
             PingRequest preq = PingRequest.fromBson(b);
             String reqSessionID = new String(preq.getServerSessId());
             if (!initEJB.validateSessionID(reqSessionID)) {

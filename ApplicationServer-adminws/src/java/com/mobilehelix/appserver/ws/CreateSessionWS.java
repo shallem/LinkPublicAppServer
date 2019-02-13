@@ -12,6 +12,7 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.CreateSessionRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
@@ -39,12 +40,13 @@ public class CreateSessionWS {
     private InitApplicationServer initEJB;
     
     @POST
-    public byte[] createSession(byte [] b) {
+    public byte[] createSession(InputStream is) {
         int statusCode = WSResponse.FAILURE;
         String msg = null;
 
         CreateSessionRequest creq; 
         try {
+            byte[] b = org.apache.commons.io.IOUtils.toByteArray(is);
             creq = CreateSessionRequest.fromBson(b);
             String reqSessionID = new String(creq.getServerSessionID());
             
