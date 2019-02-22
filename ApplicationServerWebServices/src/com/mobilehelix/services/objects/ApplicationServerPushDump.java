@@ -101,7 +101,6 @@ public class ApplicationServerPushDump extends WSResponse {
         long nSess = 0;
         
         try (JsonParser parser = WSResponse.InitFromBSON(b)) {
-            parser.nextToken();
             // Pointing at START_OBJECT after InitFromBSON. Move forward to either kEY_NAME or END_OBJECT
             try {
                 while (parser.nextToken() != JsonToken.END_OBJECT) {
