@@ -67,8 +67,9 @@ public class DumpPushWS {
                     msg = "Success";
                     
                     for (PushReceiver pr : this.pushMgr.allSessions()) {
-                        if (pr.getUserid() == null) {
-                            // For a password vault connection that never was "activated"
+                        if (pr.getUserid() == null || pr.isIsInactive()) {
+                            // For a password vault connection that never was "activated", or for the case where
+                            // we had to drop the push subscription b/c the user's password changed.
                             continue;
                         }
                         ApplicationServerPushSession nxt = new ApplicationServerPushSession();
