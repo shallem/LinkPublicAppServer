@@ -27,6 +27,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Dumps all active push sessions. We validate the session ID prior to accepting this call.
@@ -124,7 +125,8 @@ public class DumpPushWS {
         try {
             SecretKey restoreKey = initEJB.getPushDumpKey();
             ApplicationServerPushDump req = ApplicationServerPushDump.createFromBson(input, restoreKey);
-
+            String prevClientName = initEJB.getPrevClientName();
+            
             // WE do not validate with the session ID here. Generally it is not necessary - b/c
             // (a) the client is already authenticated with a certificate, and (b) if the provided data
             // is full of bogus credentials then it really doesn't create any leak of sensitive information.
@@ -136,6 +138,7 @@ public class DumpPushWS {
                 statusCode = WSResponse.SUCCESS;
                 msg = "Success";
                 
+                int nRestored = 0;
                 for (ApplicationServerPushSession aps : req.getPushSessions()) {
                     try {
                         LinkedList<WSUserPreference> prefs = new LinkedList<>();
@@ -161,15 +164,24 @@ public class DumpPushWS {
                                 prefs.add(pref);
                             }
                         }
-                        this.pushMgr.addSession(aps.getClientid(), 
+                        String clientName = aps.getClientid();
+                        String combinedUser = aps.getCombinedUser();
+                        if (!StringUtils.isEmpty(prevClientName)) {
+                            if (clientName.equals(prevClientName)) {
+                                clientName = initEJB.getClientName();
+                            }
+                            combinedUser = this.pushMgr.updateClientInCombinedUser(prevClientName, clientName, combinedUser);
+                        }
+                        this.pushMgr.addSession(clientName, 
                                 aps.getUserid(), 
                                 aps.getPassword(),
-                                aps.getCombinedUser(),
+                                combinedUser,
                                 aps.getDeviceType(), 
                                 aps.getAppID(), 
                                 0, 
                                 prefs,
                                 aps.getUserEmail());
+                        ++nRestored;
                     } catch (AppserverSystemException ex) {
                         LOG.log(Level.SEVERE, "Unable to restore push session for {0}:{1}", new Object[] {
                             aps.getClientid(), aps.getUserid()
@@ -177,6 +189,7 @@ public class DumpPushWS {
                         LOG.log(Level.SEVERE, "Unable to restore push session.", ex);
                     }
                 }
+                LOG.log(Level.INFO, "Restored {0} push sessions", nRestored);
                 this.pushMgr.setBGRefreshData(req.getBGPushData());
             }
             initEJB.updatePushDumpKey();
