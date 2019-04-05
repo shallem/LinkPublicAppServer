@@ -14,7 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.DeflaterInputStream;
 import javax.annotation.security.RolesAllowed;
-import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
@@ -34,7 +34,7 @@ public class GetLogWS {
     // Glassfish Instance Root folder system variable
     private static String glassfishInstanceRootPropertyName = "com.sun.aas.instanceRoot";
     
-    @POST
+    @PUT
     @Produces("application/octet-stream")
     public Response getLog(byte[] input) {
         GetLogRequest req = null;
