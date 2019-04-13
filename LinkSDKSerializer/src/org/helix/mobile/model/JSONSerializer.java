@@ -601,6 +601,8 @@ public class JSONSerializer {
                 jg.writeStringField("display", e.getValue().displayName());
                 jg.writeStringField("direction", e.getValue().defaultOrder());
                 jg.writeStringField("usecase", e.getValue().caseSensitive());
+                jg.writeStringField("secondary", e.getValue().secondarySort());
+                jg.writeStringField("secondaryDirection", e.getValue().secondaryOrder());
                 jg.writeEndObject();
             }
         }

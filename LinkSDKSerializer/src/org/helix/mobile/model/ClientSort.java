@@ -21,4 +21,6 @@ public @interface ClientSort {
     String displayName() default "[none]";
     String defaultOrder() default "DSC";
     String caseSensitive() default "false";
+    String secondarySort() default "";
+    String secondaryOrder() default "DSC";
 }
