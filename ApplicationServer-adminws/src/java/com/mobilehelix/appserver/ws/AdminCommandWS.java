@@ -17,6 +17,7 @@ package com.mobilehelix.appserver.ws;
 
 import com.mobilehelix.appserver.command.UpgradeCommand;
 import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
+import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.InitApplicationServer;
 import com.mobilehelix.services.interfaces.WSResponse;
@@ -48,6 +49,9 @@ public class AdminCommandWS {
     @Inject
     private InitApplicationServer initEJB;
     
+    @Inject
+    private SessionManager sessionMgr;
+    
     @POST
     public byte[] runCmd(byte [] b) {
         int statusCode = WSResponse.FAILURE;
@@ -70,7 +74,7 @@ public class AdminCommandWS {
                     case "refreshapp":
                         String client = adminCmd.getCommandArgs()[0];
                         Long appID = Long.parseLong(adminCmd.getCommandArgs()[1]);
-                        appRegistry.refreshApplication(client, appID);
+                        appRegistry.refreshApplication(client, appID, sessionMgr);
                         break;
                     default:
                         break;
