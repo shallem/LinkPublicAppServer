@@ -12,6 +12,8 @@ import com.mobilehelix.services.interfaces.WSResponse;
 import de.undercouch.bson4jackson.BsonFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
@@ -25,6 +27,8 @@ public class ApplicationServerPushSession extends WSRequest {
     private String deviceType;
     private String combinedUser;
     private String userEmail;
+    private String settings;
+    private List<Long> profileIDs;
     private Long appID;
     
     public ApplicationServerPushSession() {
@@ -96,6 +100,22 @@ public class ApplicationServerPushSession extends WSRequest {
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
     }
+
+    public String getSettings() {
+        return settings;
+    }
+
+    public void setSettings(String settings) {
+        this.settings = settings;
+    }
+
+    public List<Long> getProfileIDs() {
+        return profileIDs;
+    }
+
+    public void setProfileIDs(List<Long> profileIDs) {
+        this.profileIDs = profileIDs;
+    }
     
     @Override
     public byte[] toBson() throws IOException {
@@ -122,6 +142,16 @@ public class ApplicationServerPushSession extends WSRequest {
         }
         if (this.userEmail != null) {
             gen.writeStringField("email", this.userEmail);
+        }
+        if (this.settings != null) {
+            gen.writeStringField("settings", this.settings);
+        }
+        if (this.profileIDs != null) {
+            gen.writeArrayFieldStart("profileids");
+            for (Long l : this.profileIDs) {
+                gen.writeNumber(l);
+            }
+            gen.writeEndArray();
         }
         gen.writeStringField("device", this.deviceType);
         gen.writeNumberField("appid", appID);
@@ -167,6 +197,16 @@ public class ApplicationServerPushSession extends WSRequest {
                     break;
                 case "email":
                     asps.setUserEmail(parser.getText());
+                    break;
+                case "settings":
+                    asps.setSettings(parser.getText());
+                    break;
+                case "profileids":
+                    List<Long> pids = new LinkedList<>();
+                    while (parser.nextToken() != JsonToken.END_ARRAY) {
+                        pids.add(parser.getLongValue());
+                    }
+                    asps.setProfileIDs(pids);
                     break;
             }
             // Move past the field value to the next field name or END_OBJECT
