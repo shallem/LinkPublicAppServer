@@ -16,6 +16,7 @@ import com.mobilehelix.services.objects.ApplicationServerAppExtensionRequest;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.annotation.security.RolesAllowed;
@@ -66,8 +67,15 @@ public class AppExtensionWS {
                 } else {
                     EmailPushReceiver epr = (EmailPushReceiver)pr;
                     TodayRefreshTask todayTask = epr.runTodayRefresh();
-                    msg = this.pushMgr.addRefresh(req.getClient(), req.getUserID(), req.getAppID(), todayTask);
-                    statusCode = WSResponse.SUCCESS;
+                    try {
+                        msg = this.pushMgr.addRefresh(req.getClient(), req.getUserID(), req.getAppID(), todayTask).get();
+                        statusCode = WSResponse.SUCCESS;
+                    } catch (InterruptedException | ExecutionException ex) {
+                        LOG.log(Level.SEVERE, "Asynchronous call to add refresh is interrupted", ex);
+                        msg = ex.getMessage();
+                        statusCode = WSResponse.FAILURE;
+                    }
+                    
                 }
             }
             
