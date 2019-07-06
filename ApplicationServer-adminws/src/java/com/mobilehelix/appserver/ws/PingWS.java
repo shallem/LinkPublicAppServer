@@ -94,7 +94,7 @@ public class PingWS {
             if (id == null) {
                  LOG.log(Level.SEVERE, "Server not registered. Server ID is null.");
             } else {
-                resp.addServer(id, sessMgr.getSessionCount(), (statusCode == WSResponse.SUCCESS) ? 0 : 5 /* Warning */);
+                resp.addServer(id, SessionManager.sessionCount, (statusCode == WSResponse.SUCCESS) ? 0 : 5 /* Warning */);
             }
             
             id = initEJB.getPushServerID();
@@ -102,7 +102,7 @@ public class PingWS {
             if (id == null) {
                  LOG.log(Level.SEVERE, "Push server not registered. Server ID is null.");
             } else {            
-                resp.addServer(id, pushMgr.getPushSessionCount(), 0);
+                resp.addServer(id, PushManager.pushSessionCount, 0);
             }
         }
                 
