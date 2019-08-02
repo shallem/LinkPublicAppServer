@@ -48,7 +48,7 @@ public class GetLogWS {
                 throw new IOException( "Cannot find Glassfish instanceRoot. Is the com.sun.aas.instanceRoot system property set?" );
             }
  
-            final File tmpConcat = LogUtils.concatGlassfishLogs(req.getnBytes(), 7, instanceRoot);
+            final File tmpConcat = LogUtils.concatGlassfishLogs(req.getnBytes(), 30, instanceRoot);
             final FileInputStream concatInputStream = new FileInputStream(tmpConcat);
             final DeflaterInputStream zippedServerLog = new DeflaterInputStream(concatInputStream);
             
