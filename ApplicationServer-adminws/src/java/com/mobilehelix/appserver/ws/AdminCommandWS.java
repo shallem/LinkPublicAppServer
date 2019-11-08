@@ -20,6 +20,7 @@ import com.mobilehelix.appserver.errorhandling.AppserverSystemException;
 import com.mobilehelix.appserver.session.SessionManager;
 import com.mobilehelix.appserver.system.ApplicationServerRegistry;
 import com.mobilehelix.appserver.system.InitApplicationServer;
+import com.mobilehelix.appserver.system.ServerRegistry;
 import com.mobilehelix.services.interfaces.WSResponse;
 import com.mobilehelix.services.objects.GenericBsonResponse;
 import com.mobilehelix.services.objects.WSAdminCommand;
@@ -47,6 +48,9 @@ public class AdminCommandWS {
     private ApplicationServerRegistry appRegistry;
     
     @Inject
+    private ServerRegistry serverRegistry;
+    
+    @Inject
     private InitApplicationServer initEJB;
     
     @Inject
@@ -71,11 +75,18 @@ public class AdminCommandWS {
                         // Run the upgrade.
                         msg = upgradeCmd.run();
                         break;
-                    case "refreshapp":
+                    case "refreshapp": {
                         String client = adminCmd.getCommandArgs()[0];
                         Long appID = Long.parseLong(adminCmd.getCommandArgs()[1]);
                         appRegistry.refreshApplication(client, appID, sessionMgr);
                         break;
+                    }
+                    case "refreshservers": {
+                        String client = adminCmd.getCommandArgs()[0];
+                        Integer serverType = Integer.parseInt(adminCmd.getCommandArgs()[1]);
+                        serverRegistry.refreshServers(client, serverType);
+                        break;
+                    }
                     default:
                         break;
                 }
