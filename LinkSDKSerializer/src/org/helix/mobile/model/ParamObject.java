@@ -15,6 +15,11 @@
  */
 package org.helix.mobile.model;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import static org.helix.mobile.model.JSONSerializer.TYPE_FIELD_NAME;
+import static org.helix.mobile.model.JSONSerializer.serializeObjectFields;
+
 /**
  * Intended to send both an object to synchronize and a second object to be passed to be handled 
  * manually by the client.
@@ -22,7 +27,7 @@ package org.helix.mobile.model;
  * @author Seth
  * @param <T>
  */
-public abstract class ParamObject<T> {
+public abstract class ParamObject<T> implements JSONSerializable {
     private Object paramObject;
     
     @ClientData
@@ -38,4 +43,25 @@ public abstract class ParamObject<T> {
     public abstract T getSyncObject();
 
     public abstract void setSyncObject(T syncObject);
+    
+    public void toJSON(JSONGenerator jg) throws IOException,
+                IllegalAccessException,
+                IllegalArgumentException,
+                InvocationTargetException,
+                NoSuchMethodException {
+        jg.writeStartObject();
+
+        /* Mark as a param object for the client code. */
+        jg.writeNumberField(TYPE_FIELD_NAME, 1004);
+
+        /* Write the param. */
+        if (this.getParamObject() != null) {
+            JSONSerializer.serializeObjectFields(jg, this.getParamObject(), "param");
+        }
+        if (this.getSyncObject() != null) {
+            JSONSerializer.serializeObjectFields(jg, this.getSyncObject(), "sync");
+        }
+
+        jg.writeEndObject();
+    }
 }

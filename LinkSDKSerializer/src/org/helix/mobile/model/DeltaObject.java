@@ -18,6 +18,9 @@ package org.helix.mobile.model;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.LinkedList;
+import java.util.TreeSet;
+import java.util.UUID;
 import static org.helix.mobile.model.JSONSerializer.SCHEMA_TYPE_FIELD_NAME;
 import static org.helix.mobile.model.JSONSerializer.TYPE_FIELD_NAME;
 
@@ -28,27 +31,58 @@ import static org.helix.mobile.model.JSONSerializer.TYPE_FIELD_NAME;
  * 
  * @author shallem
  */
-public abstract class DeltaObject implements JSONSerializable {
+public abstract class DeltaObject<BaseType> implements JSONSerializable {
+    
+    private final String changeID = UUID.randomUUID().toString();
+    
+    protected final LinkedList<BaseType> newItems = new LinkedList<>();
+    protected final LinkedList<String> deleteIDs = new LinkedList<>();
+    protected final TreeSet<String> deletedIDsSet = new TreeSet<>();
+    protected final LinkedList<BaseType> updateItems = new LinkedList<>();
+    protected final LinkedList<Update> fieldUpdates = new LinkedList<>();
+    protected final LinkedList<Criteria> deleteSpec = new LinkedList<>();
+    
+    public DeltaObject() {
+        
+    }
+    
     /**
      * Return the list of adds.
      * @return 
      */
     @ClientData
-    public abstract Object[] getAdds();
+    public abstract BaseType[] getAdds();
+    
+    public synchronized void addNew(BaseType c) {
+        newItems.add(c);
+    }
     
     /**
      * Return the list of keys to delete.
      * @return 
      */
     @ClientData
-    public abstract String[] getDeletes();
+    public synchronized String[] getDeletes() {
+        return this.deleteIDs.toArray(new String[this.deleteIDs.size()]);
+    }
+    
+    public synchronized void addDelete(String k) {
+        if (!this.deletedIDsSet.contains(k)) {
+            this.deletedIDsSet.add(k);
+            this.deleteIDs.add(k);
+        }
+    }
     
     /**
      * Return the list of updates.
      * @return 
      */
     @ClientData
-    public abstract Object[] getUpdates();
+    public abstract BaseType[] getUpdates();
+    
+    public synchronized void addUpdate(BaseType c) {
+        updateItems.add(c);
+    }
 
     /**
      * Return a query criteria to be used on the client to select a set of items to delete. Functions
@@ -56,14 +90,38 @@ public abstract class DeltaObject implements JSONSerializable {
      * @return 
      */
     @ClientData
-    public abstract Criteria[] getDeleteSpec();
+    public synchronized Criteria[] getDeleteSpec() {
+        return this.deleteSpec.toArray(new Criteria[this.deleteSpec.size()]);
+    }
+    
+    public synchronized void addDeleteSpec(Criteria c) {
+        this.deleteSpec.add(c);
+    }
     
     /**
      * Update a single field.
      * @return 
      */
     @ClientData
-    public abstract Update[] getFieldUpdates();
+    public synchronized Update[] getFieldUpdates() {
+        return this.fieldUpdates.toArray(new Update[this.fieldUpdates.size()]);
+    }
+    
+    public synchronized void addFieldUpdate(Update u) {
+        this.fieldUpdates.add(u);
+    }
+    
+    public String getChangeID() {
+        return changeID;
+    }
+    
+    public synchronized boolean isEmpty() {
+        return this.newItems.isEmpty() && 
+                this.deleteIDs.isEmpty() && 
+                this.updateItems.isEmpty() && 
+                this.deleteSpec.isEmpty() && 
+                this.fieldUpdates.isEmpty();
+    }
     
     @Override
     public void toJSON(JSONGenerator jg) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
@@ -74,7 +132,7 @@ public abstract class DeltaObject implements JSONSerializable {
         // Mark as a delta object for the client code
         jg.writeFieldName(TYPE_FIELD_NAME);
         jg.writeNumber(1001);
-
+        
         Method m = c.getMethod("getAdds", (Class[]) null);
         Class<?> returnType = m.getReturnType();
         jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
@@ -112,5 +170,15 @@ public abstract class DeltaObject implements JSONSerializable {
         jg.writeEndArray();
         
         jg.writeEndObject();
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder summary = new StringBuilder(1024);
+        summary.append("adds: ").append(this.newItems.size())
+                .append(", mods: ").append(this.updateItems.size())
+                .append(", deleteIDs: ").append(this.deleteIDs.size())
+                .append(", field updates: ").append(this.fieldUpdates.size());
+        return summary.toString();
     }
 }

@@ -35,7 +35,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author shallem
  */
 @XmlRootElement
-public class ClientWSResponse {
+public class ClientWSResponse implements JSONSerializable {
 
     private int statusCode;
     private String statusMessage;
@@ -68,12 +68,14 @@ public class ClientWSResponse {
         }
     }
     
-    public void toJSON(JsonGenerator jg)  throws IOException,
+    public void toJSON(JSONGenerator jg)  throws IOException,
             IllegalAccessException,
             IllegalArgumentException,
             InvocationTargetException,
             NoSuchMethodException {
         jg.writeStartObject();
+        
+        jg.writeNumberField(JSONSerializer.TYPE_FIELD_NAME, -999);
             
         // The client reads either the return status of the return code field. Both are required
         jg.writeFieldName("status"); 
@@ -84,11 +86,11 @@ public class ClientWSResponse {
         jg.writeFieldName("msg");
         jg.writeString(statusMessage);
         jg.writeArrayFieldStart("objects");
-        JSONGenerator gen = new JSONGenerator(jg, new TreeSet<String>());
         for (Object obj : this.responseObjects) {
-            JSONSerializer.serializeObject(obj, gen);
+            JSONSerializer.serializeObject(obj, jg);
         }
         jg.writeEndArray();
+        
         jg.writeEndObject();
     }
 
@@ -100,8 +102,9 @@ public class ClientWSResponse {
         StringWriter outputString = new StringWriter();
         JsonFactory jsonF = new JsonFactory();
 
-        try (JsonGenerator jg = jsonF.createGenerator(outputString)) {
-            this.toJSON(jg);
+        JsonGenerator jg = jsonF.createGenerator(outputString);
+        try (JSONGenerator gen = new JSONGenerator(jg, new TreeSet<String>())) {
+            this.toJSON(gen);
         }
 
         outputString.flush();

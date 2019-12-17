@@ -27,6 +27,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -102,11 +103,11 @@ public class JSONSerializer {
         // Make this big initially. The memory cost is low compared to the cost of copying this string when the underlying buffer must be resized.
         StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
         JsonFactory jsonF = new JsonFactory();
-        JsonGenerator gen = jsonF.createJsonGenerator(outputString);
-        JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>());
-        serializeObject(obj, jg);      
-        outputString.flush(); 
-        jg.close();
+        JsonGenerator gen = jsonF.createGenerator(outputString);
+        try (JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>())) {
+            serializeObject(obj, jg);      
+            outputString.flush(); 
+        }
         return outputString.toString();
     }
     
@@ -186,119 +187,14 @@ public class JSONSerializer {
             if (obj instanceof JSONSerializable) {
                 ((JSONSerializable) obj).toJSON(jg);
                 return true;
-            }           
-            
-            if (isDeltaObject(c)) {
-                jg.writeStartObject();
-
-                // Mark as a delta object for the client code
-                jg.writeFieldName(TYPE_FIELD_NAME);
-                jg.writeNumber(1001);
-
-                Method m = c.getMethod("getAdds", (Class[]) null);
-                Class<?> returnType = m.getReturnType();
-                jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
-                String cName = returnType.getComponentType().getName();
-
-//                if (cName.startsWith("com.mobilehelix."))
-//                    cName = cName.substring("com.mobilehelix.".length());
-//
-                jg.writeString(cName);
-                iterateOverObjectField(jg, obj, m);
-
-                m = c.getMethod("getDeletes", (Class[]) null);
-                iterateOverObjectField(jg, obj, m);
-
-                m = c.getMethod("getUpdates", (Class[]) null);
-                iterateOverObjectField(jg, obj, m);
-
-                m = c.getMethod("getDeleteSpec", (Class[]) null);
-                Criteria[] deleteSpec = (Criteria[])m.invoke(obj, new Object[]{});
-                if (deleteSpec != null) {
-                    jg.writeArrayFieldStart("deleteSpec");
-                    for (Criteria crit : deleteSpec) {
-                        if (crit != null) {
-                            crit.toJSON(jg);
-                        }
-                    }
-                    jg.writeEndArray();
-                }
-
-                m = c.getMethod("getFieldUpdates", (Class[]) null);
-                Update[] fieldUpdates = (Update[])m.invoke(obj, new Object[]{});
-                jg.writeArrayFieldStart("fieldUpdates");
-                if (fieldUpdates != null) {
-                    for (Update u : fieldUpdates) {
-                        if (u != null) {
-                            u.toJSON(jg);
-                        }
-                    }
-                }
-                jg.writeEndArray();
-                
-                jg.writeEndObject();
-                return true;
-            } 
-            
-            if (isAggregateObject(c)) {
-                jg.writeStartObject();
-
-                /* Mark as an aggreate object for the client code. */
-                jg.writeFieldName(TYPE_FIELD_NAME);
-                jg.writeNumber(1003);
-
-                AggregateObject a = (AggregateObject)obj;
-                for (Map.Entry<String, Object> e : a.getAggregateMap().entrySet()) {
-                    if (e.getValue() == null) {
-                        LOG.log(Level.WARNING, "Received unexpected null value in aggregate map with key {0}", e.getKey());
-                        continue;
-                    }
-                    serializeObjectFields(jg, e.getValue(), e.getKey());
-                }
-
-                jg.writeEndObject();
-                return true;
-            } 
-            
-            if (isParamObject(c)) {
-                jg.writeStartObject();
-
-                /* Mark as a param object for the client code. */
-                jg.writeNumberField(TYPE_FIELD_NAME, 1004);
-
-                /* Write the param. */
-                ParamObject po = (ParamObject)obj;
-                if (po.getParamObject() != null) {
-                    serializeObjectFields(jg, po.getParamObject(), "param");
-                }
-                if (po.getSyncObject() != null) {
-                    serializeObjectFields(jg, po.getSyncObject(), "sync");
-                }
-
-                jg.writeEndObject();
-                return true;
             }
-            
-            if (isErrorObject(c)) {
-                ClientWSResponse errObj = (ClientWSResponse)obj;
-                jg.writeStartObject();
-                jg.writeFieldName("error");
-                errObj.toJSON(jg.getDelegate());
-                jg.writeEndObject();
-                return true;
-            } 
             
             if (hasClientDataMethods(c)) {               
                 jg.writeStartObject();
 
                 /* Write the object type so that we can get the Schema back. */
-                jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
                 String cName = c.getName();
-
-//                if (cName.startsWith("com.mobilehelix."))
-//                    cName = cName.substring("com.mobilehelix.".length());
-//
-                jg.writeString(cName);
+                jg.writeStringField(SCHEMA_TYPE_FIELD_NAME, cName);
 
                 for (Method m : c.getMethods()) {
                     String key = getFullyQualifiedName(c, m);
@@ -332,15 +228,13 @@ public class JSONSerializer {
     public static String serializeObjectSchema(Class<?> cls) throws IOException {
         TreeSet<String> visitedClasses = new TreeSet<>();
         StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
-        JsonGenerator gen = new JsonFactory().createJsonGenerator(outputString);
-        JSONGenerator jg = new JSONGenerator(gen, visitedClasses);
-
-        if (!serializeObjectForSchema(jg, cls, null, null)) {
-            throw new IOException("Attempting to generate schema for an object with no client data in "
-                    + cls.getName());
+        JsonGenerator gen = new JsonFactory().createGenerator(outputString);
+        try (JSONGenerator jg = new JSONGenerator(gen, visitedClasses)) {
+            if (!serializeObjectForSchema(jg, cls, null, null)) {
+                throw new IOException("Attempting to generate schema for an object with no client data in "
+                        + cls.getName());
+            }
         }
-
-        jg.close();
         return outputString.getBuffer().toString();
     }
 
@@ -498,6 +392,7 @@ public class JSONSerializer {
         Map<String, String> filterFields = null;
         List<String> indexFields = null;
         Map<String, GlobalFilterField> globalFilterFields = null;
+        List<String> deltaObjects = new LinkedList<>();
 
         for (Method m : c.getMethods()) {
             if (!Modifier.isPublic(m.getModifiers()))
@@ -574,6 +469,11 @@ public class JSONSerializer {
                 if (clientTableAnnot != null) {
                     altName = ((ClientTableName)clientTableAnnot).tableName();
                 }
+                
+                if (isDeltaObject(m.getReturnType())) {
+                    jg.writeFieldName(nxtFieldName + "ChangeKey");
+                    addSimpleType(jg, String.class);
+                }
 
                 /* Recurse over the method. */
                 if (!serializeObjectForSchema(jg, m.getReturnType(), nxtFieldName, altName)) {
@@ -635,7 +535,7 @@ public class JSONSerializer {
                 jg.writeString(s);
             }
         }
-        jg.writeEndArray();      
+        jg.writeEndArray();
     }
 
     public static void checkMethodName(String methodName) throws IOException {

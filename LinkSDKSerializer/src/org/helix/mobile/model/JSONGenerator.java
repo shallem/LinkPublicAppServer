@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.io.Closeable;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -26,7 +27,7 @@ import java.util.Set;
  * and JSONSerializable interface.
  * @author frederic
  */
-public class JSONGenerator {
+public class JSONGenerator implements Closeable {
     
     private final JsonGenerator delegate;
     private final Set<String> visitedClasses;
@@ -315,6 +316,7 @@ public class JSONGenerator {
         return this.delegate.isClosed();
     }
 
+    @Override
     public void close() throws IOException {
         this.delegate.close();
     }

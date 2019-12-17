@@ -15,8 +15,12 @@
  */
 package org.helix.mobile.model;
 
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents an "aggregate" object, which includes a list of component objects from
@@ -24,7 +28,11 @@ import java.util.TreeMap;
  * 
  * @author shallem
  */
-public class AggregateObject { //implements JSONSerializable {
+public class AggregateObject implements JSONSerializable {
+
+    private static final Logger LOG = Logger.getLogger(AggregateObject.class.getName());
+    
+    
     private final Map<String, Object> aggregateMap;
     
     public AggregateObject() {
@@ -39,24 +47,28 @@ public class AggregateObject { //implements JSONSerializable {
         this.aggregateMap.put(key, result);
     }
     
-//    @Override
-//    public void toJSON(JsonGenerator jg) throws IOException, IllegalAccessException,
-//            InvocationTargetException, NoSuchMethodException {
-//         jg.writeStartObject();
-//
-//        /* Mark as an aggreate object for the client code. */
-//        jg.writeFieldName(JSONSerializer.TYPE_FIELD_NAME);
-//        jg.writeNumber(1003);
-//
-//        for (Map.Entry<String, Object> e : this.aggregateMap.entrySet()) {
-//            if (e.getValue() == null) {
-//                continue;
-//            }
-//            JSONSerializer.serializeObjectFields(jg, e.getValue(), new TreeSet<String>(), e.getKey());
-//        }
-//
-//        jg.writeEndObject();       
-//    }
+    @Override
+    public void toJSON(JSONGenerator jg) throws IOException,
+                IllegalAccessException,
+                IllegalArgumentException,
+                InvocationTargetException,
+                NoSuchMethodException {
+        jg.writeStartObject();
+
+        /* Mark as an aggreate object for the client code. */
+        jg.writeFieldName(JSONSerializer.TYPE_FIELD_NAME);
+        jg.writeNumber(1003);
+
+        for (Map.Entry<String, Object> e : this.getAggregateMap().entrySet()) {
+            if (e.getValue() == null) {
+                LOG.log(Level.WARNING, "Received unexpected null value in aggregate map with key {0}", e.getKey());
+                continue;
+            }
+            JSONSerializer.serializeObjectFields(jg, e.getValue(), e.getKey());
+        }
+
+        jg.writeEndObject();       
+    }
 
     @Override
     public String toString() {
