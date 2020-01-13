@@ -180,7 +180,9 @@ public class ApplicationServerCheckResourceConfigResponse extends WSResponse {
         public void toBson(JsonGenerator gen) throws IOException {
             gen.writeStartObject();
             gen.writeStringField("name", this.name);
-            gen.writeStringField("msg", this.errorMessage);
+            if (this.errorMessage != null) {
+                gen.writeStringField("msg", this.errorMessage);
+            }
             gen.writeBooleanField("success", this.success);
             gen.writeEndObject();
         }
