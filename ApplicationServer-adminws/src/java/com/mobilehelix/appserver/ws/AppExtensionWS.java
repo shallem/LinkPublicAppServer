@@ -67,15 +67,8 @@ public class AppExtensionWS {
                 } else {
                     EmailPushReceiver epr = (EmailPushReceiver)pr;
                     TodayRefreshTask todayTask = epr.runTodayRefresh();
-                    try {
-                        msg = this.pushMgr.addRefresh(req.getClient(), req.getUserID(), req.getAppID(), todayTask).get();
-                        statusCode = WSResponse.SUCCESS;
-                    } catch (InterruptedException | ExecutionException ex) {
-                        LOG.log(Level.SEVERE, "Asynchronous call to add refresh is interrupted", ex);
-                        msg = ex.getMessage();
-                        statusCode = WSResponse.FAILURE;
-                    }
-                    
+                    msg = this.pushMgr.addRefresh(req.getClient(), req.getUserID(), req.getAppID(), todayTask);
+                    statusCode = WSResponse.SUCCESS;
                 }
             }
             

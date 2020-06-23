@@ -27,6 +27,8 @@ public class ApplicationServerSession extends WSRequest {
     private String password;
     private String deviceType;
     private String userEmail;
+    private String userFirstName;
+    private String userLastName;
     private String legacyUserID;
     private Long deviceID;
     private Map<String, String> attributeMap;
@@ -107,6 +109,22 @@ public class ApplicationServerSession extends WSRequest {
 
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+
+    public String getUserFirstName() {
+        return userFirstName;
+    }
+
+    public void setUserFirstName(String userFirstName) {
+        this.userFirstName = userFirstName;
+    }
+
+    public String getUserLastName() {
+        return userLastName;
+    }
+
+    public void setUserLastName(String userLastName) {
+        this.userLastName = userLastName;
     }
     
     @Override
