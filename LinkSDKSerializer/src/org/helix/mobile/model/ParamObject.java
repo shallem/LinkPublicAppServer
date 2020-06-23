@@ -27,22 +27,24 @@ import static org.helix.mobile.model.JSONSerializer.serializeObjectFields;
  * @author Seth
  * @param <T>
  */
-public abstract class ParamObject<T> implements JSONSerializable {
-    private Object paramObject;
+public abstract class ParamObject<T, P> implements JSONSerializable {
+    protected final P paramObject;
+    protected final T syncObject;
+    
+    public ParamObject(T syncObject, P paramObject) {
+        this.syncObject = syncObject;
+        this.paramObject = paramObject;
+    }
     
     @ClientData
     public Object getParamObject() {
         return paramObject;
     }
 
-    public void setParamObject(Object paramObject) {
-        this.paramObject = paramObject;
-    }
-
     @ClientData
-    public abstract T getSyncObject();
-
-    public abstract void setSyncObject(T syncObject);
+    public Object getSyncObject() {
+        return syncObject;
+    }
     
     public void toJSON(JSONGenerator jg) throws IOException,
                 IllegalAccessException,

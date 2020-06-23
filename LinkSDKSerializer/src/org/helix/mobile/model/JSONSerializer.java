@@ -104,7 +104,7 @@ public class JSONSerializer {
         StringWriter outputString = new StringWriter(DEFAULT_STRING_SIZE);
         JsonFactory jsonF = new JsonFactory();
         JsonGenerator gen = jsonF.createGenerator(outputString);
-        try (JSONGenerator jg = new JSONGenerator(gen, new TreeSet<String>())) {
+        try (JSONGenerator jg = new JSONGenerator(gen, new TreeSet<>())) {
             serializeObject(obj, jg);      
             outputString.flush(); 
         }

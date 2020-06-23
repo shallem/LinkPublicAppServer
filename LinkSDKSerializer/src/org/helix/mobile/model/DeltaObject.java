@@ -41,6 +41,7 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
     protected final LinkedList<BaseType> updateItems = new LinkedList<>();
     protected final LinkedList<Update> fieldUpdates = new LinkedList<>();
     protected final LinkedList<Criteria> deleteSpec = new LinkedList<>();
+    protected boolean isReverseOrder = false;
     
     public DeltaObject() {
         
@@ -123,6 +124,10 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
                 this.fieldUpdates.isEmpty();
     }
     
+    public void setReverseOrder() {
+        this.isReverseOrder = true;
+    }
+    
     @Override
     public void toJSON(JSONGenerator jg) throws IOException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException {
         Class<?> c = this.getClass();
@@ -175,10 +180,11 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
     @Override
     public String toString() {
         StringBuilder summary = new StringBuilder(1024);
-        summary.append("adds: ").append(this.newItems.size())
+        summary.append("[adds: ").append(this.newItems.size())
                 .append(", mods: ").append(this.updateItems.size())
                 .append(", deleteIDs: ").append(this.deleteIDs.size())
-                .append(", field updates: ").append(this.fieldUpdates.size());
+                .append(", field updates: ").append(this.fieldUpdates.size())
+                .append("]");
         return summary.toString();
     }
 }
