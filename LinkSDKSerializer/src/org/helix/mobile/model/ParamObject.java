@@ -18,14 +18,14 @@ package org.helix.mobile.model;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import static org.helix.mobile.model.JSONSerializer.TYPE_FIELD_NAME;
-import static org.helix.mobile.model.JSONSerializer.serializeObjectFields;
 
 /**
  * Intended to send both an object to synchronize and a second object to be passed to be handled 
  * manually by the client.
  * 
  * @author Seth
- * @param <T>
+ * @param <T> Sync object type
+ * @param <P> Param object type
  */
 public abstract class ParamObject<T, P> implements JSONSerializable {
     protected final P paramObject;
@@ -37,12 +37,12 @@ public abstract class ParamObject<T, P> implements JSONSerializable {
     }
     
     @ClientData
-    public Object getParamObject() {
+    public P getParamObject() {
         return paramObject;
     }
 
     @ClientData
-    public Object getSyncObject() {
+    public T getSyncObject() {
         return syncObject;
     }
     
@@ -66,4 +66,6 @@ public abstract class ParamObject<T, P> implements JSONSerializable {
 
         jg.writeEndObject();
     }
+    
+    public abstract Class getSyncClass();
 }

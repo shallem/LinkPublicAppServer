@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.util.LinkedList;
 import java.util.TreeSet;
 import java.util.UUID;
+import static org.helix.mobile.model.JSONSerializer.CHANGEID_FIELD_NAME;
 import static org.helix.mobile.model.JSONSerializer.SCHEMA_TYPE_FIELD_NAME;
 import static org.helix.mobile.model.JSONSerializer.TYPE_FIELD_NAME;
 
@@ -112,6 +113,7 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
         this.fieldUpdates.add(u);
     }
     
+    @ClientData
     public String getChangeID() {
         return changeID;
     }
@@ -138,6 +140,8 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
         jg.writeFieldName(TYPE_FIELD_NAME);
         jg.writeNumber(1001);
         
+        jg.writeStringField(CHANGEID_FIELD_NAME, this.changeID);
+        
         Method m = c.getMethod("getAdds", (Class[]) null);
         Class<?> returnType = m.getReturnType();
         jg.writeFieldName(SCHEMA_TYPE_FIELD_NAME);
@@ -145,7 +149,7 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
 
         jg.writeString(cName);
         JSONSerializer.iterateOverObjectField(jg, this, m);
-
+        
         m = c.getMethod("getDeletes", (Class[]) null);
         JSONSerializer.iterateOverObjectField(jg, this, m);
 

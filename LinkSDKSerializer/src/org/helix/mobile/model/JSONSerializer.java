@@ -73,6 +73,7 @@ public class JSONSerializer {
     public static final String FILTERS_FIELD_NAME = "__hx_filters";
     public static final String GLOBAL_FILTERS_FIELD_NAME = "__hx_global_filters";
     public static final String TEXT_INDEX_FIELD_NAME = "__hx_text_index";
+    public static final String CHANGEID_FIELD_NAME = "changeID";
     
     private static final HashMap<String, Boolean> HAS_CLIENT_DATA_CACHE = new HashMap<>();
     private static final HashMap<String, Boolean> HAS_CLIENT_METHOD_DATA_CACHE = new HashMap<>();
@@ -311,23 +312,38 @@ public class JSONSerializer {
         
         if (isParamObject(c)) {
             try {
-                Method m = c.getMethod("getSyncObject", (Class[]) null);
-                if (!serializeObjectForSchema(jg, m.getReturnType(), 
-                        fieldName, alternateName)) {
-                    /* The object neither has any fields marked as ClientData nor
-                     * does it have a toString method - this is not legal.
-                    */
-                    throw new IOException("Object types must either have fields " +
-                            "marked ClientData or have a toString method in class " + 
-                            c.getName());
+                Object thisObj = c.getConstructor((Class[])null).newInstance((Object[])null);
+                Method m = c.getMethod("getSyncClass", (Class[]) null);
+                Class syncClass = (Class)m.invoke(thisObj);
+
+                if (syncClass != null) {
+                    if (!serializeObjectForSchema(jg, syncClass, 
+                            fieldName, alternateName)) {
+                        /* The object neither has any fields marked as ClientData nor
+                         * does it have a toString method - this is not legal.
+                        */
+                        throw new IOException("Object types must either have fields " +
+                                "marked ClientData or have a toString method in class " + 
+                                c.getName());
+                    }
                 }
                 return true;
             } catch (NoSuchMethodException ex) {
+                LOG.log(Level.SEVERE, "Failed to find a method in this param object", ex);
                 throw new IOException("Invalid contents of ParamObject. " +
-                        "Missing getParamObject method in class " + c.getName());
+                        "Missing getSyncClass method in class " + c.getName());
             } catch (SecurityException  ex) {
+                LOG.log(Level.SEVERE, "Failed to create param object", ex);
                 throw new IOException("Invalid contents of ParamObject. " + ""
-                        + "Missing getParamObject method in class " + c.getName());
+                        + "Missing getSyncClass method in class " + c.getName());
+            } catch (InstantiationException | IllegalAccessException ex) {
+                LOG.log(Level.SEVERE, "Failed to create an instance of this param object", ex);
+                throw new IOException("Invalid ParamObject. " + ""
+                        + "Failed to instantiate an instance of this class: " + c.getName());
+            } catch (InvocationTargetException ex) {
+                LOG.log(Level.SEVERE, "Failed to invoke a method in this param object", ex);
+                throw new IOException("Invalid ParamObject. " + ""
+                        + "Failed to invoke an instance of this class: " + c.getName());
             }
         }
 
@@ -470,7 +486,8 @@ public class JSONSerializer {
                     altName = ((ClientTableName)clientTableAnnot).tableName();
                 }
                 
-                if (isDeltaObject(m.getReturnType())) {
+                if (isDeltaObject(m.getReturnType()) ||
+                        (m.getReturnType().isArray() && isDeltaObject(m.getReturnType().getComponentType()))) {
                     jg.writeFieldName(nxtFieldName + "ChangeKey");
                     addSimpleType(jg, String.class);
                 }
