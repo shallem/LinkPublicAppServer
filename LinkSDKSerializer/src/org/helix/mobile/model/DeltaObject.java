@@ -140,7 +140,7 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
         jg.writeFieldName(TYPE_FIELD_NAME);
         jg.writeNumber(1001);
         
-        jg.writeStringField(CHANGEID_FIELD_NAME, this.changeID);
+        jg.writeStringField(CHANGEID_FIELD_NAME, this.isEmpty() ? "" : this.changeID);
         
         Method m = c.getMethod("getAdds", (Class[]) null);
         Class<?> returnType = m.getReturnType();
