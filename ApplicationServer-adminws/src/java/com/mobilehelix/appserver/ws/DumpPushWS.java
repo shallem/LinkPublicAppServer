@@ -78,7 +78,6 @@ public class DumpPushWS {
                         nxt.setClientid(pr.getClientid());
                         nxt.setUserid(pr.getUserid());
                         nxt.setPassword(pr.getPassword());
-                        nxt.setDeviceType(pr.getDeviceType());
                         nxt.setAppID(pr.getAppID());
                         nxt.setUserEmail(pr.getUserEmail());
                         nxt.setCombinedUser(pr.getCombinedUser());
@@ -178,7 +177,8 @@ public class DumpPushWS {
                                 aps.getUserid(), 
                                 aps.getPassword(),
                                 combinedUser,
-                                aps.getDeviceType(), 
+                                -1L,
+                                "Restore",
                                 aps.getAppID(), 
                                 0, 
                                 prefs,

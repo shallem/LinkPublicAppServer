@@ -24,7 +24,6 @@ public class ApplicationServerPushSession extends WSRequest {
     private String clientid;
     private String userid;
     private String password;
-    private String deviceType;
     private String combinedUser;
     private String userEmail;
     private String settings;
@@ -64,14 +63,6 @@ public class ApplicationServerPushSession extends WSRequest {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getDeviceType() {
-        return deviceType;
-    }
-
-    public void setDeviceType(String deviceType) {
-        this.deviceType = deviceType;
     }
 
     public Long getAppID() {
@@ -153,7 +144,6 @@ public class ApplicationServerPushSession extends WSRequest {
             }
             gen.writeEndArray();
         }
-        gen.writeStringField("device", this.deviceType);
         gen.writeNumberField("appid", appID);
         gen.writeStringField("combined", this.combinedUser);
         gen.writeEndObject();
@@ -185,9 +175,6 @@ public class ApplicationServerPushSession extends WSRequest {
                     break;
                 case "password":
                     asps.setPassword(parser.getText());
-                    break;
-                case "device":
-                    asps.setDeviceType(parser.getText());
                     break;
                 case "appid":
                     asps.setAppID(parser.getLongValue());
