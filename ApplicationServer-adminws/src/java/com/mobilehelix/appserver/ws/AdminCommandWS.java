@@ -87,6 +87,13 @@ public class AdminCommandWS {
                         serverRegistry.refreshServers(client, serverType);
                         break;
                     }
+                    case "clearauth": {
+                        String client = adminCmd.getCommandArgs()[0];
+                        String userid = adminCmd.getCommandArgs()[1];
+                        Long resourceID = Long.parseLong(adminCmd.getCommandArgs()[2]);
+                        sessionMgr.clearAuthenticator(client, userid, resourceID);
+                        break;
+                    }
                     default:
                         break;
                 }
