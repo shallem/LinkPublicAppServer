@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.TreeSet;
 import java.util.UUID;
 import static org.helix.mobile.model.JSONSerializer.CHANGEID_FIELD_NAME;
@@ -59,6 +60,10 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
         newItems.add(c);
     }
     
+    public ListIterator<BaseType> newIterator() {
+        return this.newItems.listIterator();
+    }
+    
     /**
      * Return the list of keys to delete.
      * @return 
@@ -81,6 +86,10 @@ public abstract class DeltaObject<BaseType> implements JSONSerializable {
      */
     @ClientData
     public abstract BaseType[] getUpdates();
+    
+    public ListIterator<BaseType> updatesIterator() {
+        return this.updateItems.listIterator();
+    }
     
     public synchronized void addUpdate(BaseType c) {
         updateItems.add(c);
