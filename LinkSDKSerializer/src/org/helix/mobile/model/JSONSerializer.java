@@ -196,21 +196,31 @@ public class JSONSerializer {
                 /* Write the object type so that we can get the Schema back. */
                 String cName = c.getName();
                 jg.writeStringField(SCHEMA_TYPE_FIELD_NAME, cName);
-
-                for (Method m : c.getMethods()) {
-                    String key = getFullyQualifiedName(c, m);
-                    if (HAS_CLIENT_METHOD_DATA_CACHE.containsKey(key)) {
-                        iterateOverObjectField(jg, obj, m);
-                        continue;
+                
+                try {
+                    if (obj instanceof JSONSerializerLockable) {
+                        ((JSONSerializerLockable)obj).lock();
                     }
 
-                    Annotation clientDataAnnot = m.getAnnotation(ClientData.class);
-                    if (clientDataAnnot != null) {
-                        iterateOverObjectField(jg, obj, m);
-                        HAS_CLIENT_METHOD_DATA_CACHE.put(key, true);
+                    for (Method m : c.getMethods()) {
+                        String key = getFullyQualifiedName(c, m);
+                        if (HAS_CLIENT_METHOD_DATA_CACHE.containsKey(key)) {
+                            iterateOverObjectField(jg, obj, m);
+                            continue;
+                        }
+
+                        Annotation clientDataAnnot = m.getAnnotation(ClientData.class);
+                        if (clientDataAnnot != null) {
+                            iterateOverObjectField(jg, obj, m);
+                            HAS_CLIENT_METHOD_DATA_CACHE.put(key, true);
+                        }
                     }
+                } finally {
+                    if (obj instanceof JSONSerializerLockable) {
+                        ((JSONSerializerLockable)obj).unlock();
+                    }
+                    jg.writeEndObject();
                 }
-                jg.writeEndObject();
                 return true;
             } else {
                 throw new IOException("Cannot serialize an object with no ClientData fields in " +
